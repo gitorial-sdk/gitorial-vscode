@@ -35,7 +35,7 @@ export class Controller {
     private readonly viewModelConverter: TutorialViewModelConverter,
     private readonly webviewPanelManager: WebviewPanelManager,
     private readonly webviewMessageHandler: IWebviewTutorialMessageHandler,
-  ) {}
+  ) { }
 
   /**
    * Initialize webview with tutorial (first time only)
@@ -63,20 +63,25 @@ export class Controller {
 
     // Intelligent decision making based on what actually changed
     const changes = this._analyzeChanges(vm);
-    console.log('WebviewController: Detected changes:', changes);
 
-    if (changes.tutorialChanged) {
+    // Check if webview panel exists - if not, we need to send full data regardless of changes
+    const webviewExists = this.webviewPanelManager.getCurrentPanel() !== undefined;
+
+    // If no webview panel exists, or if any changes detected, send appropriate updates
+    if (!webviewExists || changes.tutorialChanged) {
       await this._handleTutorialChange(vm);
-    }
-    if (changes.stepChanged) {
+    } else if (changes.stepChanged) {
       await this._handleStepChange(vm);
-    }
-    if (changes.solutionStateChanged) {
+    } else if (changes.solutionStateChanged) {
       await this._handleSolutionToggle(vm);
     }
     //TODO: This is not very elegant. We only want to update this when nothing changed - besides the step content (like initial load)
     if (changes.contentChanged) {
       await this._handleContentChange(vm);
+    } else {
+      // If no changes detected but webview exists, still send full data
+      // This handles cases where the tutorial is the same but webview needs refreshing
+      await this._sendFullTutorialUpdate(vm);
     }
 
     // Update internal state after successful operation
@@ -124,6 +129,23 @@ export class Controller {
   }
 
   /**
+   * Force a complete tutorial refresh - bypasses change detection
+   * Use this after operations that fundamentally change the tutorial structure
+   */
+  public async forceRefresh(tutorial: Readonly<Tutorial>): Promise<void> {
+    console.log('WebviewController: Forcing complete tutorial refresh');
+    const vm = this.viewModelConverter.convert(tutorial);
+
+    // Reset internal state to force full update
+    this._resetState();
+    this.isInitialized = true;
+
+    // Send full tutorial data
+    await this._sendFullTutorialUpdate(vm);
+    this.tutorialViewModel = vm;
+  }
+
+  /**
    * Dispose of resources
    */
   public async dispose(): Promise<void> {
@@ -141,10 +163,18 @@ export class Controller {
     const prev = this.tutorialViewModel;
     const curr = tutorial;
 
-    const tutorialChanged = prev?.id !== curr.id;
+    // If this is the first load (prev is undefined), treat everything as changed
+    if (!prev) {
+      return {
+        tutorialChanged: true,
+        stepChanged: true,
+        solutionStateChanged: true,
+        contentChanged: true,
+      };
+    }
 
-    const stepChanged = prev?.currentStep.index !== curr.currentStep.index;
-
+    const tutorialChanged = prev.id !== curr.id;
+    const stepChanged = prev.currentStep.index !== curr.currentStep.index;
     const solutionStateChanged =
       curr?.isShowingSolution !== undefined &&
       prev?.isShowingSolution !== curr.isShowingSolution;
@@ -153,11 +183,16 @@ export class Controller {
     const currStep = curr.steps.at(curr.currentStep.index);
     const contentChanged = prevStep?.htmlContent !== currStep?.htmlContent;
 
+    // If the step commits are different, we should treat this as a content change
+    const prevStepCommit = prev.steps[prev.currentStep.index]?.id;
+    const currStepCommit = curr.steps[curr.currentStep.index]?.id;
+    const stepCommitChanged = prevStepCommit !== currStepCommit;
+
     return {
       tutorialChanged,
       stepChanged,
       solutionStateChanged,
-      contentChanged,
+      contentChanged: contentChanged || stepCommitChanged,
     };
   }
 
@@ -171,14 +206,14 @@ export class Controller {
     await this._handleFullUpdate(tutorial);
   }
 
+
+
   /**
    * Handle step change within same tutorial
    */
   private async _handleStepChange(tutorial: Readonly<UI.ViewModels.Tutorial>): Promise<void> {
-    const htmlContent = tutorial.steps[tutorial.currentStep.index].htmlContent;
-    if (!htmlContent) {
-      throw new Error('Step change detected but no html content found');
-    }
+    const htmlContent =
+      tutorial.steps[tutorial.currentStep.index].htmlContent ?? '<p></p>';
 
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
       category: 'tutorial',
@@ -194,7 +229,6 @@ export class Controller {
    */
   private async _handleSolutionToggle(tutorial: Readonly<UI.ViewModels.Tutorial>): Promise<void> {
     const isShowingSolution = tutorial.isShowingSolution;
-    console.log(`WebviewController: Solution toggled to ${isShowingSolution}`);
 
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
       category: 'tutorial',

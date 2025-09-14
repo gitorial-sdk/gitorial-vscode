@@ -11,7 +11,9 @@ import simpleGit, {
   TaskOptions,
 } from 'simple-git';
 import * as path from 'path'; //TODO: Remove this import and use IFileSystem instead
+import * as fs from 'fs';
 import { IGitOperations, DefaultLogFields, ListLogLine } from '../../domain/ports/IGitOperations';
+import { CommitHashSanitizer } from '../../utils/git/CommitHashSanitizer';
 import { IGitChanges, DiffFilePayload } from 'src/ui/ports/IGitChanges';
 
 /**
@@ -64,6 +66,8 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   //                           | |
   //                           |_|
   public async ensureGitorialBranch(): Promise<void> {
+    console.log('🔍 GitAdapter: ensureGitorialBranch called');
+
     // Fetch latest remote information first to ensure we see all remote branches
     console.log('GitAdapter: Fetching latest remote information...');
     try {
@@ -94,11 +98,26 @@ export class GitAdapter implements IGitOperations, IGitChanges {
         await this.git.checkout(['-f', 'gitorial']);
         console.log('GitAdapter: Successfully force checked out local \'gitorial\' branch.');
         return;
-      } catch (checkoutError) {
+      } catch (checkoutError: any) {
         console.warn(
           'GitAdapter: Failed to force checkout existing local \'gitorial\' branch. Will try to set up from remote.',
           checkoutError,
         );
+
+        // Check if this is a "reference is not a tree" error indicating corrupted commit hash
+        if (checkoutError.message && checkoutError.message.includes('reference is not a tree')) {
+          console.error('🚨 GitAdapter: Detected corrupted commit hash in gitorial branch. Attempting to recover...');
+
+          try {
+            // Try to delete the corrupted local gitorial branch and recreate from remote
+            console.log('🔄 GitAdapter: Deleting corrupted local gitorial branch...');
+            await this.git.branch(['-D', 'gitorial']);
+            console.log('✅ GitAdapter: Successfully deleted corrupted local gitorial branch');
+          } catch (deleteError) {
+            console.warn('GitAdapter: Could not delete corrupted gitorial branch:', deleteError);
+          }
+        }
+
         // Proceed to check remote branches
       }
     }
@@ -212,11 +231,32 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           await this.git.checkout(['-f', 'gitorial']);
           console.log('GitAdapter: Successfully set up gitorial branch from remote.');
           return;
-        } catch (setupError) {
+        } catch (setupError: any) {
           console.error(
             `GitAdapter: Failed to set up gitorial branch from ${targetRemoteName}/${targetBranchName}:`,
             setupError,
           );
+
+          // Check if this is a "reference is not a tree" error
+          if (setupError.message && setupError.message.includes('reference is not a tree')) {
+            console.error('🚨 GitAdapter: Detected corrupted commit hash when setting up gitorial branch from remote');
+            console.log('🔄 GitAdapter: Attempting to recover by recreating gitorial branch...');
+
+            try {
+              // Delete any corrupted local gitorial branch
+              await this.git.branch(['-D', 'gitorial']);
+              console.log('✅ GitAdapter: Deleted corrupted local gitorial branch');
+
+              // Try to fetch and create a clean gitorial branch
+              await this.git.fetch(targetRemoteName);
+              await this.git.checkout(['-B', 'gitorial', `${targetRemoteName}/${targetBranchName}`]);
+              console.log('✅ GitAdapter: Successfully recreated gitorial branch from remote');
+              return;
+            } catch (recoveryError) {
+              console.error('🚨 GitAdapter: Failed to recover from corrupted gitorial branch:', recoveryError);
+            }
+          }
+
           throw new Error(
             `Failed to set up 'gitorial' branch from remote '${targetRemoteName}/${targetBranchName}': ${setupError instanceof Error ? setupError.message : String(setupError)}`,
           );
@@ -265,64 +305,57 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     await this.git.checkout(commitHash);
   }
   public async listRemote(args: TaskOptions): Promise<string> {
-    return await this.git.listRemote(args);
+    return this.git.listRemote(args);
   }
 
   /**
    * Checkout a specific commit and clean the working directory
    */
   public async checkoutAndClean(commitHash: string): Promise<void> {
+    console.log(`GitAdapter: Checking out commit ${commitHash} and cleaning...`);
+
+    // Clean up any Git state issues first
+    await this.cleanupGitState();
+
     try {
       await this.git.checkout(commitHash);
+      console.log(`GitAdapter: Successfully checked out ${commitHash}`);
     } catch (error: any) {
-      if (error.message?.includes('Your local changes')) {
+      console.warn('GitAdapter: Initial checkout failed, trying force checkout:', error.message);
+      try {
         await this.git.checkout(['-f', commitHash]);
-      } else {
-        throw error;
+        console.log(`GitAdapter: Force checkout successful for ${commitHash}`);
+      } catch (forceError: any) {
+        console.error('GitAdapter: Force checkout also failed:', forceError.message);
+        throw forceError;
       }
     }
 
-    // Clean up untracked files
+    // Clean working directory
     await this.cleanWorkingDirectory();
+
+    // Ensure final clean state
+    await this.finalizeRepositoryState();
   }
 
   /**
    * Get file content from a specific commit
    */
   public async getFileContent(commitHash: string, filePath: string): Promise<string> {
-    try {
-      return await this.git.show([`${commitHash}:${filePath}`]);
-    } catch (error) {
-      console.error(`Error getting content for ${filePath} from commit ${commitHash}:`, error);
-      throw error;
-    }
+    return await this.git.show([`${commitHash}:${filePath}`]);
   }
 
-  /**
-   * Get changed files between current commit and its parent
-   */
-  public async getChangedFiles(): Promise<string[]> {
-    const currentHash = await this.getCurrentCommitHash();
-    const parentHash = await this.git.revparse(['HEAD^']);
-    const diff = await this.git.diff([parentHash, currentHash, '--name-only']);
 
-    return diff
-      .split('\n')
-      .filter(file => file.trim().length > 0)
-      .filter(file => !file.toLowerCase().endsWith('readme.md'));
-  }
 
   /**
    * Get commit history
    */
   public async getCommitHistory(): Promise<readonly (DefaultLogFields & ListLogLine)[]> {
-    const log = await this.git.log(['gitorial']);
-    return log.all;
+    return (await this.git.log(['gitorial'])).all;
   }
 
   public async getCommits(branch?: string): Promise<Array<DefaultLogFields & ListLogLine>> {
-    const log = await this.git.log(branch ? [branch] : []);
-    return log.all as Array<DefaultLogFields & ListLogLine>; // Type assertion, ensure compatibility
+    return (await this.git.log(branch ? [branch] : [])).all as Array<DefaultLogFields & ListLogLine>;
   }
 
   /**
@@ -342,61 +375,101 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Get current commit hash
    */
   public async getCurrentCommitHash(): Promise<string> {
-    return await this.git.revparse(['HEAD']);
+    return this.git.revparse(['HEAD']);
+  }
+
+  /**
+   * Get current commit message
+   */
+  public async getCurrentCommitMessage(): Promise<string> {
+    return (await this.git.log(['-1', '--pretty=%B'])).all[0]?.message || '';
   }
 
   /**
    * Get repository information
    */
   public async getRepoInfo(): Promise<{ remotes: RemoteWithRefs[]; branches: BranchSummary }> {
-    const [remotes, branches] = await Promise.all([this.git.getRemotes(true), this.git.branch()]);
-    return { remotes, branches };
+    return Promise.all([this.git.getRemotes(true), this.git.branch()]).then(([remotes, branches]) => ({ remotes, branches }));
   }
 
   /**
    * Clean the working directory by removing untracked files
    */
   public async cleanWorkingDirectory(): Promise<void> {
+    // Use raw Git clean to bypass simple-git clean parsing
+    await this.git.raw(['clean', '-f', '-d']);
+  }
+
+  /**
+   * Clean up any ongoing Git operations that might be causing conflicts
+   */
+  private async cleanupGitState(): Promise<void> {
+    // Abort any in-progress operations
+    const abortCommands = [
+      ['merge', '--abort'],
+      ['cherry-pick', '--abort'],
+      ['rebase', '--abort'],
+      ['revert', '--abort'],
+    ];
+
+    for (const cmd of abortCommands) {
+      try {
+        await this.git.raw(cmd);
+        console.log(`GitAdapter: Aborted ${cmd[0]} operation`);
+      } catch {
+        // Operation might not be in progress, that's fine
+      }
+    }
+
+    // Reset any staged changes
     try {
-      // Use raw Git clean to bypass simple-git clean parsing
-      await this.git.raw(['clean', '-f', '-d']);
-    } catch (error) {
-      console.error('Error cleaning working directory:', error);
-      throw error;
+      await this.git.reset(['--mixed', 'HEAD']);
+    } catch {
+      // HEAD might not exist yet, that's fine
+    }
+
+    // Clean working directory
+    try {
+      await this.cleanWorkingDirectory();
+    } catch {
+      // Directory might already be clean
     }
   }
 
-  public getAbsolutePath(relativePath: string): string {
-    return path.join(this.repoPath, relativePath);
+  /**
+   * Finalize the repository state to ensure VS Code's Git extension works correctly
+   */
+  private async finalizeRepositoryState(): Promise<void> {
+    try {
+      console.log('GitAdapter: Finalizing repository state for VS Code compatibility...');
+
+      // Ensure index is clean and matches HEAD
+      await this.git.reset(['--hard', 'HEAD']);
+
+      // Clean any untracked files
+      await this.cleanWorkingDirectory();
+
+      // Refresh Git status to ensure everything is clean
+      const status = await this.git.status();
+      console.log(`GitAdapter: Final repository state - Clean: ${status.isClean()}`);
+
+      // Force Git to recognize the current state by running a safe status check
+      await this.git.raw(['status', '--porcelain']);
+
+      console.log('GitAdapter: Repository state finalized successfully');
+    } catch (error) {
+      console.warn('GitAdapter: Warning during repository state finalization:', error);
+      // Don't throw here as this is cleanup - the main operation succeeded
+    }
   }
+
+  public getAbsolutePath = (relativePath: string): string => path.join(this.repoPath, relativePath);
 
   public async getRepoName(): Promise<string> {
     return path.basename(this.repoPath);
   }
 
-  public async getRemoteUrl(): Promise<string | null> {
-    const remotes = await this.git.getRemotes(true);
-    const originRemote = remotes.find(remote => remote.name === 'origin');
 
-    if (originRemote && originRemote.refs && originRemote.refs.fetch) {
-      return originRemote.refs.fetch;
-    } else {
-      // Fallback or attempt to find another remote if 'origin' is not standard
-      const remoteDetails = await this.git.remote(['-v']);
-      if (typeof remoteDetails === 'string' && remoteDetails.includes('origin')) {
-        const lines = remoteDetails.split('\n');
-        const originFetchLine = lines.find(
-          line => line.startsWith('origin') && line.endsWith('(fetch)'),
-        );
-        if (originFetchLine) {
-          // Example line: 'origin\thttps://github.com/owner/repo.git (fetch)'
-          // Split on tab to separate remote name from URL, then split URL on space to remove '(fetch)'
-          return originFetchLine.split('\t')[1].split(' ')[0];
-        }
-      }
-      return null;
-    }
-  }
 
   public async isGitRepository(): Promise<boolean> {
     return this.git.checkIsRepo(CheckRepoActions.IS_REPO_ROOT);
@@ -404,91 +477,205 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
   public async getChangesInCommit(commitHash: string): Promise<string[]> {
     if (!commitHash) {
-      console.warn('GitAdapter: getChangesInCommit called with no commitHash.');
       return [];
     }
+
     try {
-      // Diff against the parent. If it's the initial commit, it has no parent.
-      // simple-git might throw an error for `HEAD^` on initial commit, or an empty diff might result.
-      // Using `git.show` with `--name-only --pretty=format:` is also an option for listing files in a commit,
-      // but `diff` is more direct for changes *introduced* by the commit.
       const diffOutput = await this.git.diff([
         `${commitHash}^`,
         commitHash,
         '--name-only',
         '--diff-filter=AM',
-      ]); // Filter for Added or Modified files only
-      if (diffOutput) {
-        return diffOutput.split('\n').filter(line => line.trim().length > 0);
-      }
+      ]);
+      return diffOutput ? diffOutput.split('\n').filter(line => line.trim().length > 0) : [];
+    } catch {
+      // For initial commit or other errors, return empty array
       return [];
-    } catch (error: any) {
-      // A common error here is if the commitHash is the very first commit (no parent ^).
-      // In such cases, all files in that commit are effectively "changes".
-      if (
-        error.message &&
-        (error.message.includes('unknown revision or path not in the working tree') ||
-          error.message.includes('bad revision ')) &&
-        error.message.includes(`${commitHash}^`)
-      ) {
-        console.log(
-          `GitAdapter: Likely initial commit (${commitHash}). Listing all files in the commit instead of diffing against parent.`,
-        );
-        const showOutput = await this.git.show([
-          commitHash,
-          '--name-only',
-          '--pretty=format:',
-          '--no-abbrev',
-        ]);
-        if (showOutput) {
-          // The output of show --name-only --pretty=format: is just a list of files, one per line, often with an extra newline at the end.
-          return showOutput.split('\n').filter(line => line.trim().length > 0);
-        }
-        return [];
-      }
-      console.error(`GitAdapter: Error getting changes in commit ${commitHash}:`, error);
-      throw error;
     }
   }
+
+  /**
+   * Creates/force-updates local 'gitorial' branch by recreating it with commits
+   * in the specified order. This approach completely rebuilds the branch to avoid
+   * any cherry-pick conflicts when commits are reordered.
+   */
+  public async synthesizeGitorialBranch(steps: Array<{ commit: string; message: string }>): Promise<string[]> {
+    if (steps.length === 0) {
+      return [];
+    }
+
+    console.log('GitAdapter: Starting gitorial branch synthesis with', steps.length, 'steps');
+
+    // Step 0: Clean up any existing Git operations state
+    console.log('GitAdapter: Cleaning up any existing Git state...');
+    await this.cleanupGitState();
+
+    // Step 1: Create a new orphan branch to start clean
+    const tempBranchName = `gitorial-temp-${Date.now()}`;
+    console.log(`GitAdapter: Creating temporary orphan branch: ${tempBranchName}`);
+
+    // Array to collect the new commit hashes
+    const newCommitHashes: string[] = [];
+
+    try {
+      // Create orphan branch (no history)
+      await this.git.checkout(['--orphan', tempBranchName]);
+
+      // Clean the working directory completely
+      await this.cleanWorkingDirectory();
+
+      // Remove all files from Git's index
+      try {
+        await this.git.raw(['rm', '-rf', '--cached', '.']);
+      } catch {
+        // Index might be empty, that's fine
+      }
+
+      // Apply each step by extracting the complete file tree from each commit
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        console.log(`🔍 GitAdapter: Processing step ${i + 1}/${steps.length}: commit="${step.commit}", message="${step.message}"`);
+
+        try {
+          // Get all files from this commit
+          const fileList = await this.git.raw(['ls-tree', '-r', '--name-only', step.commit]);
+          const filePaths = fileList.trim().split('\n').filter(path => path.length > 0);
+
+          console.log(`🔍 GitAdapter: Found ${filePaths.length} files in commit ${step.commit}`);
+
+          // Extract each file and write it to the working directory
+          for (const filePath of filePaths) {
+            try {
+              const fileContent = await this.getFileContent(step.commit, filePath);
+              const absolutePath = path.join(this.repoPath, filePath);
+
+              // Ensure directory exists
+              const dir = path.dirname(absolutePath);
+              await fs.promises.mkdir(dir, { recursive: true });
+
+              // Write file content
+              await fs.promises.writeFile(absolutePath, fileContent);
+            } catch (fileError) {
+              // Skip files that can't be extracted (e.g., deleted files, binary files)
+              console.warn(`GitAdapter: Could not extract file ${filePath} from ${step.commit}:`, fileError);
+            }
+          }
+
+          // Stage all changes and commit
+          await this.git.add('.');
+          console.log(`🔍 GitAdapter: About to commit with message: "${step.message}"`);
+          await this.git.commit(step.message);
+
+          // Get the new commit hash and add it to our collection
+          const newCommitHash = await this.git.revparse(['HEAD']);
+          const sanitizedHash = CommitHashSanitizer.sanitize(newCommitHash);
+          newCommitHashes.push(sanitizedHash);
+
+          console.log(`🔍 GitAdapter: Successfully created commit for step ${i + 1}: ${step.message} (${sanitizedHash})`);
+
+        } catch (error) {
+          console.error(`GitAdapter: Error processing step ${i + 1} (${step.commit}):`, error);
+
+          // Create empty commit to maintain step sequence
+          await this.git.commit(step.message, { '--allow-empty': null });
+
+          // Get the new commit hash even for empty commits
+          const newCommitHash = await this.git.revparse(['HEAD']);
+          const sanitizedHash = CommitHashSanitizer.sanitize(newCommitHash);
+          newCommitHashes.push(sanitizedHash);
+
+          console.log(`GitAdapter: Created empty commit as fallback for step ${i + 1} (${sanitizedHash})`);
+        }
+      }
+
+      // Step 2: Replace the gitorial branch with our new branch
+      console.log('GitAdapter: Replacing gitorial branch with synthesized branch');
+
+      // Check out a safe branch first
+      try {
+        await this.git.checkout('main');
+      } catch {
+        // If main doesn't exist, create it from the first step
+        await this.git.checkout(['-B', 'main', steps[0].commit]);
+      }
+
+      // Delete old gitorial branch if it exists
+      try {
+        await this.git.branch(['-D', 'gitorial']);
+      } catch {
+        // Branch might not exist, that's fine
+      }
+
+      // Rename our temp branch to gitorial
+      await this.git.branch(['-m', tempBranchName, 'gitorial']);
+
+      // Check out the new gitorial branch
+      await this.git.checkout('gitorial');
+
+      // Ensure the repository is in a clean state for VS Code
+      await this.finalizeRepositoryState();
+
+      console.log('GitAdapter: Successfully synthesized gitorial branch');
+
+      // Return the array of new commit hashes
+      return newCommitHashes;
+
+    } catch (error) {
+      console.error('GitAdapter: Error during gitorial branch synthesis:', error);
+
+      // Clean up temp branch if it exists
+      try {
+        // First clean up any Git state issues
+        await this.cleanupGitState();
+
+        // Try to checkout a safe branch
+        try {
+          await this.git.checkout('main');
+        } catch {
+          // If main doesn't exist, checkout the first step
+          try {
+            await this.git.checkout(steps[0].commit);
+          } catch {
+            // Last resort - create a new branch
+            await this.git.checkout(['-B', 'recovery-branch']);
+          }
+        }
+
+        // Delete temp branch
+        await this.git.branch(['-D', tempBranchName]);
+      } catch (cleanupError) {
+        console.warn('GitAdapter: Error during cleanup:', cleanupError);
+      }
+
+      throw new Error(`Failed to synthesize gitorial branch: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
 
   private parseNameStatus(
     diffOutput: string,
   ): Array<{ status: string; path: string; oldPath?: string }> {
-    const files: Array<{ status: string; path: string; oldPath?: string }> = [];
     if (!diffOutput) {
-      return files;
+      return [];
     }
 
-    const lines = diffOutput.trim().split('\n');
-    for (const line of lines) {
-      if (line.trim() === '') {
-        continue;
-      }
-      // Lines are typically "S\tpath" or "SXXX\tpath" for A, M, D, T
-      // or "SXXX\told_path\tnew_path" for R, C (where S is the status char like R or C)
-      const parts = line.split('\t');
-      const rawStatus = parts[0].trim(); // e.g., "A", "M", "D", "R100", "C075"
-      const statusChar = rawStatus[0]; // "A", "M", "D", "R", "C"
+    return diffOutput.trim().split('\n')
+      .filter(line => line.trim())
+      .map(line => {
+        const parts = line.split('\t');
+        const statusChar = parts[0].trim()[0];
 
-      if (statusChar === 'R' || statusChar === 'C') {
-        if (parts.length === 3) {
-          // R_old_new or C_old_new
-          files.push({ status: statusChar, oldPath: parts[1].trim(), path: parts[2].trim() });
+        if (statusChar === 'R' || statusChar === 'C') {
+          return parts.length === 3
+            ? { status: statusChar, oldPath: parts[1].trim(), path: parts[2].trim() }
+            : null;
         } else {
-          console.warn(
-            `GitAdapter.parseNameStatus: Unexpected format for Renamed/Copied line: '${line}'`,
-          );
+          return parts.length === 2
+            ? { status: statusChar, path: parts[1].trim() }
+            : null;
         }
-      } else {
-        // A, M, D, T
-        if (parts.length === 2) {
-          files.push({ status: statusChar, path: parts[1].trim() });
-        } else {
-          console.warn(`GitAdapter.parseNameStatus: Unexpected format for line: '${line}'`);
-        }
-      }
-    }
-    return files;
+      })
+      .filter((file): file is NonNullable<typeof file> => file !== null);
   }
 
   private static _isGitorialBranchNamePattern(branchName: string): boolean {
@@ -512,11 +699,8 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
     try {
       parentCommitHash = await this.git.revparse([`${targetCommitHash}^`]);
-    } catch (error) {
+    } catch {
       isInitialCommit = true;
-      console.log(
-        `GitAdapter.getCommitDiff: Could not find parent for ${targetCommitHash}. Assuming initial commit. \nError: ${error}`,
-      );
     }
 
     let changedFilesRawOutput: string;
@@ -533,9 +717,6 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     } else {
       // For non-initial commits, use git diff --name-status against the parent.
       if (!parentCommitHash) {
-        console.error(
-          `GitAdapter.getCommitDiff: parentCommitHash is null for non-initial commit ${targetCommitHash}. This should not happen.`,
-        );
         return [];
       }
       changedFilesRawOutput = await this.git.raw([
@@ -595,6 +776,441 @@ export class GitAdapter implements IGitOperations, IGitChanges {
       });
     }
     return payloads;
+  }
+
+  // Author Mode Methods Implementation
+
+  /**
+   * Get the current branch name
+   */
+  public async getCurrentBranch(): Promise<string> {
+    const branchSummary = await this.git.branch();
+    return branchSummary.current;
+  }
+
+  /**
+   * Check if a branch exists (locally or remotely)
+   */
+  public async branchExists(branchName: string): Promise<boolean> {
+    try {
+      const branchSummary = await this.git.branch(['-a']);
+      return branchSummary.all.some(branch =>
+        branch === branchName || branch === `remotes/origin/${branchName}`,
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Create a new branch from a base branch
+   */
+  public async createBranch(branchName: string, baseBranch?: string): Promise<void> {
+    const targetBranch = baseBranch || await this.getCurrentBranch();
+    await this.git.checkout(['-b', branchName, targetBranch]);
+  }
+
+  /**
+   * Checkout a branch
+   */
+  public async checkoutBranch(branchName: string): Promise<void> {
+    await this.git.checkout(branchName);
+  }
+
+  /**
+   * Delete a branch
+   */
+  public async deleteBranch(branchName: string, force: boolean = false): Promise<void> {
+    if (force) {
+      await this.git.branch(['-D', branchName]);
+    } else {
+      await this.git.branch(['-d', branchName]);
+    }
+  }
+
+  /**
+   * Get commit information
+   */
+  public async getCommitInfo(commitHash: string): Promise<{
+    hash: string;
+    message: string;
+    author: string;
+    date: Date;
+  } | null> {
+    try {
+      const log = await this.git.log({
+        from: commitHash,
+        to: commitHash,
+        maxCount: 1,
+      });
+
+      if (log.latest) {
+        return {
+          hash: log.latest.hash,
+          message: log.latest.message,
+          author: log.latest.author_name,
+          date: new Date(log.latest.date),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error(`GitAdapter.getCommitInfo: Error getting commit info for '${commitHash}':`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Cherry-pick a commit with optional custom message
+   */
+  public async cherryPick(commitHash: string, customMessage?: string): Promise<void> {
+    if (customMessage) {
+      await this.git.raw(['cherry-pick', '-m', '1', '--edit', commitHash]);
+    } else {
+      await this.git.raw(['cherry-pick', commitHash]);
+    }
+  }
+
+  /**
+   * Create a new commit with the current staged changes
+   */
+  public async createCommit(message: string): Promise<string> {
+    const result = await this.git.commit(message);
+    return result.commit;
+  }
+
+  /**
+   * Get the commit message for a specific commit
+   */
+  public async getCommitMessage(commitHash: string): Promise<string> {
+    const result = await this.git.show([commitHash, '--format=%B', '--no-patch']);
+    return result.trim();
+  }
+
+  /**
+   * Stage all changes in the working directory
+   */
+  public async stageAllChanges(): Promise<void> {
+    await this.git.add('.');
+  }
+
+  /**
+   * Stage specific files
+   */
+  public async stageFiles(filePaths: string[]): Promise<void> {
+    if (filePaths.length === 0) {
+      return;
+    }
+    await this.git.add(filePaths);
+  }
+
+  /**
+   * Get the status of the working directory
+   */
+  public async getWorkingDirectoryStatus(): Promise<{
+    staged: string[];
+    unstaged: string[];
+    untracked: string[];
+  }> {
+    const status = await this.git.status();
+    return {
+      staged: status.staged,
+      unstaged: status.modified.concat(status.deleted),
+      untracked: status.not_added,
+    };
+  }
+
+  /**
+   * Reset the working directory to match the last commit
+   */
+  public async resetWorkingDirectory(hard: boolean = false): Promise<void> {
+    if (hard) {
+      await this.git.reset(['--hard', 'HEAD']);
+    } else {
+      await this.git.reset(['--soft', 'HEAD']);
+    }
+  }
+
+  /**
+   * Push a branch to the remote repository
+   */
+  public async pushBranch(branchName: string, force: boolean = false): Promise<void> {
+    if (force) {
+      await this.git.push(['origin', branchName, '--force']);
+    } else {
+      await this.git.push(['origin', branchName]);
+    }
+  }
+
+  /**
+   * Pull the latest changes from the remote repository
+   */
+  public async pullLatest(branchName?: string): Promise<void> {
+    const targetBranch = branchName || await this.getCurrentBranch();
+    await this.git.pull(['origin', targetBranch]);
+  }
+
+  // ============================================================================
+  // Step Editing Git Operations (Task 3.1)
+  // ============================================================================
+
+  /**
+   * Convenience method: Stage all changes in the working directory
+   * Alias for stageAllChanges()
+   */
+  public async addAll(): Promise<void> {
+    await this.stageAllChanges();
+  }
+
+  /**
+   * Convenience method: Create a new commit with staged changes
+   * Alias for createCommit()
+   * @param message The commit message
+   * @returns The hash of the new commit
+   */
+  public async commit(message: string): Promise<string> {
+    return await this.createCommit(message);
+  }
+
+  /**
+   * Convenience method: Reset working directory with options
+   * Alias for resetWorkingDirectory() with raw git options
+   * @param options Git reset options (e.g., ['--hard', 'HEAD'])
+   */
+  public async reset(options: string[]): Promise<void> {
+    await this.git.reset(options);
+  }
+
+  /**
+   * Capture current changes in the working directory
+   * @returns Object containing modified, added, and deleted files with their content
+   */
+  public async captureCurrentChanges(): Promise<{
+    modified: string[];
+    added: string[];
+    deleted: string[];
+    fileContents: Map<string, string>;
+  }> {
+    const status = await this.git.status();
+    const fileContents = new Map<string, string>();
+
+    // Get content for modified and added files
+    const changedFiles = [...status.modified, ...status.not_added];
+    for (const filePath of changedFiles) {
+      try {
+        const absolutePath = path.join(this.repoPath, filePath);
+        if (fs.existsSync(absolutePath)) {
+          const content = fs.readFileSync(absolutePath, 'utf-8');
+          fileContents.set(filePath, content);
+        }
+      } catch (error) {
+        console.warn(`GitAdapter: Could not read file content for ${filePath}:`, error);
+      }
+    }
+
+    return {
+      modified: status.modified,
+      added: status.not_added,
+      deleted: status.deleted,
+      fileContents,
+    };
+  }
+
+  /**
+   * Create a commit for step editing with all current changes
+   * @param message The commit message
+   * @returns The hash of the new commit
+   */
+  public async createStepCommit(message: string): Promise<string> {
+    // Stage all changes
+    await this.addAll();
+
+    // Create the commit
+    return await this.commit(message);
+  }
+
+  /**
+   * Get list of files that were changed in a specific commit
+   * @param commitHash The commit hash to analyze
+   * @returns Object containing file paths and change types
+   */
+  public async getStepFilesChanged(commitHash: string): Promise<{
+    added: string[];
+    modified: string[];
+    deleted: string[];
+  }> {
+    try {
+      // Get diff with file status
+      const diffOutput = await this.git.raw([
+        'diff',
+        '--name-status',
+        `${commitHash}^`,
+        commitHash,
+      ]);
+
+      const added: string[] = [];
+      const modified: string[] = [];
+      const deleted: string[] = [];
+
+      if (diffOutput) {
+        const lines = diffOutput.split('\n').filter(line => line.trim());
+        for (const line of lines) {
+          const [status, filePath] = line.split('\t');
+          if (filePath) {
+            switch (status) {
+            case 'A':
+              added.push(filePath);
+              break;
+            case 'M':
+              modified.push(filePath);
+              break;
+            case 'D':
+              deleted.push(filePath);
+              break;
+            default:
+              // Handle other statuses (R for rename, C for copy, etc.)
+              modified.push(filePath);
+            }
+          }
+        }
+      }
+
+      return { added, modified, deleted };
+    } catch (error) {
+      console.warn(`GitAdapter: Could not get file changes for commit ${commitHash}:`, error);
+      return { added: [], modified: [], deleted: [] };
+    }
+  }
+
+  /**
+   * Safely update a single step in the gitorial branch without corrupting other steps.
+   * This prevents the cascade corruption issue that occurs when synthesizeGitorialBranch
+   * is called with potentially corrupted commit hashes from the manifest.
+   */
+  public async updateSingleStepInGitorialBranch(
+    stepIndex: number,
+    newCommitContent: { commit: string; message: string },
+    totalSteps: number,
+  ): Promise<string> {
+    console.log(`🔄 GitAdapter: Updating step ${stepIndex + 1} of ${totalSteps} using patch-based approach`);
+
+    // MUCH SIMPLER APPROACH: Don't modify gitorial branch during editing
+    // Instead, just return the new commit hash and let the manifest track it
+    // The gitorial branch will be updated only when explicitly publishing
+
+    console.log(`✅ GitAdapter: Using simple approach - returning new commit hash ${newCommitContent.commit}`);
+    console.log(`📝 GitAdapter: Step ${stepIndex + 1} will use commit ${newCommitContent.commit} in manifest`);
+    console.log('🔒 GitAdapter: Gitorial branch remains unchanged until publish');
+
+    // Validate that the new commit exists
+    try {
+      await this.git.raw(['cat-file', '-e', newCommitContent.commit]);
+      console.log(`✅ GitAdapter: Confirmed new commit ${newCommitContent.commit} exists`);
+    } catch (_error) {
+      throw new Error(`New commit ${newCommitContent.commit} does not exist in repository`);
+    }
+
+    // Simply return the new commit hash
+    // The manifest will track this change, and the gitorial branch stays intact
+    return newCommitContent.commit;
+  }
+
+  /**
+   * Rebuild the gitorial branch from a manifest when publishing.
+   * This creates a clean gitorial branch with the exact commits specified in the manifest.
+   */
+  public async rebuildGitorialBranchFromManifest(steps: Array<{ commit: string; type: string; title: string }>): Promise<void> {
+    // Create backup of current gitorial branch
+    const backupBranch = `gitorial-backup-${Date.now()}`;
+    try {
+      await this.git.checkout('gitorial');
+      await this.git.checkout(['-b', backupBranch]);
+    } catch (_error) {
+      // No existing gitorial branch to backup
+    }
+
+    try {
+      // Create new gitorial branch from scratch
+      await this.git.checkout(['--orphan', 'gitorial-new']);
+      await this.cleanWorkingDirectory();
+
+      // Remove everything from index
+      try {
+        await this.git.raw(['rm', '-rf', '--cached', '.']);
+      } catch (_error) {
+        // Index might be empty
+      }
+
+      // Apply each step in order
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+
+        try {
+          // Validate commit exists
+          await this.git.raw(['cat-file', '-e', step.commit]);
+
+          // Get the file tree from this commit
+          const fileList = await this.git.raw(['ls-tree', '-r', '--name-only', step.commit]);
+          const filePaths = fileList.trim().split('\n').filter(path => path.length > 0);
+
+          // Clear working directory
+          await this.cleanWorkingDirectory();
+
+          // Extract and write each file from the commit
+          for (const filePath of filePaths) {
+            try {
+              const fileContent = await this.getFileContent(step.commit, filePath);
+              const absolutePath = path.join(this.repoPath, filePath);
+
+              const dir = path.dirname(absolutePath);
+              await fs.promises.mkdir(dir, { recursive: true });
+              await fs.promises.writeFile(absolutePath, fileContent);
+            } catch (fileError) {
+              console.warn(`GitAdapter: Could not extract file ${filePath} from ${step.commit}:`, fileError);
+            }
+          }
+
+          // Stage and commit
+          await this.git.add('.');
+          const commitMessage = `${step.type}: ${step.title}`;
+          await this.git.commit(commitMessage);
+
+        } catch (error) {
+          console.error(`GitAdapter: Error applying step ${i + 1}:`, error);
+          // Create empty commit to maintain sequence
+          await this.git.commit(`${step.type}: ${step.title}`, { '--allow-empty': null });
+        }
+      }
+
+      // Replace old gitorial branch with new one
+      await this.git.checkout('main').catch(() => {
+        // If main doesn't exist, create it from first step
+        return this.git.checkout(['-B', 'main']);
+      });
+
+      // Delete old gitorial branch
+      await this.git.branch(['-D', 'gitorial']).catch(() => { });
+
+      // Rename new branch to gitorial
+      await this.git.branch(['-m', 'gitorial-new', 'gitorial']);
+      await this.git.checkout('gitorial');
+
+      // Clean up backup
+      await this.git.branch(['-D', backupBranch]).catch(() => { });
+
+    } catch (error) {
+      console.error('GitAdapter: Error rebuilding gitorial branch:', error);
+
+      // Restore from backup if possible
+      try {
+        await this.git.checkout(backupBranch);
+        await this.git.branch(['-D', 'gitorial']).catch(() => { });
+        await this.git.branch(['-m', 'gitorial']);
+      } catch (restoreError) {
+        console.error('GitAdapter: Could not restore from backup:', restoreError);
+      }
+
+      throw error;
+    }
   }
 }
 

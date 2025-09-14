@@ -27,11 +27,14 @@ import { TutorialSolutionWorkflow } from '@ui/tutorial/TutorialSolutionWorkflow'
 import { TutorialUriHandler } from '@ui/deep-link/UriHandler';
 import { TutorialController } from '@ui/tutorial/controller';
 import { CommandHandler } from '@ui/tutorial/CommandHandler';
+import { AuthorModeCommandHandler } from '@ui/tutorial/AuthorModeCommandHandler';
+import { AuthorModeController } from '@ui/tutorial/AuthorModeController';
 import { EditorManager } from '@ui/tutorial/manager/EditorManager';
 import { SystemController } from '@ui/system/SystemController';
 import {
   IWebviewSystemMessageHandler,
   IWebviewTutorialMessageHandler,
+  IWebviewAuthorMessageHandler,
   WebviewMessageHandler,
 } from '@ui/webview/WebviewMessageHandler';
 import { WebviewPanelManager } from '@ui/webview/WebviewPanelManager';
@@ -44,17 +47,34 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
   context: vscode.ExtensionContext;
   tutorialController: TutorialController;
   autoOpenState: AutoOpenState;
+  authorModeController: AuthorModeController;
 }> {
   console.log('📖 Gitorial extension active');
 
-  const { tutorialController, autoOpenState } =
-    await bootstrapApplication(context);
+  const {
+    tutorialController,
+    autoOpenState,
+    systemController,
+    authorModeController,
+  } = await bootstrapApplication(context);
 
   // --- VS Code Specific Registrations (Infrastructure concern, performed here) ---
   const commandHandler = new CommandHandler(tutorialController, autoOpenState);
   const uriHandler = new TutorialUriHandler(tutorialController);
 
+  // Author Mode Command Handler
+  const authorModeCommandHandler = new AuthorModeCommandHandler(
+    systemController,
+    authorModeController,
+  );
+
+  console.log('📖 Registering regular commands...');
   commandHandler.register(context);
+
+  console.log('📖 Registering Author Mode commands...');
+  authorModeCommandHandler.register(context);
+
+  console.log('📖 Registering URI handler...');
   uriHandler.register(context);
 
   await checkAndHandleAutoOpenState(tutorialController, autoOpenState);
@@ -66,6 +86,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     context,
     tutorialController,
     autoOpenState,
+    authorModeController,
   };
 }
 
@@ -141,22 +162,45 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // Add services to context subscriptions for proper disposal
   context.subscriptions.push(solutionWorkflow);
 
-  const tutorialMessageHandler: IWebviewTutorialMessageHandler = {
-    handleWebviewMessage: msg => tutorialController.handleWebviewMessage(msg),
-  };
-  const systemMessageHandler: IWebviewSystemMessageHandler = {
-    handleWebviewMessage: msg => systemController.handleWebviewMessage(msg),
-  };
-  const webviewMessageHandler = new WebviewMessageHandler(
-    tutorialMessageHandler,
-    systemMessageHandler,
-  );
-  const webviewPanelManager = new WebviewPanelManager(context.extensionUri, msg =>
-    webviewMessageHandler.handleMessage(msg),
+  // Create a placeholder webview panel manager first
+  let webviewPanelManager: WebviewPanelManager;
+
+  // Create webview panel manager first
+  webviewPanelManager = new WebviewPanelManager(context.extensionUri, () => {
+    // Placeholder message handler - will be updated after controllers are created
+    console.warn('WebviewPanelManager: Message received before controllers are ready');
+  });
+
+  // Create a temporary message handler that will be replaced later
+  const tempMessageHandler = new WebviewMessageHandler(
+    {
+      handleWebviewMessage: async () => {
+        console.warn('Tutorial message handler not ready yet');
+      },
+    },
+    {
+      handleWebviewMessage: async () => {
+        console.warn('System message handler not ready yet');
+      },
+    },
+    {
+      handleWebviewMessage: async () => {
+        console.warn('Author message handler not ready yet');
+      },
+    },
   );
 
-  // --- UI Layer Controllers ---
+  // Set the temporary message handler immediately
+  webviewPanelManager.updateMessageHandler(tempMessageHandler.handleMessage.bind(tempMessageHandler));
+
+  // Create controllers first
   const systemController = new SystemController(context, webviewPanelManager);
+  const authorModeController = new AuthorModeController(
+    systemController,
+    gitOperationsFactory,
+    activeTutorialStateRepository,
+  );
+
   const tutorialController = new TutorialController(
     progressReportAdapter,
     userInteractionAdapter,
@@ -171,14 +215,38 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     webviewPanelManager,
   );
 
+  // Set the tutorial controller reference in system controller
+  systemController.setTutorialController(tutorialController);
+
+  // Now create the message handlers after all controllers are created
+  const tutorialMessageHandler: IWebviewTutorialMessageHandler = {
+    handleWebviewMessage: msg => tutorialController.handleWebviewMessage(msg),
+  };
+  const systemMessageHandler: IWebviewSystemMessageHandler = {
+    handleWebviewMessage: msg => systemController.handleWebviewMessage(msg),
+  };
+  const authorMessageHandler: IWebviewAuthorMessageHandler = {
+    handleWebviewMessage: msg => authorModeController.handleWebviewMessage(msg),
+  };
+
+  const webviewMessageHandler = new WebviewMessageHandler(
+    tutorialMessageHandler,
+    systemMessageHandler,
+    authorMessageHandler,
+  );
+
+  // Update the webview panel manager with the real message handler
+  webviewPanelManager.updateMessageHandler(webviewMessageHandler.handleMessage.bind(webviewMessageHandler));
+
   return {
     tutorialController,
     autoOpenState,
+    systemController,
+    gitOperationsFactory,
+    fileSystemAdapter,
     userInteractionAdapter,
-    activeTutorialStateRepository,
-    tutorialRepository,
-    workspaceId,
-  };
+    authorModeController,
+  } as const;
 }
 
 /**

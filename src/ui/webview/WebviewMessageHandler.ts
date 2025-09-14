@@ -14,7 +14,11 @@ export interface IWebviewTutorialMessageHandler {
 }
 
 export interface IWebviewSystemMessageHandler {
-  handleWebviewMessage(message: UI.Messages.WebviewToExtensionSystemMessage): void;
+  handleWebviewMessage(message: UI.Messages.WebviewToExtensionSystemMessageAll): void; //TODO: Find out why this needs a *-ALL
+}
+
+export interface IWebviewAuthorMessageHandler {
+  handleWebviewMessage(message: UI.Messages.WebviewToExtensionAuthorMessage): Promise<void>;
 }
 
 /**
@@ -24,13 +28,14 @@ export class WebviewMessageHandler {
   constructor(
     private readonly tutorialMessageHandler: IWebviewTutorialMessageHandler,
     private readonly systemMessageHandler: IWebviewSystemMessageHandler,
+    private readonly authorMessageHandler: IWebviewAuthorMessageHandler,
   ) {}
 
   /**
    * Handles messages received from the webview panel.
    * @param message The message object received from the webview.
    */
-  public handleMessage(message: UI.Messages.WebviewToExtensionMessage): void {
+  public async handleMessage(message: UI.Messages.WebviewToExtensionMessage): Promise<void> {
     switch (message.category) {
     case 'tutorial': {
       this.tutorialMessageHandler.handleWebviewMessage(message);
@@ -38,6 +43,10 @@ export class WebviewMessageHandler {
     }
     case 'system': {
       this.systemMessageHandler.handleWebviewMessage(message);
+      break;
+    }
+    case 'author': {
+      await this.authorMessageHandler.handleWebviewMessage(message);
       break;
     }
     default: {
