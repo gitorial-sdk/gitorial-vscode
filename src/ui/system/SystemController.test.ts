@@ -4,7 +4,6 @@ import { SystemController } from './SystemController';
 import type { Domain, UI } from '@gitorial/shared-types';
 
 
-
 describe('SystemController', () => {
   let systemController: SystemController;
   let mockWebviewPanelManager: any;

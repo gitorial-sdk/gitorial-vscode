@@ -2,8 +2,8 @@ import { UI, Domain } from '@gitorial/shared-types';
 import { IWebviewSystemMessageHandler } from '../webview/WebviewMessageHandler';
 import { IWebviewPanelManager } from '@domain/ports/IWebviewPanelManager';
 import { CONFIG_CONSTANTS as CC } from './SystemControllerConstants';
-import { IContextStore } from '@domain/ports/IContextStore';
-import { IConfigurationStore } from '@domain/ports/IConfigurationStore';
+import { IContextState } from '@domain/ports/IContextState';
+import { IConfigurationState } from '@domain/ports/IConfigurationState';
 import { IUserInteraction } from '@domain/ports/IUserInteraction';
 import { IStateStorage } from '@domain/ports/IStateStorage';
 
@@ -15,8 +15,8 @@ export class SystemController implements IWebviewSystemMessageHandler {
   private tutorialController: any; // Will be set after TutorialController is created
 
   private constructor(
-    private readonly contextStore: IContextStore,
-    private readonly configurationStore: IConfigurationStore,
+    private readonly contextStore: IContextState,
+    private readonly configurationStore: IConfigurationState,
     private readonly webviewPanelManager: IWebviewPanelManager,
     private readonly userInteraction: IUserInteraction,
     private readonly authorManifestBackupStore: IStateStorage,
@@ -25,7 +25,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
     this.configurationStore = configurationStore;
   }
 
-  public static async new(contextStore: IContextStore, configurationStore: IConfigurationStore, webviewPanelManager: IWebviewPanelManager, userInteraction: IUserInteraction, authorManifestBackupStore: IStateStorage): Promise<SystemController> {
+  public static async new(contextStore: IContextState, configurationStore: IConfigurationState, webviewPanelManager: IWebviewPanelManager, userInteraction: IUserInteraction, authorManifestBackupStore: IStateStorage): Promise<SystemController> {
     const systemController = new SystemController(contextStore, configurationStore, webviewPanelManager, userInteraction, authorManifestBackupStore);
     await systemController.initializeAuthorModeState();
     systemController.registerConfigurationListener();

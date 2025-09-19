@@ -26,7 +26,7 @@ export interface IUserInteraction {
     defaultValue?: string;
   }): Promise<undefined | string>;
   showInformationMessage(message: string, options?: { copy?: { data: string } }): Promise<void>;
-  showWarningMessage<T extends string>(message: string, options?: MessageOptions, ...items: T[]): Thenable<T | undefined>;
+  showWarningMessage<T extends string>(message: string, options?: MessageOptions, ...items: T[]): Promise<T | undefined>;
   showErrorMessage(message: string): Promise<void>;
 
   /**
