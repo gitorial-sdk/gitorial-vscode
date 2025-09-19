@@ -26,7 +26,7 @@ export interface IUserInteraction {
     defaultValue?: string;
   }): Promise<undefined | string>;
   showInformationMessage(message: string, options?: { copy?: { data: string } }): Promise<void>;
-  showWarningMessage(message: string): Promise<void>;
+  showWarningMessage<T extends string>(message: string, options?: MessageOptions, ...items: T[]): Promise<T | undefined>;
   showErrorMessage(message: string): Promise<void>;
 
   /**
@@ -73,3 +73,25 @@ export interface IUserInteraction {
    */
   pickOption(options: string[], prompt?: string, placeHolder?: string): Promise<string | undefined>;
 }
+
+
+/**
+	 * Options to configure the behavior of the message.
+	 *
+	 * @see {@link window.showInformationMessage showInformationMessage}
+	 * @see {@link window.showWarningMessage showWarningMessage}
+	 * @see {@link window.showErrorMessage showErrorMessage}
+	 */
+export interface MessageOptions {
+
+		/**
+		 * Indicates that this message should be modal.
+		 */
+		modal?: boolean;
+
+		/**
+		 * Human-readable detail message that is rendered less prominent. _Note_ that detail
+		 * is only shown for {@link MessageOptions.modal modal} messages.
+		 */
+		detail?: string;
+	}

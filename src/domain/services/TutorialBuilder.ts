@@ -1,8 +1,3 @@
-/*
-- Creates tutorial instances from different sources
-- Handles parsing tutorial metadata
-*/
-
 import * as path from 'path';
 import { Tutorial, TutorialData } from '../models/Tutorial';
 import { GitService } from './GitService';
@@ -10,59 +5,56 @@ import { Domain } from '@gitorial/shared-types';
 import { DomainCommit } from '../ports/IGitOperations';
 import { Step } from '../models/Step';
 
-/**
- * Constructs Tutorial domain objects from raw data (e.g., repository information,
- * commit lists, step states). It encapsulates the logic of assembling a valid Tutorial.
- */
 export class TutorialBuilder {
-  /**
-   * Creates a tutorial from a local repository path
-   *
-   * @param repoPath Path to the local git repository
-   * @param stateStorage Storage for tutorial state
-   * @param gitAdapter Git adapter for the repository
-   * @returns A built tutorial, or null if not a valid tutorial repo
-   */
+  private static readonly VALID_STEP_TYPES: ReadonlyArray<Domain.StepType> = [
+    'section', 'template', 'solution', 'action', 'readme',
+  ];
+
+  private static readonly REPO_URL_PATTERNS = [
+    {
+      platform: 'github',
+      pattern: /github\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i,
+    },
+    {
+      platform: 'gitlab',
+      pattern: /gitlab\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i,
+    },
+  ];
+
   public static async buildFromLocalPath(
     repoPath: string,
     gitService: GitService,
   ): Promise<Tutorial | null> {
-    try {
-      const repoUrl = await gitService.getRepoUrl();
-      if (!repoUrl) {
-        throw new Error(
-          'For now a gitorial needs to be linked to a remote origin\nOtherwise we can not derive the Gitorials Identifier',
-        );
-      }
-      const details = this.extractRepoDetails(repoUrl);
+    const repoUrl = await gitService.getRepoUrl();
+    if (!repoUrl) {
+      throw new Error('For now a gitorial needs to be linked to a remote origin');
+    }
 
-      if (!details) {
-        throw new Error('Could not get repo details out of remote url: ' + repoUrl);
-      }
+    const details = this.extractRepoDetails(repoUrl);
+    if (!details) {
+      throw new Error('Could not get repo details out of remote url: ' + repoUrl);
+    }
 
-      const id = this.generateTutorialId(details.owner, details.repo);
-      const title = path.basename(repoPath);
+    const id = this.generateTutorialId(details.owner, details.repo);
+    const title = path.basename(repoPath);
 
-      const domainCommits = await gitService.getCommitHistory();
-      if (domainCommits.length === 0) {
-        console.log(`No commits found in repository: ${repoPath}`);
-        return null;
-      }
-      const steps = TutorialBuilder.extractStepsFromCommits(domainCommits, id);
-      const tutorialData: TutorialData = {
-        id,
-        title,
-        repoUrl: repoUrl || undefined,
-        localPath: repoPath,
-        steps,
-        activeStepIndex: 0,
-      };
-
-      return new Tutorial(tutorialData);
-    } catch (error) {
-      console.error(`Error building tutorial from path ${repoPath}:`, error);
+    const domainCommits = await gitService.getCommitHistory();
+    if (domainCommits.length === 0) {
+      console.log(`No commits found in repository: ${repoPath}`);
       return null;
     }
+
+    const steps = this.extractStepsFromCommits(domainCommits, id);
+    const tutorialData: TutorialData = {
+      id,
+      title,
+      repoUrl,
+      localPath: repoPath,
+      steps,
+      activeStepIndex: 0,
+    };
+
+    return new Tutorial(tutorialData);
   }
 
   /**
@@ -73,43 +65,22 @@ export class TutorialBuilder {
     return identifier as Domain.TutorialId;
   }
 
-  /**
-   * Extract repository details from a repository URL
-   */
   public static extractRepoDetails(repoUrl: string): {
     platform: string;
     owner: string;
     repo: string;
   } | null {
-    try {
-      // Handle GitHub URLs
-      const githubRegex = /github\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i;
-      const githubMatch = repoUrl.match(githubRegex);
-      if (githubMatch) {
+    for (const { platform, pattern } of this.REPO_URL_PATTERNS) {
+      const match = repoUrl.match(pattern);
+      if (match) {
         return {
-          platform: 'github',
-          owner: githubMatch[1],
-          repo: githubMatch[2],
+          platform,
+          owner: match[1],
+          repo: match[2],
         };
       }
-
-      // Handle GitLab URLs
-      const gitlabRegex = /gitlab\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i;
-      const gitlabMatch = repoUrl.match(gitlabRegex);
-      if (gitlabMatch) {
-        return {
-          platform: 'gitlab',
-          owner: gitlabMatch[1],
-          repo: gitlabMatch[2],
-        };
-      }
-
-      // Unknown platform
-      return null;
-    } catch (error) {
-      console.error(`Error extracting repo details from URL ${repoUrl}:`, error);
-      return null;
     }
+    return null;
   }
 
   /**
@@ -137,48 +108,41 @@ export class TutorialBuilder {
   /**
    * Converts raw commit data (from IGitOperations) into Step domain models.
    */
+
   public static extractStepsFromCommits(commits: DomainCommit[], tutorialId: Domain.TutorialId): Step[] {
     const chronologicalCommits = [...commits].reverse();
-    const steps: Step[] = [];
-    const validTypes: ReadonlyArray<Domain.StepType> = ['section', 'template', 'solution', 'action'];
 
-    let relevantCommits = chronologicalCommits;
-    if (
-      relevantCommits.length > 0 &&
-      relevantCommits[0].message.toLowerCase().startsWith('readme:')
-    ) {
-      relevantCommits = relevantCommits.slice(1);
-    }
+    console.log(`🔍 TutorialBuilder: Processing ${chronologicalCommits.length} commits for tutorial ${tutorialId}`);
 
-    relevantCommits.forEach((commit, index) => {
+    return chronologicalCommits.map((commit, index) => {
       const message = commit.message.trim();
+      console.log(`🔍 TutorialBuilder: Processing commit ${index + 1}: hash="${commit.hash}", message="${message}"`);
       const colonIndex = message.indexOf(':');
-      let stepType: Domain.StepType;
-      let stepTitle = message;
 
-      if (colonIndex > 0) {
-        const parsedType = message.substring(0, colonIndex).toLowerCase();
-        if (validTypes.includes(parsedType as Domain.StepType)) {
-          stepType = parsedType as Domain.StepType;
-          stepTitle = message.substring(colonIndex + 1).trim();
-        } else {
-          throw new Error(
-            `TutorialBuilder: Invalid step type "${parsedType}" in commit message: "${message}".`,
-          );
-        }
-      } else {
+      if (colonIndex <= 0) {
+        console.error(`🔍 TutorialBuilder: ERROR - Commit message "${message}" missing type prefix!`);
         throw new Error(`TutorialBuilder: Commit message "${message}" missing type prefix.`);
       }
 
+      const parsedType = message.substring(0, colonIndex).toLowerCase();
+      if (!this.VALID_STEP_TYPES.includes(parsedType as Domain.StepType)) {
+        throw new Error(
+          `TutorialBuilder: Invalid step type "${parsedType}" in commit message: "${message}".`,
+        );
+      }
+
+      const stepType = parsedType as Domain.StepType;
+      const stepTitle = message.substring(colonIndex + 1).trim() || 'Unnamed Step';
+
       const stepData: Domain.StepData = {
         id: `${tutorialId}-step-${index + 1}-${commit.hash.substring(0, 7)}`,
-        title: stepTitle || 'Unnamed Step',
+        title: stepTitle,
         commitHash: commit.hash,
-        type: stepType as Domain.StepType,
-        index: index,
+        type: stepType,
+        index,
       };
-      steps.push(new Step(stepData));
+
+      return new Step(stepData);
     });
-    return steps;
   }
 }

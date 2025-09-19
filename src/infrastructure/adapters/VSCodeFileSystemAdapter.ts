@@ -33,8 +33,41 @@ export class VSCodeFileSystemAdapter implements IFileSystem {
     const content = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
     return Buffer.from(content).toString('utf-8');
   }
+  async writeFile(path: string, contents: string): Promise<void> {
+    const uri = vscode.Uri.file(path);
+    const encoder = new TextEncoder();
+    const data = encoder.encode(contents);
+    // Ensure parent directory exists
+    try {
+      const parent = uri.with({ path: uri.path.substring(0, uri.path.lastIndexOf('/')) });
+      await vscode.workspace.fs.createDirectory(parent);
+    } catch {
+      // ignore
+    }
+    await vscode.workspace.fs.writeFile(uri, data);
+  }
   join(path1: string, path2: string): string {
     return vscode.Uri.joinPath(vscode.Uri.file(path1), path2).fsPath;
+  }
+
+  relative(fromPath: string, toPath: string): string {
+    const fromParts = fromPath.split('/').filter(Boolean);
+    const toParts = toPath.split('/').filter(Boolean);
+
+    let commonPrefixLength = 0;
+    for (let i = 0; i < Math.min(fromParts.length, toParts.length); i++) {
+      if (fromParts[i] === toParts[i]) {
+        commonPrefixLength++;
+      } else {
+        break;
+      }
+    }
+
+    const upLevels = fromParts.length - commonPrefixLength;
+    const relativeParts = toParts.slice(commonPrefixLength);
+
+    const upPath = '../'.repeat(upLevels);
+    return upPath + relativeParts.join('/');
   }
   public async pathExists(path: string): Promise<boolean> {
     try {

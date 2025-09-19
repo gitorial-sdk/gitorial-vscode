@@ -1,14 +1,19 @@
 export * from './TutorialMessages';
 export * from './SystemMessages';
+export * from './AuthorMessages';
 
 import type {
   ExtensionToWebviewTutorialMessage,
   WebviewToExtensionTutorialMessage,
 } from './TutorialMessages';
 import type {
-  ExtensionToWebviewSystemMessage,
-  WebviewToExtensionSystemMessage,
+  ExtensionToWebviewSystemMessageAll,
+  WebviewToExtensionSystemMessageAll,
 } from './SystemMessages';
+import type {
+  ExtensionToWebviewAuthorMessage,
+  WebviewToExtensionAuthorMessage,
+} from './AuthorMessages';
 
 /**
  * All possible messages sent from Extension → Webview
@@ -17,7 +22,8 @@ import type {
  */
 export type ExtensionToWebviewMessage =
   | ExtensionToWebviewTutorialMessage
-  | ExtensionToWebviewSystemMessage;
+  | ExtensionToWebviewSystemMessageAll
+  | ExtensionToWebviewAuthorMessage;
 
 /**
  * All possible messages sent from Webview → Extension
@@ -26,7 +32,8 @@ export type ExtensionToWebviewMessage =
  */
 export type WebviewToExtensionMessage =
   | WebviewToExtensionTutorialMessage
-  | WebviewToExtensionSystemMessage;
+  | WebviewToExtensionSystemMessageAll
+  | WebviewToExtensionAuthorMessage;
 
 /**
  * Category-based type guards for Webview → Extension messages
@@ -39,8 +46,14 @@ export function isTutorialMessage(
 
 export function isSystemMessage(
   message: WebviewToExtensionMessage,
-): message is WebviewToExtensionSystemMessage {
+): message is WebviewToExtensionSystemMessageAll {
   return message.category === 'system';
+}
+
+export function isAuthorMessage(
+  message: WebviewToExtensionMessage,
+): message is WebviewToExtensionAuthorMessage {
+  return message.category === 'author';
 }
 
 /**
@@ -54,8 +67,14 @@ export function isOutgoingTutorialMessage(
 
 export function isOutgoingSystemMessage(
   message: ExtensionToWebviewMessage,
-): message is ExtensionToWebviewSystemMessage {
+): message is ExtensionToWebviewSystemMessageAll {
   return message.category === 'system';
+}
+
+export function isOutgoingAuthorMessage(
+  message: ExtensionToWebviewMessage,
+): message is ExtensionToWebviewAuthorMessage {
+  return message.category === 'author';
 }
 
 /**

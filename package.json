@@ -86,8 +86,32 @@
       {
         "command": "gitorial.openTutorial",
         "title": "Gitorial: Open Tutorial"
+      },
+      {
+        "command": "gitorial.enterAuthorMode",
+        "title": "Gitorial: Enter Author Mode"
+      },
+      {
+        "command": "gitorial.exitAuthorMode",
+        "title": "Gitorial: Exit Author Mode"
+      },
+      {
+        "command": "gitorial.createNewTutorial",
+        "title": "Gitorial: Create New Tutorial"
+      },
+      {
+        "command": "gitorial.publishTutorial",
+        "title": "Gitorial: Publish Tutorial"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        { "command": "gitorial.enterAuthorMode", "when": "!gitorial.authorModeEnabled" },
+        { "command": "gitorial.exitAuthorMode", "when": "gitorial.authorModeEnabled" },
+        { "command": "gitorial.createNewTutorial", "when": "gitorial.authorModeEnabled" },
+        { "command": "gitorial.publishTutorial", "when": "gitorial.authorModeEnabled"  }
+      ]
+    },
     "uriHandler": [
       {
         "id": "gitorial-uri-handler",
@@ -111,6 +135,11 @@
           "type": "string",
           "default": "tutorials",
           "description": "Default subdirectory name for tutorials when using subdirectory mode"
+        },
+        "gitorial.authorModeEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether author mode is currently enabled for this workspace"
         }
       }
     }
@@ -121,6 +150,7 @@
     "markdown-it": "^14.1.0",
     "neverthrow": "^8.2.0",
     "simple-git": "^3.28.0",
+    "uuid": "9.0.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
@@ -134,6 +164,7 @@
     "@types/node": "~20.17.51",
     "@types/sinon": "^17.0.4",
     "@types/sinonjs__fake-timers": "^8.1.5",
+    "@types/uuid": "^10.0.0",
     "@types/vscode": "^1.87.0",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.28.0",

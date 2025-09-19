@@ -3,6 +3,7 @@ import {
   IUserInteraction,
   PathSelectionOptions,
   OpenDialogOptions,
+  MessageOptions,
 } from '../../domain/ports/IUserInteraction';
 
 export class VSCodeUserInteractionAdapter implements IUserInteraction {
@@ -37,12 +38,17 @@ export class VSCodeUserInteractionAdapter implements IUserInteraction {
       await vscode.window.showInformationMessage(message);
     }
   }
+
   public async showStatusBarMessage(message: string): Promise<void> {
     vscode.window.setStatusBarMessage(message, 5000);
   }
 
-  public async showWarningMessage(message: string): Promise<void> {
-    await vscode.window.showWarningMessage(message);
+  public async showWarningMessage<T extends string>(message: string, options?: MessageOptions, ...items: T[]): Promise<T | undefined> {
+    if(options){
+      return vscode.window.showWarningMessage(message, options, ...items);
+    }else {
+      return vscode.window.showWarningMessage(message, ...items);
+    }
   }
 
   public async showErrorMessage(message: string): Promise<void> {
