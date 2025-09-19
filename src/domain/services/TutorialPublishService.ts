@@ -1,5 +1,5 @@
 import { Result, ok, err } from 'neverthrow';
-import { Domain, UI } from '@gitorial/shared-types';
+import { Domain } from '@gitorial/shared-types';
 import { IGitOperations } from '../ports/IGitOperations';
 
 export type TutorialPublishError =

@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { Tutorial } from '../domain/models/Tutorial';
 import { Step } from '../domain/models/Step';
-import { Domain, UI } from '@gitorial/shared-types';
+import { Domain } from '@gitorial/shared-types';
 
 suite('Tutorial Navigation', () => {
   let tutorial: Tutorial;

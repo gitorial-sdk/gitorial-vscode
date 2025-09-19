@@ -194,7 +194,8 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   webviewPanelManager.updateMessageHandler(tempMessageHandler.handleMessage.bind(tempMessageHandler));
 
   // Create controllers first
-  const systemController = new SystemController(context, webviewPanelManager);
+  const systemController = await SystemController.new(context, webviewPanelManager);
+
   const authorModeController = new AuthorModeController(
     systemController,
     gitOperationsFactory,

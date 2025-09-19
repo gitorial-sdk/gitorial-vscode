@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { UI } from '@gitorial/shared-types';
 import { WebViewPanel } from './WebviewPanel';
+import { IWebviewPanelManager } from '@domain/ports/IWebviewPanelManager';
 
-export class WebviewPanelManager {
+export class WebviewPanelManager implements IWebviewPanelManager {
   private currentPanel: WebViewPanel | undefined;
   private disposables: vscode.Disposable[] = [];
   private messageHandler: (message: any) => void;

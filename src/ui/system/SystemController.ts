@@ -1,21 +1,60 @@
 import { UI, Domain } from '@gitorial/shared-types';
 import { IWebviewSystemMessageHandler } from '../webview/WebviewMessageHandler';
-import * as vscode from 'vscode';
-import { WebviewPanelManager } from '../webview/WebviewPanelManager';
+import { IWebviewPanelManager } from '@domain/ports/IWebviewPanelManager';
+import { CONFIG_CONSTANTS as CC } from './SystemControllerConstants';
+import { IContextStore } from '@domain/ports/IContextStore';
+import { IConfigurationStore } from '@domain/ports/IConfigurationStore';
+import { IUserInteraction } from '@domain/ports/IUserInteraction';
+import { IStateStorage } from '@domain/ports/IStateStorage';
 
 /**
  * Controller responsible for managing system-level operations and communication
  * between the extension and webview components.
  */
 export class SystemController implements IWebviewSystemMessageHandler {
-  private readonly extensionContext: vscode.ExtensionContext;
   private tutorialController: any; // Will be set after TutorialController is created
 
-  constructor(
-    context: vscode.ExtensionContext,
-    private readonly webviewPanelManager: WebviewPanelManager,
+  private constructor(
+    private readonly contextStore: IContextStore,
+    private readonly configurationStore: IConfigurationStore,
+    private readonly webviewPanelManager: IWebviewPanelManager,
+    private readonly userInteraction: IUserInteraction,
+    private readonly authorManifestBackupStore: IStateStorage,
   ) {
-    this.extensionContext = context;
+    this.contextStore = contextStore;
+    this.configurationStore = configurationStore;
+  }
+
+  public static async new(contextStore: IContextStore, configurationStore: IConfigurationStore, webviewPanelManager: IWebviewPanelManager, userInteraction: IUserInteraction, authorManifestBackupStore: IStateStorage): Promise<SystemController> {
+    const systemController = new SystemController(contextStore, configurationStore, webviewPanelManager, userInteraction, authorManifestBackupStore);
+    await systemController.initializeAuthorModeState();
+    systemController.registerConfigurationListener();
+    return systemController;
+  }
+
+  /**
+   * Initializes author mode state on extension startup.
+   * This should be called during extension activation to restore the previous state.
+   */
+  public async initializeAuthorModeState(): Promise<void> {
+    try {
+      const storedState = this.configurationStore.get<boolean>(CC.AUTHOR_MODE_KEY, false);
+      await this.contextStore.setContext(CC.AUTHOR_MODE_CONTEXT, storedState);
+      console.log(`SystemController: Initialized author mode state to ${storedState}`);
+    } catch (error) {
+      console.error('SystemController: Failed to initialize author mode state:', error);
+    }
+  }
+
+  private registerConfigurationListener(): void {
+    this.configurationStore.onDidChange(async (event) => {
+      if (event.affectsConfiguration(CC.AUTHOR_MODE_CONTEXT)) {
+        const newValue = this.configurationStore.get<boolean>(CC.AUTHOR_MODE_KEY, false);
+        await this.contextStore.setContext(CC.AUTHOR_MODE_CONTEXT, newValue);
+
+        this.sendSystemMessage({ category: 'system', type: 'author-mode-changed', payload: { isActive: newValue } });
+      }
+    });
   }
 
   /**
@@ -42,12 +81,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       case 'requestConfirm':
         // Show a native confirm dialog and return result
         try {
-          const result = await vscode.window.showWarningMessage(
-            message.payload.message,
-            { modal: true },
-            'Yes',
-            'No',
-          );
+          const result = await this.userInteraction.showWarningMessage(message.payload.message, { modal: true }, 'Yes', 'No');
 
           const confirmed = result === 'Yes';
           await this.sendSystemMessage({
@@ -138,7 +172,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
 
     if (showToUser) {
       try {
-        await vscode.window.showErrorMessage(message);
+        await this.userInteraction.showErrorMessage(message);
       } catch (showError) {
         console.error('Failed to show error message to user:', showError);
       }
@@ -154,14 +188,22 @@ export class SystemController implements IWebviewSystemMessageHandler {
    * @param isActive - Whether author mode should be active
    */
   public async setAuthorMode(isActive: boolean): Promise<void> {
-    await this.extensionContext.globalState.update('authorMode', isActive);
+    await this.configurationStore.update(CC.AUTHOR_MODE_KEY, isActive);
+    await this.contextStore.setContext(CC.AUTHOR_MODE_CONTEXT, isActive);
 
-    // Send message to webview to update author mode state
     await this.sendSystemMessage({
       category: 'system',
       type: 'author-mode-changed',
       payload: { isActive },
     });
+  }
+
+  /**
+   * Gets the current author mode state from configuration.
+   * @returns Whether author mode is currently active
+   */
+  public getAuthorMode(): boolean {
+    return this.configurationStore.get<boolean>(CC.AUTHOR_MODE_KEY, false);
   }
 
   /**
@@ -212,7 +254,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async clearAuthorManifestBackup(repoPath: string): Promise<void> {
     try {
       const key = `authorManifestBackup_${repoPath}`;
-      await this.extensionContext.globalState.update(key, undefined);
+      await this.authorManifestBackupStore.update(key, undefined);
       console.log(`🧹 SystemController: Cleared corrupted backup for ${repoPath}`);
     } catch (error) {
       console.error('Failed to clear author manifest backup:', error);
@@ -399,9 +441,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   }
 
   private async handleError(payload: { message: string; details?: string }): Promise<void> {
-    await vscode.window.showErrorMessage(`Webview Error: ${payload.message}`);
+    await this.userInteraction.showErrorMessage(`Webview Error: ${payload.message}`);
     if (payload.details) {
-      await vscode.window.showErrorMessage(payload.details);
+      await this.userInteraction.showErrorMessage(payload.details);
     }
   }
 
@@ -412,7 +454,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public async saveAuthorManifestBackup(repoPath: string, manifest: Domain.AuthorManifestData): Promise<void> {
     const key = `authorManifestBackup_${repoPath}`;
-    await this.extensionContext.globalState.update(key, manifest);
+    await this.authorManifestBackupStore.update(key, manifest);
   }
   /**
    * Retrieves a backup of the author manifest for a specific repository.
@@ -421,7 +463,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public getAuthorManifestBackup(repoPath: string): Domain.AuthorManifestData | null {
     try {
-      const backup = this.extensionContext.globalState.get(`authorManifestBackup_${repoPath}`, null) as Domain.AuthorManifestData | null;
+      const backup = this.authorManifestBackupStore.get(`authorManifestBackup_${repoPath}`, null) as Domain.AuthorManifestData | null;
 
       // Validate backup data for corrupted commit hashes
       if (backup && backup.steps) {

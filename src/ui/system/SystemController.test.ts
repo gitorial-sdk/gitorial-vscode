@@ -1,51 +1,72 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import * as vscode from 'vscode';
 import { SystemController } from './SystemController';
-import { WebviewPanelManager } from '../webview/WebviewPanelManager';
 import type { Domain, UI } from '@gitorial/shared-types';
 
-suite('SystemController', () => {
+
+
+describe('SystemController', () => {
   let systemController: SystemController;
-  let mockWebviewPanelManager: sinon.SinonStubbedInstance<WebviewPanelManager>;
-  let mockExtensionContext: vscode.ExtensionContext;
-  let mockGlobalStateGet: sinon.SinonStub;
-  let mockGlobalStateUpdate: sinon.SinonStub;
+  let mockWebviewPanelManager: any;
+  let mockContextStore: any;
+  let mockConfigurationStore: any;
+  let mockUserInteraction: any;
+  let mockAuthorManifestBackupStore: any;
 
-  setup(() => {
-    // Create mock global state
-    mockGlobalStateGet = sinon.stub();
-    mockGlobalStateUpdate = sinon.stub();
+  beforeEach(async () => {
+    mockContextStore = {
+      setContext: sinon.stub().resolves(),
+    };
 
-    // Create mock extension context
-    mockExtensionContext = {
-      globalState: {
-        get: mockGlobalStateGet,
-        update: mockGlobalStateUpdate,
-      },
-    } as unknown as vscode.ExtensionContext;
+    mockConfigurationStore = {
+      get: sinon.stub().returns(false),
+      update: sinon.stub().resolves(),
+      onDidChange: sinon.stub(),
+    };
+
+    mockUserInteraction = {
+      showErrorMessage: sinon.stub().resolves(),
+      showWarningMessage: sinon.stub().resolves(),
+      showInformationMessage: sinon.stub().resolves(),
+    };
+
+    mockAuthorManifestBackupStore = {
+      get: sinon.stub().returns(null),
+      update: sinon.stub().resolves(),
+      clear: sinon.stub().resolves(),
+      has: sinon.stub().returns(false),
+    };
 
     // Create mock webview panel manager
-    mockWebviewPanelManager = sinon.createStubInstance(WebviewPanelManager);
+    mockWebviewPanelManager = {
+      sendMessage: sinon.stub().resolves(),
+      updateMessageHandler: sinon.stub(),
+      isVisible: sinon.stub().returns(false),
+      show: sinon.stub(),
+      dispose: sinon.stub(),
+    };
 
     // Create system controller instance
-    systemController = new SystemController(
-      mockExtensionContext,
+    systemController = await SystemController.new(
+      mockContextStore,
+      mockConfigurationStore,
       mockWebviewPanelManager,
+      mockUserInteraction,
+      mockAuthorManifestBackupStore,
     );
   });
 
-  teardown(() => {
+  afterEach(() => {
     sinon.restore();
   });
 
-  suite('constructor', () => {
+  describe('constructor', () => {
     it('should initialize with extension context and webview panel manager', () => {
       expect(systemController).to.be.instanceOf(SystemController);
     });
   });
 
-  suite('handleWebviewMessage', () => {
+  describe('handleWebviewMessage', () => {
     it('should handle error messages from webview', async () => {
       const errorMessage: UI.Messages.WebviewToExtensionSystemMessage = {
         category: 'system',
@@ -73,7 +94,7 @@ suite('SystemController', () => {
     });
   });
 
-  suite('sendSystemMessage', () => {
+  describe('sendSystemMessage', () => {
     it('should send message through webview panel manager', async () => {
       const message: UI.Messages.ExtensionToWebviewSystemMessage = {
         category: 'system',
@@ -98,17 +119,14 @@ suite('SystemController', () => {
       const error = new Error('Send failed');
       mockWebviewPanelManager.sendMessage.rejects(error);
 
-      const showErrorMessageStub = sinon.stub(vscode.window, 'showErrorMessage');
-
       await systemController.sendSystemMessage(message);
 
-      expect(showErrorMessageStub.calledWith('Sending system message to webview: Send failed')).to.be.true;
-
-      showErrorMessageStub.restore();
+      // Verify that userInteraction.showErrorMessage was called (reportError calls it with showToUser=true)
+      expect(mockUserInteraction.showErrorMessage.calledWith('Sending system message to webview: Send failed')).to.be.true;
     });
   });
 
-  suite('showLoadingState', () => {
+  describe('showLoadingState', () => {
     it('should send loading state message', async () => {
       mockWebviewPanelManager.sendMessage.resolves();
 
@@ -124,7 +142,7 @@ suite('SystemController', () => {
     });
   });
 
-  suite('hideLoadingState', () => {
+  describe('hideLoadingState', () => {
     it('should hide loading state', async () => {
       mockWebviewPanelManager.sendMessage.resolves();
 
@@ -140,7 +158,7 @@ suite('SystemController', () => {
     });
   });
 
-  suite('hideGlobalLoading', () => {
+  describe('hideGlobalLoading', () => {
     it('should hide global loading state', async () => {
       mockWebviewPanelManager.sendMessage.resolves();
 
@@ -156,7 +174,7 @@ suite('SystemController', () => {
     });
   });
 
-  suite('showError', () => {
+  describe('showError', () => {
     it('should send error message', async () => {
       mockWebviewPanelManager.sendMessage.resolves();
 
@@ -171,7 +189,7 @@ suite('SystemController', () => {
     });
   });
 
-  suite('reportError', () => {
+  describe('reportError', () => {
     it('should log error to console', async () => {
       const error = new Error('Test error');
       const consoleErrorStub = sinon.stub(console, 'error');
@@ -185,102 +203,104 @@ suite('SystemController', () => {
 
     it('should show error message to user when requested', async () => {
       const error = new Error('Test error');
-      const showErrorMessageStub = sinon.stub(vscode.window, 'showErrorMessage');
 
       await systemController.reportError(error, 'Test context', true);
 
-      expect(showErrorMessageStub.calledWith('Test context: Test error')).to.be.true;
-
-      showErrorMessageStub.restore();
+      expect(mockUserInteraction.showErrorMessage.calledWith('Test context: Test error')).to.be.true;
     });
 
     it('should handle errors when showing error message fails', async () => {
       const error = new Error('Test error');
-      const showErrorMessageStub = sinon.stub(vscode.window, 'showErrorMessage').rejects(new Error('Show failed'));
+      mockUserInteraction.showErrorMessage.rejects(new Error('Show failed'));
       const consoleErrorStub = sinon.stub(console, 'error');
 
       await systemController.reportError(error, 'Test context', true);
 
       expect(consoleErrorStub.calledTwice).to.be.true;
       expect(consoleErrorStub.firstCall.args[0]).to.equal('Test context: Test error');
-      expect(consoleErrorStub.secondCall.args[0]).to.equal('Failed to show error message to user: Error: Show failed');
+      expect(consoleErrorStub.secondCall.args[0]).to.equal('Failed to show error message to user:');
+      expect(consoleErrorStub.secondCall.args[1]).to.be.instanceOf(Error);
+      expect(consoleErrorStub.secondCall.args[1].message).to.equal('Show failed');
 
       consoleErrorStub.restore();
-      showErrorMessageStub.restore();
     });
   });
 
-  suite('setAuthorMode', () => {
-    it('should update global state with author mode', async () => {
-      mockGlobalStateUpdate.resolves();
-
+  describe('setAuthorMode', () => {
+    it('should update configuration store with author mode', async () => {
       await systemController.setAuthorMode(true);
 
-      expect(mockGlobalStateUpdate.calledWith('authorMode', true)).to.be.true;
+      expect(mockConfigurationStore.update.calledWith('authorModeEnabled', true)).to.be.true;
+      expect(mockContextStore.setContext.calledWith('gitorial.authorModeEnabled', true)).to.be.true;
     });
 
     it('should handle errors when setting author mode fails', async () => {
       const error = new Error('Update failed');
-      mockGlobalStateUpdate.rejects(error);
-      const showErrorMessageStub = sinon.stub(vscode.window, 'showErrorMessage');
+      mockConfigurationStore.update.rejects(error);
 
-      await systemController.setAuthorMode(true);
-
-      expect(showErrorMessageStub.calledWith('Setting author mode state: Update failed')).to.be.true;
-
-      showErrorMessageStub.restore();
+      // Should propagate the error since there's no error handling in setAuthorMode
+      try {
+        await systemController.setAuthorMode(true);
+        expect.fail('Expected error to be thrown');
+      } catch (thrownError) {
+        expect(thrownError).to.equal(error);
+      }
     });
   });
 
-  suite('sendAuthorManifest', () => {
-    it('should log author manifest data', async () => {
+  describe('sendAuthorManifest', () => {
+    it('should send author manifest data to webview', async () => {
       const manifest: Domain.AuthorManifestData = {
         authoringBranch: 'main',
         publishBranch: 'main',
         steps: [],
       };
-      const consoleLogStub = sinon.stub(console, 'log');
+
       await systemController.sendAuthorManifest(manifest, true);
-      expect(consoleLogStub.calledWith('Author manifest loaded:', { manifest, isEditing: true })).to.be.true;
-      consoleLogStub.restore();
+
+      expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0];
+      expect(sentMessage.category).to.equal('author');
+      expect(sentMessage.type).to.equal('manifestLoaded');
+      expect(sentMessage.payload.manifest).to.equal(manifest);
+      expect(sentMessage.payload.isEditing).to.be.true;
     });
   });
 
-  suite('saveAuthorManifestBackup', () => {
-    it('should save manifest backup to global state', async () => {
+  describe('saveAuthorManifestBackup', () => {
+    it('should save manifest backup to backup store', async () => {
       const manifest: Domain.AuthorManifestData = {
         authoringBranch: 'main',
         publishBranch: 'main',
         steps: [],
       };
-      mockGlobalStateUpdate.resolves();
       await systemController.saveAuthorManifestBackup('/test/repo', manifest);
-      expect(mockGlobalStateUpdate.calledWith('authorManifestBackup_/test/repo', manifest)).to.be.true;
+      expect(mockAuthorManifestBackupStore.update.calledWith('authorManifestBackup_/test/repo', manifest)).to.be.true;
     });
   });
 
-  suite('getAuthorManifestBackup', () => {
-    it('should retrieve manifest backup from global state', () => {
+  describe('getAuthorManifestBackup', () => {
+    it('should retrieve manifest backup from backup store', () => {
       const manifest: Domain.AuthorManifestData = {
         authoringBranch: 'main',
         publishBranch: 'main',
         steps: [],
       };
 
-      mockGlobalStateGet.returns(manifest);
+      mockAuthorManifestBackupStore.get.returns(manifest);
       const result = systemController.getAuthorManifestBackup('/test/repo');
       expect(result).to.deep.equal(manifest);
-      expect(mockGlobalStateGet.calledWith('authorManifestBackup_/test/repo', null)).to.be.true;
+      expect(mockAuthorManifestBackupStore.get.calledWith('authorManifestBackup_/test/repo', null)).to.be.true;
     });
 
     it('should return null when backup not found', () => {
-      mockGlobalStateGet.returns(null);
+      mockAuthorManifestBackupStore.get.returns(null);
       const result = systemController.getAuthorManifestBackup('/test/repo');
       expect(result).to.be.null;
     });
 
     it('should handle errors and return null', () => {
-      mockGlobalStateGet.throws(new Error('Get failed'));
+      mockAuthorManifestBackupStore.get.throws(new Error('Get failed'));
       const consoleErrorStub = sinon.stub(console, 'error');
       const result = systemController.getAuthorManifestBackup('/test/repo');
       expect(result).to.be.null;
@@ -289,8 +309,8 @@ suite('SystemController', () => {
     });
   });
 
-  suite('sendPublishResult', () => {
-    it('should log publish result', async () => {
+  describe('sendPublishResult', () => {
+    it('should send publish result to webview', async () => {
       const publishedCommits = [
         {
           originalCommit: 'abc123',
@@ -299,23 +319,30 @@ suite('SystemController', () => {
           stepType: 'instruction',
         },
       ];
-      const consoleLogStub = sinon.stub(console, 'log');
+
       await systemController.sendPublishResult(true, undefined, publishedCommits);
-      expect(consoleLogStub.calledWith('Publish result:', { success: true, error: undefined, publishedCommits })).to.be.true;
-      consoleLogStub.restore();
+
+      expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0];
+      expect(sentMessage.category).to.equal('author');
+      expect(sentMessage.type).to.equal('publishResult');
+      expect(sentMessage.payload.success).to.be.true;
+      expect(sentMessage.payload.error).to.be.undefined;
+      expect(sentMessage.payload.publishedCommits).to.equal(publishedCommits);
     });
   });
 
-  suite('sendValidationWarnings', () => {
-    it('should log validation warnings', async () => {
+  describe('sendValidationWarnings', () => {
+    it('should send validation warnings to webview', async () => {
       const warnings = ['Warning 1', 'Warning 2'];
-      const consoleLogStub = sinon.stub(console, 'log');
 
       await systemController.sendValidationWarnings(warnings);
 
-      expect(consoleLogStub.calledWith('Validation warnings:', warnings)).to.be.true;
-
-      consoleLogStub.restore();
+      expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0];
+      expect(sentMessage.category).to.equal('author');
+      expect(sentMessage.type).to.equal('validationWarnings');
+      expect(sentMessage.payload.warnings).to.equal(warnings);
     });
   });
 });

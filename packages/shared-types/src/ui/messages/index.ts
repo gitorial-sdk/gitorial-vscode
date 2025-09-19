@@ -7,9 +7,7 @@ import type {
   WebviewToExtensionTutorialMessage,
 } from './TutorialMessages';
 import type {
-  ExtensionToWebviewSystemMessage,
   ExtensionToWebviewSystemMessageAll,
-  WebviewToExtensionSystemMessage,
   WebviewToExtensionSystemMessageAll,
 } from './SystemMessages';
 import type {
