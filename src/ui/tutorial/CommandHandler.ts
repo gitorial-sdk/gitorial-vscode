@@ -1,16 +1,26 @@
 import * as vscode from 'vscode';
 import { TutorialController } from './controller';
-import { AutoOpenState } from 'src/infrastructure/state/AutoOpenState';
+import { AuthoringCommandHandler } from './authoring/CommandHandler';
+import { SystemController } from '@ui/system/SystemController';
+import { AuthorModeController } from './authoring/controller';
+import { IUserInteraction } from '@domain/ports/IUserInteraction';
 
 /**
  * Handles VS Code commands related to Gitorial tutorials.
  * It acts as a bridge between VS Code command palette/buttons and the TutorialController.
  */
 export class CommandHandler {
+  private authoringCommandHandler: AuthoringCommandHandler;
+
   constructor(
     private readonly tutorialController: TutorialController,
-    private autoOpenState: AutoOpenState,
-  ) {}
+    systemController: SystemController,
+    authorModeController: AuthorModeController,
+    private readonly userInteraction: IUserInteraction,
+    workspacePath: string,
+  ) {
+    this.authoringCommandHandler = new AuthoringCommandHandler(systemController, authorModeController, userInteraction, workspacePath);
+  }
 
   /**
    * Tries to open a tutorial in the workspace.
@@ -59,7 +69,7 @@ export class CommandHandler {
   public async handleCleanupTemporaryFolders(): Promise<void> {
     console.log('CommandHandler: handleCleanupTemporaryFolders called');
     // This is primarily a test utility command - in real usage, cleanup is handled automatically
-    vscode.window.showInformationMessage('Temporary folders cleanup completed.');
+    await this.userInteraction.showInformationMessage('Temporary folders cleanup completed.');
   }
 
   /**
@@ -68,7 +78,7 @@ export class CommandHandler {
   public async handleResetClonePreferences(): Promise<void> {
     console.log('CommandHandler: handleResetClonePreferences called');
     // This is primarily a test utility command - resets any cached clone preferences
-    vscode.window.showInformationMessage('Clone preferences reset completed.');
+    await this.userInteraction.showInformationMessage('Clone preferences reset completed.');
   }
 
   /**
@@ -78,42 +88,32 @@ export class CommandHandler {
    */
   public register(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.openTutorial', () => this.handleOpenLocalTutorial()),
+      vscode.commands.registerCommand('gitorial.openTutorial', () => this.handleOpenLocalTutorial()));
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand('gitorial.cloneTutorial', () => this.handleCloneTutorial()));
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand('gitorial.openWorkspaceTutorial', () => this.handleOpenWorkspaceTutorial()),
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.cloneTutorial', () => this.handleCloneTutorial()),
+      vscode.commands.registerCommand('gitorial.navigateToNextStep', () => this.handleNavigateToNextStep()),
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.openWorkspaceTutorial', () =>
-        this.handleOpenWorkspaceTutorial(),
-      ),
+      vscode.commands.registerCommand('gitorial.navigateToPreviousStep', () => this.handleNavigateToPreviousStep()),
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.navigateToNextStep', () =>
-        this.handleNavigateToNextStep(),
-      ),
+      vscode.commands.registerCommand('gitorial.cleanupTemporaryFolders', () => this.handleCleanupTemporaryFolders()),
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.navigateToPreviousStep', () =>
-        this.handleNavigateToPreviousStep(),
-      ),
+      vscode.commands.registerCommand('gitorial.resetClonePreferences', () => this.handleResetClonePreferences()),
     );
 
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.cleanupTemporaryFolders', () =>
-        this.handleCleanupTemporaryFolders(),
-      ),
-    );
-
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.resetClonePreferences', () =>
-        this.handleResetClonePreferences(),
-      ),
-    );
+    this.authoringCommandHandler.register(context);
 
     console.log('Gitorial commands registered.');
   }

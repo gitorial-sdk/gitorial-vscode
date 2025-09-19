@@ -30,8 +30,7 @@ import { TutorialSolutionWorkflow } from '@ui/tutorial/TutorialSolutionWorkflow'
 import { TutorialUriHandler } from '@ui/deep-link/UriHandler';
 import { TutorialController } from '@ui/tutorial/controller';
 import { CommandHandler } from '@ui/tutorial/CommandHandler';
-import { AuthorModeCommandHandler } from '@ui/tutorial/AuthorModeCommandHandler';
-import { AuthorModeController } from '@ui/tutorial/AuthorModeController';
+import { AuthorModeController } from '@ui/tutorial/authoring/controller';
 import { EditorManager } from '@ui/tutorial/manager/EditorManager';
 import { SystemController } from '@ui/system/SystemController';
 import {
@@ -56,28 +55,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
 }> {
   console.log('📖 Gitorial extension active');
 
+  const application = await bootstrapApplication(context);
+  if (!application) {
+    return Promise.reject();
+  }
+
   const {
     tutorialController,
     autoOpenState,
     systemController,
     authorModeController,
-  } = await bootstrapApplication(context);
+    userInteractionAdapter,
+    workspacePath,
+  } = application;
 
-  // --- VS Code Specific Registrations (Infrastructure concern, performed here) ---
-  const commandHandler = new CommandHandler(tutorialController, autoOpenState);
+  const commandHandler = new CommandHandler(tutorialController, systemController, authorModeController, userInteractionAdapter, workspacePath);
   const uriHandler = new TutorialUriHandler(tutorialController);
-
-  // Author Mode Command Handler
-  const authorModeCommandHandler = new AuthorModeCommandHandler(
-    systemController,
-    authorModeController,
-  );
 
   console.log('📖 Registering regular commands...');
   commandHandler.register(context);
-
-  console.log('📖 Registering Author Mode commands...');
-  authorModeCommandHandler.register(context);
 
   console.log('📖 Registering URI handler...');
   uriHandler.register(context);
@@ -86,7 +82,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
 
   console.log('📖 Gitorial activation complete.');
 
-  // Return API for testing and external access
   return {
     context,
     tutorialController,
@@ -126,16 +121,15 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   const gitChangesFactory = new GitChangesFactory();
 
   // --- Determine Workspace ID ---
-  let workspaceId: string | undefined;
+  let workspacePath: string | undefined;
   if (
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
   ) {
-    workspaceId = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
   } else {
-    console.warn(
-      'Gitorial: No workspace folder open. Workspace-specific tutorial state persistence will be limited.',
-    );
+    userInteractionAdapter.showWarningMessage('No workspace folder open. \nExiting Gitorial extension');
+    return;
   }
 
   // --- Infrastructure Repositories ---
@@ -153,7 +147,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     gitOperationsFactory,
     stepContentRepository,
     activeTutorialStateRepository,
-    workspaceId,
+    workspacePath,
   );
 
   const diffService = new DiffService(diffDisplayerAdapter, fileSystemAdapter);
@@ -192,17 +186,17 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // Create a temporary message handler that will be replaced later
   const tempMessageHandler = new WebviewMessageHandler(
     {
-      handleWebviewMessage: async () => {
+      handleWebviewMessage: async() => {
         console.warn('Tutorial message handler not ready yet');
       },
     },
     {
-      handleWebviewMessage: async () => {
+      handleWebviewMessage: async() => {
         console.warn('System message handler not ready yet');
       },
     },
     {
-      handleWebviewMessage: async () => {
+      handleWebviewMessage: async() => {
         console.warn('Author message handler not ready yet');
       },
     },
@@ -226,6 +220,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     systemController,
     gitOperationsFactory,
     activeTutorialStateRepository,
+    workspacePath,
   );
 
   const tutorialController = new TutorialController(
@@ -276,6 +271,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     fileSystemAdapter,
     userInteractionAdapter,
     authorModeController,
+    workspacePath,
   } as const;
 }
 

@@ -12,7 +12,7 @@ describe('SystemController', () => {
   let mockUserInteraction: any;
   let mockAuthorManifestBackupStore: any;
 
-  beforeEach(async () => {
+  beforeEach(async() => {
     mockContextStore = {
       setContext: sinon.stub().resolves(),
     };
@@ -66,7 +66,7 @@ describe('SystemController', () => {
   });
 
   describe('handleWebviewMessage', () => {
-    it('should handle error messages from webview', async () => {
+    it('should handle error messages from webview', async() => {
       const errorMessage: UI.Messages.WebviewToExtensionSystemMessage = {
         category: 'system',
         type: 'error',
@@ -81,7 +81,7 @@ describe('SystemController', () => {
       // The main goal is to ensure no exceptions are thrown
     });
 
-    it('should handle unknown message types gracefully', async () => {
+    it('should handle unknown message types gracefully', async() => {
       const unknownMessage = {
         category: 'system' as const,
         type: 'error' as any,
@@ -94,7 +94,7 @@ describe('SystemController', () => {
   });
 
   describe('sendSystemMessage', () => {
-    it('should send message through webview panel manager', async () => {
+    it('should send message through webview panel manager', async() => {
       const message: UI.Messages.ExtensionToWebviewSystemMessage = {
         category: 'system',
         type: 'loading-state',
@@ -108,7 +108,7 @@ describe('SystemController', () => {
       expect(mockWebviewPanelManager.sendMessage.calledWith(message)).to.be.true;
     });
 
-    it('should handle errors when sending message fails', async () => {
+    it('should handle errors when sending message fails', async() => {
       const message: UI.Messages.ExtensionToWebviewSystemMessage = {
         category: 'system',
         type: 'error',
@@ -126,7 +126,7 @@ describe('SystemController', () => {
   });
 
   describe('showLoadingState', () => {
-    it('should send loading state message', async () => {
+    it('should send loading state message', async() => {
       mockWebviewPanelManager.sendMessage.resolves();
 
       await systemController.showLoadingState(true, 'Loading...');
@@ -142,7 +142,7 @@ describe('SystemController', () => {
   });
 
   describe('hideLoadingState', () => {
-    it('should hide loading state', async () => {
+    it('should hide loading state', async() => {
       mockWebviewPanelManager.sendMessage.resolves();
 
       await systemController.hideLoadingState();
@@ -158,10 +158,10 @@ describe('SystemController', () => {
   });
 
   describe('hideGlobalLoading', () => {
-    it('should hide global loading state', async () => {
+    it('should hide global loading state', async() => {
       mockWebviewPanelManager.sendMessage.resolves();
 
-      await systemController.hideGlobalLoading();
+      await systemController.hideLoadingState();
 
       expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
       const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
@@ -174,7 +174,7 @@ describe('SystemController', () => {
   });
 
   describe('showError', () => {
-    it('should send error message', async () => {
+    it('should send error message', async() => {
       mockWebviewPanelManager.sendMessage.resolves();
 
       await systemController.showError('Test error');
@@ -189,7 +189,7 @@ describe('SystemController', () => {
   });
 
   describe('reportError', () => {
-    it('should log error to console', async () => {
+    it('should log error to console', async() => {
       const error = new Error('Test error');
       const consoleErrorStub = sinon.stub(console, 'error');
 
@@ -200,7 +200,7 @@ describe('SystemController', () => {
       consoleErrorStub.restore();
     });
 
-    it('should show error message to user when requested', async () => {
+    it('should show error message to user when requested', async() => {
       const error = new Error('Test error');
 
       await systemController.reportError(error, 'Test context', true);
@@ -208,7 +208,7 @@ describe('SystemController', () => {
       expect(mockUserInteraction.showErrorMessage.calledWith('Test context: Test error')).to.be.true;
     });
 
-    it('should handle errors when showing error message fails', async () => {
+    it('should handle errors when showing error message fails', async() => {
       const error = new Error('Test error');
       mockUserInteraction.showErrorMessage.rejects(new Error('Show failed'));
       const consoleErrorStub = sinon.stub(console, 'error');
@@ -226,14 +226,14 @@ describe('SystemController', () => {
   });
 
   describe('setAuthorMode', () => {
-    it('should update configuration store with author mode', async () => {
+    it('should update configuration store with author mode', async() => {
       await systemController.setAuthorMode(true);
 
       expect(mockConfigurationStore.update.calledWith('authorModeEnabled', true)).to.be.true;
       expect(mockContextStore.setContext.calledWith('gitorial.authorModeEnabled', true)).to.be.true;
     });
 
-    it('should handle errors when setting author mode fails', async () => {
+    it('should handle errors when setting author mode fails', async() => {
       const error = new Error('Update failed');
       mockConfigurationStore.update.rejects(error);
 
@@ -248,7 +248,7 @@ describe('SystemController', () => {
   });
 
   describe('sendAuthorManifest', () => {
-    it('should send author manifest data to webview', async () => {
+    it('should send author manifest data to webview', async() => {
       const manifest: Domain.AuthorManifestData = {
         authoringBranch: 'main',
         publishBranch: 'main',
@@ -267,7 +267,7 @@ describe('SystemController', () => {
   });
 
   describe('saveAuthorManifestBackup', () => {
-    it('should save manifest backup to backup store', async () => {
+    it('should save manifest backup to backup store', async() => {
       const manifest: Domain.AuthorManifestData = {
         authoringBranch: 'main',
         publishBranch: 'main',
@@ -309,7 +309,7 @@ describe('SystemController', () => {
   });
 
   describe('sendPublishResult', () => {
-    it('should send publish result to webview', async () => {
+    it('should send publish result to webview', async() => {
       const publishedCommits = [
         {
           originalCommit: 'abc123',
@@ -332,7 +332,7 @@ describe('SystemController', () => {
   });
 
   describe('sendValidationWarnings', () => {
-    it('should send validation warnings to webview', async () => {
+    it('should send validation warnings to webview', async() => {
       const warnings = ['Warning 1', 'Warning 2'];
 
       await systemController.sendValidationWarnings(warnings);

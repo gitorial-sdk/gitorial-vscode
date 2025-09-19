@@ -44,7 +44,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
   }
 
   private registerConfigurationListener(): void {
-    this.configurationState.onDidChange(async (event) => {
+    this.configurationState.onDidChange(async(event) => {
       if (event.affectsConfiguration(CC.AUTHOR_MODE_CONTEXT)) {
         const newValue = this.configurationState.get<boolean>(CC.AUTHOR_MODE_KEY, false);
         await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, newValue);
@@ -72,26 +72,26 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async handleWebviewMessage(message: UI.Messages.WebviewToExtensionSystemMessageAll): Promise<void> {
     try {
       switch (message.type) {
-      case 'error':
-        await this.handleError(message.payload);
-        break;
-      case 'requestConfirm':
+        case 'error':
+          await this.handleError(message.payload);
+          break;
+        case 'requestConfirm':
         // Show a native confirm dialog and return result
-        try {
-          const result = await this.userInteraction.showWarningMessage(message.payload.message, { modal: true }, 'Yes', 'No');
+          try {
+            const result = await this.userInteraction.showWarningMessage(message.payload.message, { modal: true }, 'Yes', 'No');
 
-          const confirmed = result === 'Yes';
-          await this.sendSystemMessage({
-            category: 'system',
-            type: 'confirmResult',
-            payload: { id: message.payload.id, confirmed },
-          } as any);
-        } catch (e) {
-          console.warn('SystemController: Failed to show confirm dialog', e);
-        }
-        break;
-      default:
-        console.warn(`Unknown message type: ${(message as any).type}`);
+            const confirmed = result === 'Yes';
+            await this.sendSystemMessage({
+              category: 'system',
+              type: 'confirmResult',
+              payload: { id: message.payload.id, confirmed },
+            } as any);
+          } catch (e) {
+            console.warn('SystemController: Failed to show confirm dialog', e);
+          }
+          break;
+        default:
+          console.warn(`Unknown message type: ${(message as any).type}`);
       }
     } catch (error) {
       console.error('Error handling webview message:', error);
@@ -136,10 +136,6 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public hideLoadingState = (): Promise<void> => this.showLoadingState(false, '');
 
-  /**
-   * Hides the global loading state.
-   */
-  public hideGlobalLoading = (): Promise<void> => this.showLoadingState(false, '');
 
   // ============================================================================
   // Error Handling and User Feedback

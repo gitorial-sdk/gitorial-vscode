@@ -9,9 +9,37 @@
   // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
   "typescript.tsc.autoDetect": "off",
   "gitorial.cloneLocation": "subdirectory",
+
+  // === UNIFIED FORMATTING CONFIGURATION ===
+
+  // ESLint Configuration
   "eslint.format.enable": true,
-  "eslint.validate": [ "javascript", "typescript" ],
+  "eslint.validate": ["javascript", "typescript"],
+
+  // Make ESLint the default formatter for TypeScript and JavaScript
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
+  },
+
+  // Code Actions on Save (ESLint fixes)
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
-  }
+  },
+
+  // Disable VS Code's built-in TypeScript formatter to prevent conflicts
+  "typescript.format.enable": false,
+  "javascript.format.enable": false,
+
+  // General editor settings to match ESLint config
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true
 }
