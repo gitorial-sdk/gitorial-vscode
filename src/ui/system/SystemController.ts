@@ -15,15 +15,12 @@ export class SystemController implements IWebviewSystemMessageHandler {
   private tutorialController: any; // Will be set after TutorialController is created
 
   private constructor(
-    private readonly contextStore: IContextState,
-    private readonly configurationStore: IConfigurationState,
+    private readonly contextState: IContextState,
+    private readonly configurationState: IConfigurationState,
     private readonly webviewPanelManager: IWebviewPanelManager,
     private readonly userInteraction: IUserInteraction,
     private readonly authorManifestBackupStore: IStateStorage,
-  ) {
-    this.contextStore = contextStore;
-    this.configurationStore = configurationStore;
-  }
+  ) {}
 
   public static async new(contextStore: IContextState, configurationStore: IConfigurationState, webviewPanelManager: IWebviewPanelManager, userInteraction: IUserInteraction, authorManifestBackupStore: IStateStorage): Promise<SystemController> {
     const systemController = new SystemController(contextStore, configurationStore, webviewPanelManager, userInteraction, authorManifestBackupStore);
@@ -38,8 +35,8 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public async initializeAuthorModeState(): Promise<void> {
     try {
-      const storedState = this.configurationStore.get<boolean>(CC.AUTHOR_MODE_KEY, false);
-      await this.contextStore.setContext(CC.AUTHOR_MODE_CONTEXT, storedState);
+      const storedState = this.configurationState.get<boolean>(CC.AUTHOR_MODE_KEY, false);
+      await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, storedState);
       console.log(`SystemController: Initialized author mode state to ${storedState}`);
     } catch (error) {
       console.error('SystemController: Failed to initialize author mode state:', error);
@@ -47,10 +44,10 @@ export class SystemController implements IWebviewSystemMessageHandler {
   }
 
   private registerConfigurationListener(): void {
-    this.configurationStore.onDidChange(async (event) => {
+    this.configurationState.onDidChange(async (event) => {
       if (event.affectsConfiguration(CC.AUTHOR_MODE_CONTEXT)) {
-        const newValue = this.configurationStore.get<boolean>(CC.AUTHOR_MODE_KEY, false);
-        await this.contextStore.setContext(CC.AUTHOR_MODE_CONTEXT, newValue);
+        const newValue = this.configurationState.get<boolean>(CC.AUTHOR_MODE_KEY, false);
+        await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, newValue);
 
         this.sendSystemMessage({ category: 'system', type: 'author-mode-changed', payload: { isActive: newValue } });
       }
@@ -188,8 +185,8 @@ export class SystemController implements IWebviewSystemMessageHandler {
    * @param isActive - Whether author mode should be active
    */
   public async setAuthorMode(isActive: boolean): Promise<void> {
-    await this.configurationStore.update(CC.AUTHOR_MODE_KEY, isActive);
-    await this.contextStore.setContext(CC.AUTHOR_MODE_CONTEXT, isActive);
+    await this.configurationState.update(CC.AUTHOR_MODE_KEY, isActive);
+    await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, isActive);
 
     await this.sendSystemMessage({
       category: 'system',
@@ -203,7 +200,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
    * @returns Whether author mode is currently active
    */
   public getAuthorMode(): boolean {
-    return this.configurationStore.get<boolean>(CC.AUTHOR_MODE_KEY, false);
+    return this.configurationState.get<boolean>(CC.AUTHOR_MODE_KEY, false);
   }
 
   /**

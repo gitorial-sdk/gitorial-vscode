@@ -21,6 +21,6 @@ export class ContextState implements IContextState {
    * @param value - The value to store for the given key.
    */
   public async setContext(key: string, value: any): Promise<void> {
-    await this.context.workspaceState.update(key, value);
+    vscode.commands.executeCommand('setContext', key, value);
   }
 }
