@@ -100,6 +100,10 @@ export class Controller {
     this._lastViewModel = viewModel;
   }
 
+  public async closeAllFileTabs(): Promise<void> {
+    await this.editorManager.closeAllFileTabs();
+  }
+
   /**
    * Handles display changes based on detected change type
    */

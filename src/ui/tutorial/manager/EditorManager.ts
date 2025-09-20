@@ -188,4 +188,16 @@ export class EditorManager {
     const tabGroup = vscode.window.tabGroups.all.find(group => group.viewColumn === viewColumn);
     return tabGroup ? tabGroup.tabs : [];
   }
+
+  public async closeAllFileTabs(): Promise<void> {
+    const fileTabsToClose = this.getTabsInGroup(vscode.ViewColumn.Two)
+      .filter(tab => {
+        const input = tab.input as any;
+        return !(input?.original && input?.modified);
+      });
+
+    if (fileTabsToClose.length > 0) {
+      await vscode.window.tabGroups.close(fileTabsToClose, false);
+    }
+  }
 }

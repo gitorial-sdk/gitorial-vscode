@@ -18,7 +18,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
     private readonly contextState: IContextState,
     private readonly configurationState: IConfigurationState,
     private readonly webviewPanelManager: IWebviewPanelManager,
-    private readonly userInteraction: IUserInteraction,
+    readonly userInteraction: IUserInteraction,
     private readonly authorManifestBackupStore: IStateStorage
   ) {}
 

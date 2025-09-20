@@ -206,14 +206,6 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     authorManifestBackupState
   );
 
-  const authorModeController = new AuthorModeController(
-    systemController,
-    gitOperationsFactory,
-    activeTutorialStateRepository,
-    workspacePath,
-    fileSystemAdapter
-  );
-
   const tutorialController = new TutorialController(
     progressReportAdapter,
     userInteractionAdapter,
@@ -226,6 +218,15 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     gitChangesFactory,
     markdownConverter,
     webviewPanelManager
+  );
+
+  const authorModeController = new AuthorModeController(
+    systemController,
+    gitOperationsFactory,
+    activeTutorialStateRepository,
+    workspacePath,
+    fileSystemAdapter,
+    tutorialController
   );
 
   // Set the tutorial controller reference in system controller

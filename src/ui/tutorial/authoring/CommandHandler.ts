@@ -8,45 +8,21 @@ export class AuthoringCommandHandler {
     private systemController: SystemController,
     private authorModeController: AuthorModeController,
     private readonly userInteraction: IUserInteraction,
-    private readonly workspacePath: string,
-  ) { }
+    private readonly workspacePath: string
+  ) {}
 
   /**
    * Enters author mode for the current workspace
    */
   public async handleEnterAuthorMode(): Promise<void> {
-    try {
-      console.log('🔥 AUTHOR MODE: Starting activation...');
-
-      await this.systemController.hideLoadingState();
-
-      console.log('🔥 AUTHOR MODE: Setting author mode true...');
-      await this.systemController.setAuthorMode(true);
-
-      console.log('🔥 AUTHOR MODE: Loading initial manifest (from file or gitorial branch)...');
-      await this.authorModeController.loadInitialManifest();
-
-      console.log('🔥 AUTHOR MODE: Showing success message...');
-      await this.userInteraction.showInformationMessage('Author Mode activated! This is a basic implementation.');
-
-      console.log('🔥 AUTHOR MODE: Activation complete!');
-    } catch (error) {
-      console.error('❌ AUTHOR MODE ERROR:', error);
-      await this.userInteraction.showErrorMessage(`Failed to enter Author Mode: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    await this.authorModeController.handleEnterAuthorMode();
   }
 
   /**
    * Exits author mode and returns to normal tutorial mode
    */
   public async handleExitAuthorMode(): Promise<void> {
-    try {
-      await this.systemController.setAuthorMode(false);
-      await this.userInteraction.showInformationMessage('Exited Author Mode. Returned to tutorial view.');
-    } catch (error) {
-      console.error('Error exiting author mode:', error);
-      await this.userInteraction.showErrorMessage(`Failed to exit Author Mode: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    await this.authorModeController.handleExitAuthorMode();
   }
 
   /**
@@ -60,11 +36,14 @@ export class AuthoringCommandHandler {
       await this.authorModeController.clearCachedData();
 
       console.log('✅ CLEAR CORRUPTED DATA: Cleanup complete!');
-      await this.userInteraction.showInformationMessage('Corrupted data cleared successfully. Try entering Author Mode again.');
-
+      await this.userInteraction.showInformationMessage(
+        'Corrupted data cleared successfully. Try entering Author Mode again.'
+      );
     } catch (error) {
       console.error('🚨 CLEAR CORRUPTED DATA: Error during cleanup:', error);
-      await this.userInteraction.showErrorMessage(`Failed to clear corrupted data: ${error instanceof Error ? error.message : String(error)}`);
+      await this.userInteraction.showErrorMessage(
+        `Failed to clear corrupted data: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -76,7 +55,9 @@ export class AuthoringCommandHandler {
       this.userInteraction.showInformationMessage('Create New Tutorial - Feature coming soon!');
     } catch (error) {
       console.error('Error creating new tutorial:', error);
-      await this.userInteraction.showErrorMessage(`Failed to create tutorial: ${error instanceof Error ? error.message : String(error)}`);
+      await this.userInteraction.showErrorMessage(
+        `Failed to create tutorial: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -88,7 +69,9 @@ export class AuthoringCommandHandler {
       await this.userInteraction.showInformationMessage('Publish Tutorial - Feature coming soon!');
     } catch (error) {
       console.error('Error publishing tutorial:', error);
-      await this.userInteraction.showErrorMessage(`Failed to publish tutorial: ${error instanceof Error ? error.message : String(error)}`);
+      await this.userInteraction.showErrorMessage(
+        `Failed to publish tutorial: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -99,23 +82,23 @@ export class AuthoringCommandHandler {
     console.log('🔥 REGISTERING AUTHOR MODE COMMANDS...');
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.enterAuthorMode', () => this.handleEnterAuthorMode()),
+      vscode.commands.registerCommand('gitorial.enterAuthorMode', () => this.handleEnterAuthorMode())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.exitAuthorMode', () => this.handleExitAuthorMode()),
+      vscode.commands.registerCommand('gitorial.exitAuthorMode', () => this.handleExitAuthorMode())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.createNewTutorial', () => this.handleCreateNewTutorial()),
+      vscode.commands.registerCommand('gitorial.createNewTutorial', () => this.handleCreateNewTutorial())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.publishTutorial', () => this.handlePublishTutorial()),
+      vscode.commands.registerCommand('gitorial.publishTutorial', () => this.handlePublishTutorial())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.clearCorruptedData', () => this.handleClearCorruptedData()),
+      vscode.commands.registerCommand('gitorial.clearCorruptedData', () => this.handleClearCorruptedData())
     );
 
     console.log('Author Mode commands registered.');

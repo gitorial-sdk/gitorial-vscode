@@ -27,7 +27,7 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
   private readonly lifecycleController: Lifecycle.Controller;
   private readonly navigationController: Navigation.Controller;
   private readonly externalController: External.Controller;
-  private readonly editorController: Editor.Controller;
+  readonly editorController: Editor.Controller;
   private readonly webviewController: Webview.Controller;
 
   private _gitChanges: IGitChanges | null = null;

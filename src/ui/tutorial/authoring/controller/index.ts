@@ -9,6 +9,7 @@ import * as Validation from './validation';
 import * as Manifest from './manifest';
 import * as StepEditing from './step-editing';
 import { IFileSystem } from '@domain/ports/IFileSystem';
+import { TutorialController } from '@ui/tutorial/controller';
 
 export interface IClearable {
   clearCachedData(): Promise<void>;
@@ -28,8 +29,9 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
     private systemController: SystemController,
     gitFactory: IGitOperationsFactory,
     activeTutorialStateRepository: IActiveTutorialStateRepository,
-    private readonly workspacePath: string,
-    fs: IFileSystem
+    workspacePath: string,
+    fs: IFileSystem,
+    private readonly tutorialController: TutorialController
   ) {
     this.manifestController = new Manifest.Controller(systemController, gitFactory, fs, workspacePath);
     this.stepEditingController = new StepEditing.Controller(
@@ -56,7 +58,7 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
         case 'loadManifest':
         case 'saveManifest':
           let result = await this.manifestController.handleMessage(message);
-          this.handleResult(result);
+          this._handleResult(result);
           break;
         case 'addStep':
         case 'removeStep':
@@ -66,13 +68,13 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
         case 'saveStepChanges':
         case 'cancelStepEditing':
           result = await this.stepEditingController.handleMessage(message);
-          this.handleResult(result);
+          this._handleResult(result);
           break;
 
         case 'publishTutorial':
         case 'previewTutorial':
           result = await this.publishingController.handleMessage(message);
-          this.handleResult(result);
+          this._handleResult(result);
           break;
         case 'validateCommit':
           await this.validationController.handleMessage(message);
@@ -102,18 +104,36 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
     console.log('✅ AuthorModeController: Cached data cleared');
   }
 
-  private async handleExitAuthorMode(): Promise<void> {
-    console.log('AuthorModeController: Exiting author mode and cleaning up state');
-    await this.clearCachedData();
-    await this.systemController.setAuthorMode(false);
-    console.log('AuthorModeController: Author mode exit completed, tutorial state cleaned');
+  public async handleExitAuthorMode(): Promise<void> {
+    try {
+      await this.systemController.setAuthorMode(false);
+      await this.clearCachedData();
+    } catch (error) {
+      console.error('Error exiting author mode:', error);
+      await this.systemController.userInteraction.showErrorMessage(
+        `Failed to exit Author Mode: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
-  public async loadInitialManifest(): Promise<void> {
-    await this.manifestController.load();
+  public async handleEnterAuthorMode(): Promise<void> {
+    try {
+      await this.systemController.hideLoadingState();
+      await this.tutorialController.editorController.closeAllFileTabs();
+      await this.systemController.setAuthorMode(true);
+      this.manifestController.load();
+      await this.systemController.userInteraction.showInformationMessage(
+        'Author Mode activated! This is a basic implementation.'
+      );
+    } catch (error) {
+      console.error('❌ AUTHOR MODE ERROR:', error);
+      await this.systemController.userInteraction.showErrorMessage(
+        `Failed to enter Author Mode: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
-  private handleResult(result: Result<any, any>): void {
+  private _handleResult(result: Result<any, any>): void {
     if (result.isErr()) {
       console.error('AuthorModeController: Error:', result.error);
     }
