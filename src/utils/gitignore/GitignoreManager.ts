@@ -276,7 +276,10 @@ export class GitignoreManager {
         },
         {
           language: 'python',
-          files: ['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile'],
+          files: ['requirements.txt',
+            'setup.py',
+            'pyproject.toml',
+            'Pipfile'],
         },
         {
           language: 'go',
@@ -407,13 +410,31 @@ export class GitignoreManager {
    */
   private hasEssentialPatterns(content: string, language: ProjectLanguage): boolean {
     const essentialPatterns: Record<ProjectLanguage, string[]> = {
-      rust: ['target/', 'target\\', '.gitorial/', '.vscode/', '.rust-analyzer/'],
+      rust: ['target/',
+        'target\\',
+        '.gitorial/',
+        '.vscode/',
+        '.rust-analyzer/'],
       javascript: ['node_modules/', 'node_modules\\', '.gitorial/'],
-      typescript: ['node_modules/', 'node_modules\\', 'dist/', 'dist\\', '.gitorial/'],
-      python: ['__pycache__/', '__pycache__\\', '*.pyc', '.gitorial/'],
+      typescript: ['node_modules/',
+        'node_modules\\',
+        'dist/',
+        'dist\\',
+        '.gitorial/'],
+      python: ['__pycache__/',
+        '__pycache__\\',
+        '*.pyc',
+        '.gitorial/'],
       go: ['*.exe', '*.out', '.gitorial/'],
-      java: ['target/', 'target\\', '*.class', '.gitorial/'],
-      csharp: ['bin/', 'bin\\', 'obj/', 'obj\\', '.gitorial/'],
+      java: ['target/',
+        'target\\',
+        '*.class',
+        '.gitorial/'],
+      csharp: ['bin/',
+        'bin\\',
+        'obj/',
+        'obj\\',
+        '.gitorial/'],
       unknown: ['.gitorial/'],
     };
 
@@ -421,8 +442,7 @@ export class GitignoreManager {
     const lowercaseContent = content.toLowerCase();
 
     return patterns.some(pattern =>
-      lowercaseContent.includes(pattern.toLowerCase()),
-    );
+      lowercaseContent.includes(pattern.toLowerCase()));
   }
 
   /**
@@ -499,9 +519,7 @@ export class GitignoreManager {
         '*.dll',
       ],
       unknown: [
-        '',
-        '# Essential Gitorial patterns',
-        '.gitorial/',
+        '', '# Essential Gitorial patterns', '.gitorial/',
       ],
     };
 

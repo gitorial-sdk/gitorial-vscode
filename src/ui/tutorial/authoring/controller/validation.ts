@@ -1,5 +1,7 @@
 import { IClearable } from '.';
 import { UI } from '@gitorial/shared-types';
+import { Domain } from '@gitorial/shared-types';
+
 
 export class Controller implements IClearable {
   clearCachedData(): Promise<void> {
@@ -11,6 +13,9 @@ export class Controller implements IClearable {
   }
 
   private async validateCommit(): Promise<void> {
+    //todo: validate commits
     console.log('AuthorModeController: Validate commit (basic implementation)');
+    const exampleCommit = Domain.Commit.V1.Validator.buildCommitFromMessage('template: Implement feature', ['README.md'], [])._unsafeUnwrap();
+    Domain.Commit.V1.Validator.validateContent(exampleCommit);
   }
 }

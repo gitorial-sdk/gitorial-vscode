@@ -150,7 +150,7 @@ export class IntegrationTestUtils {
 
   static mockInputBox(returnValue: string | undefined): void {
     const originalShowInputBox = vscode.window.showInputBox;
-    vscode.window.showInputBox = async () => returnValue;
+    vscode.window.showInputBox = async() => returnValue;
 
     this.mockCleanups.push(() => {
       vscode.window.showInputBox = originalShowInputBox;
@@ -159,7 +159,7 @@ export class IntegrationTestUtils {
 
   static mockOpenDialog(returnValue: vscode.Uri[] | undefined): void {
     const originalShowOpenDialog = vscode.window.showOpenDialog;
-    vscode.window.showOpenDialog = async () => {
+    vscode.window.showOpenDialog = async() => {
       if (returnValue && returnValue[0]) {
         const dirPath = returnValue[0].fsPath;
         try {
@@ -178,7 +178,7 @@ export class IntegrationTestUtils {
 
   static mockAskConfirmation(returnValue: boolean): void {
     const originalShowWarningMessage = vscode.window.showWarningMessage;
-    vscode.window.showWarningMessage = async (_message: string, ...items: any[]) => {
+    vscode.window.showWarningMessage = async(_message: string, ...items: any[]) => {
       if (items.length >= 2 && typeof items[0] === 'object' && typeof items[1] === 'object') {
         const confirmItem = items[0];
         const cancelItem = items[1];
@@ -197,7 +197,7 @@ export class IntegrationTestUtils {
     let currentIndex = 0;
     const originalShowWarningMessage = vscode.window.showWarningMessage;
 
-    vscode.window.showWarningMessage = async (_message: string, ...items: any[]) => {
+    vscode.window.showWarningMessage = async(_message: string, ...items: any[]) => {
       const returnValue = returnValues[currentIndex] ?? returnValues[returnValues.length - 1];
 
       if (items.length >= 2 && typeof items[0] === 'object' && typeof items[1] === 'object') {
@@ -266,9 +266,7 @@ export class IntegrationTestUtils {
 
   static async findClonedRepository(repositoryName: string): Promise<string | undefined> {
     const expectedPaths = [
-      path.join(process.cwd(), 'tutorials', repositoryName),
-      path.join(process.cwd(), repositoryName),
-      path.join(os.tmpdir(), repositoryName),
+      path.join(process.cwd(), 'tutorials', repositoryName), path.join(process.cwd(), repositoryName), path.join(os.tmpdir(), repositoryName),
     ];
 
     for (const repoPath of expectedPaths) {

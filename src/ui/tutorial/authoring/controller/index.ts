@@ -8,14 +8,14 @@ import * as Publishing from './publishing';
 import * as Validation from './validation';
 import * as Manifest from './manifest';
 import * as StepEditing from './step-editing';
-
+import { IFileSystem } from '@domain/ports/IFileSystem';
 
 export interface IClearable {
-    clearCachedData(): Promise<void>;
-  }
+  clearCachedData(): Promise<void>;
+}
 
 export interface IWebviewAuthorMessageHandler {
-    handleWebviewMessage(message: UI.Messages.WebviewToExtensionAuthorMessage): Promise<void>;
+  handleWebviewMessage(message: UI.Messages.WebviewToExtensionAuthorMessage): Promise<void>;
 }
 
 export class AuthorModeController implements IWebviewAuthorMessageHandler {
@@ -25,17 +25,28 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
   private validationController: Validation.Controller;
 
   constructor(
-        private systemController: SystemController,
-        gitFactory: IGitOperationsFactory,
-        activeTutorialStateRepository: IActiveTutorialStateRepository,
-        private readonly workspacePath: string,
+    private systemController: SystemController,
+    gitFactory: IGitOperationsFactory,
+    activeTutorialStateRepository: IActiveTutorialStateRepository,
+    private readonly workspacePath: string,
+    fs: IFileSystem
   ) {
-    this.manifestController = new Manifest.Controller(systemController, gitFactory);
-    this.stepEditingController = new StepEditing.Controller(systemController, this.manifestController, gitFactory, workspacePath);
-    this.publishingController = new Publishing.Controller(this.manifestController, gitFactory, workspacePath, activeTutorialStateRepository, systemController);
+    this.manifestController = new Manifest.Controller(systemController, gitFactory, fs, workspacePath);
+    this.stepEditingController = new StepEditing.Controller(
+      systemController,
+      this.manifestController,
+      gitFactory,
+      workspacePath
+    );
+    this.publishingController = new Publishing.Controller(
+      this.manifestController,
+      gitFactory,
+      workspacePath,
+      activeTutorialStateRepository,
+      systemController
+    );
     this.validationController = new Validation.Controller();
   }
-
 
   public async handleWebviewMessage(message: UI.Messages.WebviewToExtensionAuthorMessage): Promise<void> {
     console.log('AuthorModeController: Received webview message', message);
@@ -74,14 +85,9 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
       }
     } catch (error) {
       console.error('AuthorModeController: Error handling message:', error);
-      this.systemController.reportError(
-        error instanceof Error ? error : new Error(String(error)),
-        'Author Mode',
-        true,
-      );
+      this.systemController.reportError(error instanceof Error ? error : new Error(String(error)), 'Author Mode', true);
     }
   }
-
 
   public async clearCachedData(): Promise<void> {
     console.log('🧹 AuthorModeController: Clearing cached data...');
@@ -96,7 +102,6 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
     console.log('✅ AuthorModeController: Cached data cleared');
   }
 
-
   private async handleExitAuthorMode(): Promise<void> {
     console.log('AuthorModeController: Exiting author mode and cleaning up state');
     await this.clearCachedData();
@@ -105,9 +110,8 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
   }
 
   public async loadInitialManifest(): Promise<void> {
-    await this.manifestController.loadInitial(this.workspacePath);
+    await this.manifestController.load();
   }
-
 
   private handleResult(result: Result<any, any>): void {
     if (result.isErr()) {

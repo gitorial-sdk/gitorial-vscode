@@ -29,7 +29,7 @@ export class WebviewMessageHandler {
     private readonly tutorialMessageHandler: IWebviewTutorialMessageHandler,
     private readonly systemMessageHandler: IWebviewSystemMessageHandler,
     private readonly authorMessageHandler: IWebviewAuthorMessageHandler,
-  ) {}
+  ) { }
 
   /**
    * Handles messages received from the webview panel.
@@ -37,22 +37,22 @@ export class WebviewMessageHandler {
    */
   public async handleMessage(message: UI.Messages.WebviewToExtensionMessage): Promise<void> {
     switch (message.category) {
-    case 'tutorial': {
-      this.tutorialMessageHandler.handleWebviewMessage(message);
-      break;
-    }
-    case 'system': {
-      this.systemMessageHandler.handleWebviewMessage(message);
-      break;
-    }
-    case 'author': {
-      await this.authorMessageHandler.handleWebviewMessage(message);
-      break;
-    }
-    default: {
-      console.warn('Received unknown command from webview:', message);
-      break;
-    }
+      case 'tutorial': {
+        this.tutorialMessageHandler.handleWebviewMessage(message);
+        break;
+      }
+      case 'system': {
+        this.systemMessageHandler.handleWebviewMessage(message);
+        break;
+      }
+      case 'author': {
+        await this.authorMessageHandler.handleWebviewMessage(message);
+        break;
+      }
+      default: {
+        console.warn('Received unknown command from webview:', message);
+        break;
+      }
     }
   }
 }

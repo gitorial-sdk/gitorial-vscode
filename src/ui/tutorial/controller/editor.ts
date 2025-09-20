@@ -118,22 +118,22 @@ export class Controller {
     const changeType = this.changeDetector.detectChange(viewModel, this._lastViewModel);
 
     switch (changeType) {
-    case TutorialViewChangeType.SolutionToggle:
-      await this.solutionWorkflow.toggleSolution(tutorial, gitChanges);
-      break;
+      case TutorialViewChangeType.SolutionToggle:
+        await this.solutionWorkflow.toggleSolution(tutorial, gitChanges);
+        break;
 
-    case TutorialViewChangeType.StepChange:
-      await this._handleStepChange(step, tutorial, gitChanges);
-      break;
+      case TutorialViewChangeType.StepChange:
+        await this._handleStepChange(step, tutorial, gitChanges);
+        break;
 
-    case TutorialViewChangeType.StepSolutionChange:
-      await this.solutionWorkflow.toggleSolution(tutorial, gitChanges);
-      await this._handleStepChange(step, tutorial, gitChanges);
-      break;
+      case TutorialViewChangeType.StepSolutionChange:
+        await this.solutionWorkflow.toggleSolution(tutorial, gitChanges);
+        await this._handleStepChange(step, tutorial, gitChanges);
+        break;
 
-    default:
+      default:
       // No changes needed
-      break;
+        break;
     }
   }
 

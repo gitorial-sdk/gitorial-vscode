@@ -234,8 +234,7 @@ export class TabTrackingService {
           }
 
           return false;
-        }),
-      );
+        }));
 
       if (activeGroup?.viewColumn === vscode.ViewColumn.Two) {
         this._lastActiveTutorialFile = editorUri;

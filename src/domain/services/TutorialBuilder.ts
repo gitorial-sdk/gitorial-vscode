@@ -7,7 +7,11 @@ import { Step } from '../models/Step';
 
 export class TutorialBuilder {
   private static readonly VALID_STEP_TYPES: ReadonlyArray<Domain.StepType> = [
-    'section', 'template', 'solution', 'action', 'readme',
+    'section',
+    'template',
+    'solution',
+    'action',
+    'readme',
   ];
 
   private static readonly REPO_URL_PATTERNS = [

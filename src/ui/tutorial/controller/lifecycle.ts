@@ -174,7 +174,7 @@ export class Controller {
     targetPath: string,
     commitHash?: string,
   ): Promise<Tutorial | null> {
-    return await this._reportProgress(`Cloning ${repoUrl}...`, async () => {
+    return await this._reportProgress(`Cloning ${repoUrl}...`, async() => {
       try {
         const tutorial = await this.tutorialService.cloneAndLoadTutorial(repoUrl, targetPath, {
           initialStepCommitHash: commitHash,
@@ -268,7 +268,7 @@ export class Controller {
     tutorialPath: string,
     commitHash?: string,
   ): Promise<Tutorial | null> {
-    return await this._reportProgress('Loading tutorial...', async () => {
+    return await this._reportProgress('Loading tutorial...', async() => {
       try {
         const tutorial = await this.tutorialService.loadTutorialFromPath(tutorialPath, {
           initialStepCommitHash: commitHash,

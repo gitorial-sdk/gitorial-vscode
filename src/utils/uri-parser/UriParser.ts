@@ -64,20 +64,20 @@ class UriParser {
       }
 
       switch (matchedCommand) {
-      case UriCommand.Sync: {
-        const payload = this.parseSyncPayload(url.searchParams);
-        if (!(payload instanceof Error)) {
-          return { command: UriCommand.Sync, payload };
+        case UriCommand.Sync: {
+          const payload = this.parseSyncPayload(url.searchParams);
+          if (!(payload instanceof Error)) {
+            return { command: UriCommand.Sync, payload };
+          }
+          return new Error(
+            `Failed to parse payload for Sync command from URI: ${uri.toString()}\n${payload.message}`,
+          );
         }
-        return new Error(
-          `Failed to parse payload for Sync command from URI: ${uri.toString()}\n${payload.message}`,
-        );
-      }
-      default:
-        console.warn(`Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`);
-        return new Error(
-          `Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`,
-        );
+        default:
+          console.warn(`Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`);
+          return new Error(
+            `Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`,
+          );
       }
     } catch (error) {
       console.error(`Error parsing URI: ${uri.toString()}`, error);
@@ -116,4 +116,6 @@ class UriParser {
   }
 }
 
-export { UriParser, UriCommand, SyncPayload, CommandPayloads, ParseResult };
+export {
+  UriParser, UriCommand, SyncPayload, CommandPayloads, ParseResult,
+};

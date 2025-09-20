@@ -126,7 +126,7 @@ export class DiffService {
         const absoluteFilePath = this.fs.join(tutorial.localPath, payload.relativeFilePath);
 
         return {
-          leftContentProvider: async () => {
+          leftContentProvider: async() => {
             try {
               return await this.fs.pathExists(absoluteFilePath)
                 ? await this.fs.readFile(absoluteFilePath)
@@ -136,7 +136,7 @@ export class DiffService {
               return `// Error reading current file: ${error}`;
             }
           },
-          rightContentProvider: async () => payload.modifiedContent || '',
+          rightContentProvider: async() => payload.modifiedContent || '',
           relativePath: payload.relativeFilePath,
           leftCommitId: 'working-dir',
           rightCommitId: nextStep.commitHash,

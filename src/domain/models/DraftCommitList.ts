@@ -96,9 +96,7 @@ export class DraftCommitList<TCode extends string = string> {
   appendCommit(commit: TCommit) {
     if (this.working[this.working.length - 1].type === 'readme') {
       this.working = [
-        ...this.working.slice(0, this.working.length - 1),
-        commit,
-        this.working[this.working.length - 1],
+        ...this.working.slice(0, this.working.length - 1), commit, this.working[this.working.length - 1],
       ];
     } else {
       this.working = [...this.working, commit];

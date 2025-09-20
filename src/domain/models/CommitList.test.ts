@@ -17,8 +17,7 @@ describe('Domain CommitList', () => {
   ];
 
   const invalidSequence: Commit[] = [
-    Commit.newFromObject(c('section', 'Introduction', ['README.md']))._unsafeUnwrap(),
-    Commit.newFromObject(c('solution', 'Cargo Init'))._unsafeUnwrap(),
+    Commit.newFromObject(c('section', 'Introduction', ['README.md']))._unsafeUnwrap(), Commit.newFromObject(c('solution', 'Cargo Init'))._unsafeUnwrap(),
   ];
 
   const mixedInvalid: Commit[] = [

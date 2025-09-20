@@ -27,7 +27,12 @@ export class PathSanitizer {
     restrictToUserHome: true,
     maxDepth: 10,
     maxLength: 260, // Windows MAX_PATH limit
-    allowedExtensions: ['.git', '.md', '.json', '.txt', '.yml', '.yaml'],
+    allowedExtensions: ['.git',
+      '.md',
+      '.json',
+      '.txt',
+      '.yml',
+      '.yaml'],
   };
 
   /**

@@ -25,10 +25,10 @@ type AuthoringServiceError = 'Not implemented';
 export class TutorialAuthoringService {
   constructor(
         private readonly tutorialRepository: ITutorialRepository,
-  ){}
+  ) {}
 
   public toggleAuthorMode(): void {}
-  private _isAuthorMode(): boolean{
+  private _isAuthorMode(): boolean {
     return true;
   }
 

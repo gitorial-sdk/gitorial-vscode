@@ -1,0 +1,30 @@
+{
+  "languages": {
+    "JavaScript": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    },
+    "TypeScript": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    }
+  },
+
+  // ESLint for linting only (not formatting)
+  "lsp": {
+    "eslint": {
+      "settings": {
+        "run": "onType",
+        "format": {
+          "enable": false
+        }
+      }
+    }
+  }
+}

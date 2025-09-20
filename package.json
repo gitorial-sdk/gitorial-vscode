@@ -46,8 +46,8 @@
     "clean": "rm -rf out dist node_modules/.cache packages/*/dist webview-ui/dist",
     "reset": "pnpm run clean && pnpm install && pnpm run build:shared",
     "// Formatting": "=== Code Formatting ===",
-    "format": "eslint --fix .",
-    "format:check": "eslint ."
+    "format": "prettier --write src packages/shared-types/src && eslint --fix .",
+    "format:check": "prettier --check src packages/shared-types/src && eslint ."
   },
   "categories": [
     "Education",
@@ -106,10 +106,22 @@
     ],
     "menus": {
       "commandPalette": [
-        { "command": "gitorial.enterAuthorMode", "when": "!gitorial.authorModeEnabled" },
-        { "command": "gitorial.exitAuthorMode", "when": "gitorial.authorModeEnabled" },
-        { "command": "gitorial.createNewTutorial", "when": "gitorial.authorModeEnabled" },
-        { "command": "gitorial.publishTutorial", "when": "gitorial.authorModeEnabled"  }
+        {
+          "command": "gitorial.enterAuthorMode",
+          "when": "!gitorial.authorModeEnabled"
+        },
+        {
+          "command": "gitorial.exitAuthorMode",
+          "when": "gitorial.authorModeEnabled"
+        },
+        {
+          "command": "gitorial.createNewTutorial",
+          "when": "gitorial.authorModeEnabled"
+        },
+        {
+          "command": "gitorial.publishTutorial",
+          "when": "gitorial.authorModeEnabled"
+        }
       ]
     },
     "uriHandler": [
@@ -180,6 +192,7 @@
     "linkify-it": "^5.0.0",
     "mdurl": "^2.0.0",
     "mocha": "^11.2.2",
+    "prettier": "^3.6.2",
     "sinon": "^20.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2",

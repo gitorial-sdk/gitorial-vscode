@@ -69,7 +69,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     workspacePath,
   } = application;
 
-  const commandHandler = new CommandHandler(tutorialController, systemController, authorModeController, userInteractionAdapter, workspacePath);
+  const commandHandler = new CommandHandler(
+    tutorialController,
+    systemController,
+    authorModeController,
+    userInteractionAdapter,
+    workspacePath
+  );
   const uriHandler = new TutorialUriHandler(tutorialController);
 
   console.log('📖 Registering regular commands...');
@@ -122,10 +128,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
 
   // --- Determine Workspace ID ---
   let workspacePath: string | undefined;
-  if (
-    vscode.workspace.workspaceFolders &&
-    vscode.workspace.workspaceFolders.length > 0
-  ) {
+  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
     workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
   } else {
     userInteractionAdapter.showWarningMessage('No workspace folder open. \nExiting Gitorial extension');
@@ -134,11 +137,10 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
 
   // --- Infrastructure Repositories ---
   const stepContentRepository = new StepContentRepository(fileSystemAdapter);
-  const activeTutorialStateRepository =
-    new MementoActiveTutorialStateRepository(workspaceStateMementoAdapter);
+  const activeTutorialStateRepository = new MementoActiveTutorialStateRepository(workspaceStateMementoAdapter);
   const tutorialRepository = new TutorialRepositoryImpl(
     workspaceStateMementoAdapter, // Using workspace specific state for tutorials
-    gitOperationsFactory.fromPath,
+    gitOperationsFactory.fromPath
   );
 
   // --- Domain Services ---
@@ -147,27 +149,19 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     gitOperationsFactory,
     stepContentRepository,
     activeTutorialStateRepository,
-    workspacePath,
+    workspacePath
   );
 
   const diffService = new DiffService(diffDisplayerAdapter, fileSystemAdapter);
-  const tutorialViewModelConverter = new TutorialViewModelConverter(
-    markdownConverter,
-  );
-  const tutorialDisplayService = new TutorialDisplayService(
-    tutorialViewModelConverter,
-    diffService,
-  );
+  const tutorialViewModelConverter = new TutorialViewModelConverter(markdownConverter);
+  const tutorialDisplayService = new TutorialDisplayService(tutorialViewModelConverter, diffService);
 
   // --- UI Services ---
 
   const editorManager = new EditorManager(fileSystemAdapter);
 
   const changeDetector = new TutorialChangeDetector();
-  const solutionWorkflow = new TutorialSolutionWorkflow(
-    diffService,
-    editorManager,
-  );
+  const solutionWorkflow = new TutorialSolutionWorkflow(diffService, editorManager);
 
   // Add services to context subscriptions for proper disposal
   context.subscriptions.push(solutionWorkflow);
@@ -178,34 +172,30 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // Create webview panel manager first
   webviewPanelManager = new WebviewPanelManager(context.extensionUri, () => {
     // Placeholder message handler - will be updated after controllers are created
-    console.warn(
-      'WebviewPanelManager: Message received before controllers are ready',
-    );
+    console.warn('WebviewPanelManager: Message received before controllers are ready');
   });
 
   // Create a temporary message handler that will be replaced later
   const tempMessageHandler = new WebviewMessageHandler(
     {
-      handleWebviewMessage: async() => {
+      handleWebviewMessage: async () => {
         console.warn('Tutorial message handler not ready yet');
       },
     },
     {
-      handleWebviewMessage: async() => {
+      handleWebviewMessage: async () => {
         console.warn('System message handler not ready yet');
       },
     },
     {
-      handleWebviewMessage: async() => {
+      handleWebviewMessage: async () => {
         console.warn('Author message handler not ready yet');
       },
-    },
+    }
   );
 
   // Set the temporary message handler immediately
-  webviewPanelManager.updateMessageHandler(
-    tempMessageHandler.handleMessage.bind(tempMessageHandler),
-  );
+  webviewPanelManager.updateMessageHandler(tempMessageHandler.handleMessage.bind(tempMessageHandler));
 
   // Create controllers first
   const systemController = await SystemController.new(
@@ -213,7 +203,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     configurationState,
     webviewPanelManager,
     userInteractionAdapter,
-    authorManifestBackupState,
+    authorManifestBackupState
   );
 
   const authorModeController = new AuthorModeController(
@@ -221,6 +211,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     gitOperationsFactory,
     activeTutorialStateRepository,
     workspacePath,
+    fileSystemAdapter
   );
 
   const tutorialController = new TutorialController(
@@ -234,7 +225,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     changeDetector,
     gitChangesFactory,
     markdownConverter,
-    webviewPanelManager,
+    webviewPanelManager
   );
 
   // Set the tutorial controller reference in system controller
@@ -242,26 +233,23 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
 
   // Now create the message handlers after all controllers are created
   const tutorialMessageHandler: IWebviewTutorialMessageHandler = {
-    handleWebviewMessage: (msg) => tutorialController.handleWebviewMessage(msg),
+    handleWebviewMessage: msg => tutorialController.handleWebviewMessage(msg),
   };
   const systemMessageHandler: IWebviewSystemMessageHandler = {
-    handleWebviewMessage: (msg) => systemController.handleWebviewMessage(msg),
+    handleWebviewMessage: msg => systemController.handleWebviewMessage(msg),
   };
   const authorMessageHandler: IWebviewAuthorMessageHandler = {
-    handleWebviewMessage: (msg) =>
-      authorModeController.handleWebviewMessage(msg),
+    handleWebviewMessage: msg => authorModeController.handleWebviewMessage(msg),
   };
 
   const webviewMessageHandler = new WebviewMessageHandler(
     tutorialMessageHandler,
     systemMessageHandler,
-    authorMessageHandler,
+    authorMessageHandler
   );
 
   // Update the webview panel manager with the real message handler
-  webviewPanelManager.updateMessageHandler(
-    webviewMessageHandler.handleMessage.bind(webviewMessageHandler),
-  );
+  webviewPanelManager.updateMessageHandler(webviewMessageHandler.handleMessage.bind(webviewMessageHandler));
 
   return {
     tutorialController,
@@ -281,7 +269,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
  */
 async function checkAndHandleAutoOpenState(
   tutorialController: TutorialController,
-  autoOpenState: AutoOpenState,
+  autoOpenState: AutoOpenState
 ): Promise<void> {
   try {
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -301,9 +289,7 @@ async function checkAndHandleAutoOpenState(
       return;
     }
 
-    console.log(
-      'Gitorial: Found pending auto-open state, attempting to open tutorial automatically',
-    );
+    console.log('Gitorial: Found pending auto-open state, attempting to open tutorial automatically');
 
     await tutorialController.openFromWorkspace({
       commitHash: pending.commitHash,

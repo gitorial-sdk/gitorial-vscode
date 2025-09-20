@@ -153,7 +153,10 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       try {
         // Try to checkout a new local branch 'gitorial' tracking the remote one with force
-        await this.git.checkout(['-B', 'gitorial', '--track', trackingBranch]);
+        await this.git.checkout(['-B',
+          'gitorial',
+          '--track',
+          trackingBranch]);
         console.log(
           `GitAdapter: Successfully created and force checked out local 'gitorial' branch tracking '${trackingBranch}'.`,
         );
@@ -526,7 +529,10 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       // Remove all files from Git's index
       try {
-        await this.git.raw(['rm', '-rf', '--cached', '.']);
+        await this.git.raw(['rm',
+          '-rf',
+          '--cached',
+          '.']);
       } catch {
         // Index might be empty, that's fine
       }
@@ -538,7 +544,10 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
         try {
           // Get all files from this commit
-          const fileList = await this.git.raw(['ls-tree', '-r', '--name-only', step.commit]);
+          const fileList = await this.git.raw(['ls-tree',
+            '-r',
+            '--name-only',
+            step.commit]);
           const filePaths = fileList.trim().split('\n').filter(path => path.length > 0);
 
           console.log(`🔍 GitAdapter: Found ${filePaths.length} files in commit ${step.commit}`);
@@ -795,8 +804,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     try {
       const branchSummary = await this.git.branch(['-a']);
       return branchSummary.all.some(branch =>
-        branch === branchName || branch === `remotes/origin/${branchName}`,
-      );
+        branch === branchName || branch === `remotes/origin/${branchName}`);
     } catch {
       return false;
     }
@@ -864,7 +872,11 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    */
   public async cherryPick(commitHash: string, customMessage?: string): Promise<void> {
     if (customMessage) {
-      await this.git.raw(['cherry-pick', '-m', '1', '--edit', commitHash]);
+      await this.git.raw(['cherry-pick',
+        '-m',
+        '1',
+        '--edit',
+        commitHash]);
     } else {
       await this.git.raw(['cherry-pick', commitHash]);
     }
@@ -1057,18 +1069,18 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           const [status, filePath] = line.split('\t');
           if (filePath) {
             switch (status) {
-            case 'A':
-              added.push(filePath);
-              break;
-            case 'M':
-              modified.push(filePath);
-              break;
-            case 'D':
-              deleted.push(filePath);
-              break;
-            default:
+              case 'A':
+                added.push(filePath);
+                break;
+              case 'M':
+                modified.push(filePath);
+                break;
+              case 'D':
+                deleted.push(filePath);
+                break;
+              default:
               // Handle other statuses (R for rename, C for copy, etc.)
-              modified.push(filePath);
+                modified.push(filePath);
             }
           }
         }
@@ -1135,7 +1147,10 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       // Remove everything from index
       try {
-        await this.git.raw(['rm', '-rf', '--cached', '.']);
+        await this.git.raw(['rm',
+          '-rf',
+          '--cached',
+          '.']);
       } catch (_error) {
         // Index might be empty
       }
@@ -1149,7 +1164,10 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           await this.git.raw(['cat-file', '-e', step.commit]);
 
           // Get the file tree from this commit
-          const fileList = await this.git.raw(['ls-tree', '-r', '--name-only', step.commit]);
+          const fileList = await this.git.raw(['ls-tree',
+            '-r',
+            '--name-only',
+            step.commit]);
           const filePaths = fileList.trim().split('\n').filter(path => path.length > 0);
 
           // Clear working directory

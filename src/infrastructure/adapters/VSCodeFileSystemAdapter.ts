@@ -2,15 +2,25 @@ import * as vscode from 'vscode';
 import { IFileSystem } from '../../domain/ports/IFileSystem';
 
 export class VSCodeFileSystemAdapter implements IFileSystem {
+  async createDirectory(path: string): Promise<boolean> {
+    try {
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(path));
+      return true;
+    } catch (error) {
+      // If the directory already exists, treat as success
+      if (error instanceof vscode.FileSystemError && error.code === 'FileExists') {
+        return true;
+      }
+      return false;
+    }
+  }
+
   async hasSubdirectory(parentDirectoryPath: string, subdirectoryName: string): Promise<boolean> {
     const parentStat = await vscode.workspace.fs.stat(vscode.Uri.file(parentDirectoryPath));
     if (parentStat.type !== vscode.FileType.Directory) {
       return false;
     }
-    const subdirectoryPath = vscode.Uri.joinPath(
-      vscode.Uri.file(parentDirectoryPath),
-      subdirectoryName,
-    );
+    const subdirectoryPath = vscode.Uri.joinPath(vscode.Uri.file(parentDirectoryPath), subdirectoryName);
     try {
       await vscode.workspace.fs.stat(subdirectoryPath);
       return true;

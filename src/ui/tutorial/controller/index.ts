@@ -185,16 +185,16 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
       this.userInteraction.showInformationMessage('Opened tutorial in current workspace.');
     } else if (result.action === External.TutorialStatus.NotFound) {
       switch (result.userChoice) {
-      case 'clone':
-        await this.cloneAndOpen({ repoUrl, commitHash });
-        break;
-      case 'open-local':
-        await this._openLocalTutorial({ commitHash });
-        break;
-      case 'cancel':
-        await this.webviewController.hideLoading();
-        this.userInteraction.showInformationMessage('Tutorial request cancelled.');
-        break;
+        case 'clone':
+          await this.cloneAndOpen({ repoUrl, commitHash });
+          break;
+        case 'open-local':
+          await this._openLocalTutorial({ commitHash });
+          break;
+        case 'cancel':
+          await this.webviewController.hideLoading();
+          this.userInteraction.showInformationMessage('Tutorial request cancelled.');
+          break;
       }
     }
   }

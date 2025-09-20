@@ -8,8 +8,10 @@ type TToDoComment = Domain.Commit.ToDoComment;
 
 export class Commit {
   private _data: TCommit;
-  private constructor(type: TCommitType, title: string, changedFiles: Array<string>, toDoComments: Array<TToDoComment>){
-    this._data = { type, title, changedFiles, toDoComments: toDoComments };
+  private constructor(type: TCommitType, title: string, changedFiles: Array<string>, toDoComments: Array<TToDoComment>) {
+    this._data = {
+      type, title, changedFiles, toDoComments: toDoComments,
+    };
   }
 
   public static new(message: string, changedFiles: Array<string>, toDoComments: Array<TToDoComment>): Result<Commit, TCommitError<string>> {

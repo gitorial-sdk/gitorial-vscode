@@ -92,9 +92,7 @@ export class EditorManager {
 
     const urisToActuallyOpen = targetUris.filter(uri =>
       !currentTabsInGroupTwo.find(tab =>
-        (tab.input as any)?.uri?.toString() === uri.toString(),
-      ),
-    );
+        (tab.input as any)?.uri?.toString() === uri.toString()));
 
     if (urisToActuallyOpen.length > 0) {
       for (let i = 0; i < urisToActuallyOpen.length; i++) {

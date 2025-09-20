@@ -19,11 +19,23 @@ export class SystemController implements IWebviewSystemMessageHandler {
     private readonly configurationState: IConfigurationState,
     private readonly webviewPanelManager: IWebviewPanelManager,
     private readonly userInteraction: IUserInteraction,
-    private readonly authorManifestBackupStore: IStateStorage,
+    private readonly authorManifestBackupStore: IStateStorage
   ) {}
 
-  public static async new(contextStore: IContextState, configurationStore: IConfigurationState, webviewPanelManager: IWebviewPanelManager, userInteraction: IUserInteraction, authorManifestBackupStore: IStateStorage): Promise<SystemController> {
-    const systemController = new SystemController(contextStore, configurationStore, webviewPanelManager, userInteraction, authorManifestBackupStore);
+  public static async new(
+    contextStore: IContextState,
+    configurationStore: IConfigurationState,
+    webviewPanelManager: IWebviewPanelManager,
+    userInteraction: IUserInteraction,
+    authorManifestBackupStore: IStateStorage
+  ): Promise<SystemController> {
+    const systemController = new SystemController(
+      contextStore,
+      configurationStore,
+      webviewPanelManager,
+      userInteraction,
+      authorManifestBackupStore
+    );
     await systemController.initializeAuthorModeState();
     systemController.registerConfigurationListener();
     return systemController;
@@ -44,7 +56,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
   }
 
   private registerConfigurationListener(): void {
-    this.configurationState.onDidChange(async(event) => {
+    this.configurationState.onDidChange(async event => {
       if (event.affectsConfiguration(CC.AUTHOR_MODE_CONTEXT)) {
         const newValue = this.configurationState.get<boolean>(CC.AUTHOR_MODE_KEY, false);
         await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, newValue);
@@ -76,9 +88,14 @@ export class SystemController implements IWebviewSystemMessageHandler {
           await this.handleError(message.payload);
           break;
         case 'requestConfirm':
-        // Show a native confirm dialog and return result
+          // Show a native confirm dialog and return result
           try {
-            const result = await this.userInteraction.showWarningMessage(message.payload.message, { modal: true }, 'Yes', 'No');
+            const result = await this.userInteraction.showWarningMessage(
+              message.payload.message,
+              { modal: true },
+              'Yes',
+              'No'
+            );
 
             const confirmed = result === 'Yes';
             await this.sendSystemMessage({
@@ -109,7 +126,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending system message to webview',
-        true,
+        true
       );
     }
   }
@@ -135,7 +152,6 @@ export class SystemController implements IWebviewSystemMessageHandler {
    * Hides the loading state in the webview.
    */
   public hideLoadingState = (): Promise<void> => this.showLoadingState(false, '');
-
 
   // ============================================================================
   // Error Handling and User Feedback
@@ -181,8 +197,8 @@ export class SystemController implements IWebviewSystemMessageHandler {
    * @param isActive - Whether author mode should be active
    */
   public async setAuthorMode(isActive: boolean): Promise<void> {
-    await this.configurationState.update(CC.AUTHOR_MODE_KEY, isActive);
-    await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, isActive);
+    await this.configurationState.update(CC.AUTHOR_MODE_KEY, isActive); //we change here the configurationState (.json file) to persist it
+    await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, isActive); //we change the context so that pallet settings change
 
     await this.sendSystemMessage({
       category: 'system',
@@ -218,11 +234,10 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending author manifest to webview',
-        true,
+        true
       );
     }
   }
-
 
   /**
    * Sends author manifest data to the webview.
@@ -263,7 +278,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendPublishResult(
     success: boolean,
     error?: string,
-    publishedCommits?: Array<{ originalCommit: string; newCommit: string; stepTitle: string; stepType: string }>,
+    publishedCommits?: Array<{ originalCommit: string; newCommit: string; stepTitle: string; stepType: string }>
   ): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
@@ -279,7 +294,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending publish result to webview',
-        true,
+        true
       );
     }
   }
@@ -301,7 +316,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending validation warnings to webview',
-        true,
+        true
       );
     }
   }
@@ -325,7 +340,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending editing started notification to webview',
-        true,
+        true
       );
     }
   }
@@ -346,7 +361,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending editing file-saved notification to webview',
-        true,
+        true
       );
     }
   }
@@ -370,7 +385,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending editing saved notification to webview',
-        true,
+        true
       );
     }
   }
@@ -392,7 +407,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending editing cancelled notification to webview',
-        true,
+        true
       );
     }
   }
@@ -416,7 +431,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
       await this.reportError(
         error instanceof Error ? error : new Error(String(error)),
         'Sending editing error notification to webview',
-        true,
+        true
       );
     }
   }
@@ -456,13 +471,23 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public getAuthorManifestBackup(repoPath: string): Domain.AuthorManifestData | null {
     try {
-      const backup = this.authorManifestBackupStore.get(`authorManifestBackup_${repoPath}`, null) as Domain.AuthorManifestData | null;
+      const backup = this.authorManifestBackupStore.get(
+        `authorManifestBackup_${repoPath}`,
+        null
+      ) as Domain.AuthorManifestData | null;
 
       // Validate backup data for corrupted commit hashes
       if (backup && backup.steps) {
         for (const step of backup.steps) {
-          if (!step.commit || step.commit.length !== 40 || step.commit.includes('HEAD.') || step.commit.includes('.c74')) {
-            console.warn(`🚨 SystemController: Corrupted commit hash detected in backup: "${step.commit}" - clearing backup`);
+          if (
+            !step.commit ||
+            step.commit.length !== 40 ||
+            step.commit.includes('HEAD.') ||
+            step.commit.includes('.c74')
+          ) {
+            console.warn(
+              `🚨 SystemController: Corrupted commit hash detected in backup: "${step.commit}" - clearing backup`
+            );
             this.clearAuthorManifestBackup(repoPath);
             return null;
           }

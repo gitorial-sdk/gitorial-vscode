@@ -206,8 +206,7 @@ suite('Integration: Author Mode E2E Workflow', () => {
           // Check if our changes are reflected in gitorial branch
           const gitorialCommits = gitorialLog.split('\n');
           const enhancementCommit = gitorialCommits.find(line =>
-            line.includes('Enhanced') || line.includes('author-mode') || line.includes(newCommitHash.trim().substring(0, 7)),
-          );
+            line.includes('Enhanced') || line.includes('author-mode') || line.includes(newCommitHash.trim().substring(0, 7)));
 
           if (enhancementCommit) {
             console.log('✅ Author Mode E2E: Enhancement commit found in gitorial branch');
@@ -320,8 +319,7 @@ suite('Integration: Author Mode E2E Workflow', () => {
 
           const enhancedCommitInLog = commits.find(line =>
             line.includes(newCommitHash.trim().substring(0, 7)) ||
-              line.includes('author-mode'),
-          );
+              line.includes('author-mode'));
 
           if (enhancedCommitInLog) {
             console.log('✅ Author Mode E2E: Enhanced commit found in git log:', enhancedCommitInLog);

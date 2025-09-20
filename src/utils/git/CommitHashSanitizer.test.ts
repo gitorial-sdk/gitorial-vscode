@@ -41,7 +41,8 @@ describe('CommitHashSanitizer', () => {
       const malformedInput = `HEAD.${truncatedHash.substring(0, 3)}`;
 
       // This should throw an error because "HEAD.c74" is not a valid pattern
-      assert.throws(() => CommitHashSanitizer.sanitize(malformedInput),
+      assert.throws(
+        () => CommitHashSanitizer.sanitize(malformedInput),
         /Could not extract valid commit hash/,
       );
     });

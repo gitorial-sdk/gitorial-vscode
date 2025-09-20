@@ -1,7 +1,11 @@
 import { ToDoComment } from './ToDoComment';
 
 //StepType.ts defines the same types besides the readme type TODO: duplicate code -> fix
-export const Types = ['section','template','solution','action','readme'] as const;
+export const Types = ['section',
+  'template',
+  'solution',
+  'action',
+  'readme'] as const;
 export type Type = typeof Types[number];
 
 export const isType = (value: string): value is Type =>

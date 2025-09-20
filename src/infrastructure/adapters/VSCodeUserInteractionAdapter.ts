@@ -44,9 +44,9 @@ export class VSCodeUserInteractionAdapter implements IUserInteraction {
   }
 
   public async showWarningMessage<T extends string>(message: string, options?: MessageOptions, ...items: T[]): Promise<T | undefined> {
-    if(options){
+    if (options) {
       return vscode.window.showWarningMessage(message, options, ...items);
-    }else {
+    } else {
       return vscode.window.showWarningMessage(message, ...items);
     }
   }
@@ -91,8 +91,7 @@ export class VSCodeUserInteractionAdapter implements IUserInteraction {
     cancelActionTitle?: string;
   }): Promise<boolean> {
     const options: vscode.MessageItem[] = [
-      { title: opt.confirmActionTitle || 'Yes', isCloseAffordance: false },
-      { title: opt.cancelActionTitle || 'Cancel', isCloseAffordance: true },
+      { title: opt.confirmActionTitle || 'Yes', isCloseAffordance: false }, { title: opt.cancelActionTitle || 'Cancel', isCloseAffordance: true },
     ];
 
     const choice = await vscode.window.showWarningMessage(

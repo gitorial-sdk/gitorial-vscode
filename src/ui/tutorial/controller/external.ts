@@ -112,14 +112,14 @@ export class Controller {
     );
 
     switch (result) {
-    case 'Clone and Sync':
-      return 'clone';
-    case 'Open Local and Sync':
-      return 'open-local';
-    case 'Cancel':
-      return 'cancel';
-    default:
-      return 'cancel';
+      case 'Clone and Sync':
+        return 'clone';
+      case 'Open Local and Sync':
+        return 'open-local';
+      case 'Cancel':
+        return 'cancel';
+      default:
+        return 'cancel';
     }
   }
 }

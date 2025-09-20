@@ -14,7 +14,7 @@ export class VSCodeProgressReporter implements IProgressReporter {
         title,
         cancellable: onCancel !== undefined,
       },
-      async (progress, token) => {
+      async(progress, token) => {
         this.progressInstance = progress;
         if (onCancel) {
           token.onCancellationRequested(() => {

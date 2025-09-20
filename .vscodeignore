@@ -26,6 +26,7 @@ node_modules/**
 *.tsbuildinfo
 tsconfig.*
 eslint.config.mjs
+eslint.config.js
 .gitignore
 .DS_Store
 *.vsix

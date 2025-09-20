@@ -93,20 +93,20 @@ export class Controller {
     message: UI.Messages.WebviewToExtensionTutorialMessage,
   ): Promise<boolean> {
     switch (message.type) {
-    case 'next-step':
-      await this.navigateToNextStep();
-      return true;
-    case 'prev-step':
-      await this.navigateToPreviousStep();
-      return true;
-    case 'show-solution':
-      await this.showSolution();
-      return true;
-    case 'hide-solution':
-      await this.hideSolution();
-      return true;
-    default:
-      return false;
+      case 'next-step':
+        await this.navigateToNextStep();
+        return true;
+      case 'prev-step':
+        await this.navigateToPreviousStep();
+        return true;
+      case 'show-solution':
+        await this.showSolution();
+        return true;
+      case 'hide-solution':
+        await this.hideSolution();
+        return true;
+      default:
+        return false;
     }
   }
 

@@ -131,7 +131,7 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
     sandbox.restore();
   });
 
-  test('checkoutAndClean logic should handle successful checkout and clean', async () => {
+  test('checkoutAndClean logic should handle successful checkout and clean', async() => {
     // Create a mock git object
     const mockGit = {
       checkout: sandbox.stub().resolves(),
@@ -176,7 +176,7 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
     );
   });
 
-  test('checkoutAndClean logic should handle local changes error', async () => {
+  test('checkoutAndClean logic should handle local changes error', async() => {
     // Create a mock git object
     const localChangesError = new Error(
       'Your local changes to the following files would be overwritten by checkout',
@@ -228,7 +228,7 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
     assert.ok(mockGit.raw.calledOnce, 'git clean should be called even after forced checkout');
   });
 
-  test('checkoutAndClean logic should propagate non-local-changes errors', async () => {
+  test('checkoutAndClean logic should propagate non-local-changes errors', async() => {
     const unexpectedError = new Error('Some other git error');
     const mockGit = {
       checkout: sandbox.stub().rejects(unexpectedError),
@@ -294,7 +294,7 @@ suite('DiffViewService Show Solution Tests', () => {
     sandbox.restore();
   });
 
-  test('showStepSolution should compare user\'s current working directory against solution', async () => {
+  test('showStepSolution should compare user\'s current working directory against solution', async() => {
     // Mock file system
     const mockFs = {
       join: sandbox.stub().callsFake((path1: string, path2: string) => `${path1}/${path2}`),
@@ -312,8 +312,7 @@ suite('DiffViewService Show Solution Tests', () => {
       activeStepIndex: 0,
       activeStep: { commitHash: 'current123', title: 'Step 1' },
       steps: [
-        { commitHash: 'current123', title: 'Step 1' },
-        { commitHash: 'next456', title: 'Step 2' },
+        { commitHash: 'current123', title: 'Step 1' }, { commitHash: 'next456', title: 'Step 2' },
       ],
       localPath: '/tutorial/path',
     };
@@ -366,14 +365,14 @@ suite('DiffViewService Show Solution Tests', () => {
           const absoluteFilePath = mockFs.join(tutorial.localPath, payload.relativeFilePath);
 
           // Create content providers that actually call the mocked file system
-          const leftContentProvider = async () => {
+          const leftContentProvider = async() => {
             if (await mockFs.pathExists(absoluteFilePath)) {
               return await mockFs.readFile(absoluteFilePath);
             }
             return '';
           };
 
-          const rightContentProvider = async () => payload.modifiedContent || '';
+          const rightContentProvider = async() => payload.modifiedContent || '';
 
           filesToDisplay.push({
             leftContentProvider,
@@ -436,7 +435,7 @@ suite('DiffViewService Show Solution Tests', () => {
     );
   });
 
-  test('showStepSolution should preserve focus on preferred file when specified', async () => {
+  test('showStepSolution should preserve focus on preferred file when specified', async() => {
     // Mock file system
     const mockFs = {
       join: sandbox.stub().callsFake((path1: string, path2: string) => `${path1}/${path2}`),
@@ -454,8 +453,7 @@ suite('DiffViewService Show Solution Tests', () => {
       activeStepIndex: 0,
       activeStep: { commitHash: 'current123', title: 'Step 1' },
       steps: [
-        { commitHash: 'current123', title: 'Step 1' },
-        { commitHash: 'next456', title: 'Step 2' },
+        { commitHash: 'current123', title: 'Step 1' }, { commitHash: 'next456', title: 'Step 2' },
       ],
       localPath: '/tutorial/path',
     };
@@ -518,13 +516,13 @@ suite('DiffViewService Show Solution Tests', () => {
           const absoluteFilePath = mockFs.join(tutorial.localPath, payload.relativeFilePath);
 
           filesToDisplay.push({
-            leftContentProvider: async () => {
+            leftContentProvider: async() => {
               if (await mockFs.pathExists(absoluteFilePath)) {
                 return await mockFs.readFile(absoluteFilePath);
               }
               return '';
             },
-            rightContentProvider: async () => payload.modifiedContent || '',
+            rightContentProvider: async() => payload.modifiedContent || '',
             relativePath: payload.relativeFilePath,
             leftCommitId: 'working-dir',
             rightCommitId: nextStep.commitHash,
@@ -570,7 +568,7 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     sandbox.restore();
   });
 
-  test('ensureGitorialBranch should skip checkout when already on gitorial branch', async () => {
+  test('ensureGitorialBranch should skip checkout when already on gitorial branch', async() => {
     // Mock git object
     const mockGit = {
       branch: sandbox.stub().resolves({
@@ -641,7 +639,7 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     );
   });
 
-  test('ensureGitorialBranch should detect gitorial branch even in detached HEAD state', async () => {
+  test('ensureGitorialBranch should detect gitorial branch even in detached HEAD state', async() => {
     // Mock git object - simulating detached HEAD but on gitorial branch
     const mockGit = {
       branch: sandbox.stub().resolves({
@@ -710,7 +708,7 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     );
   });
 
-  test('ensureGitorialBranch should force checkout when local gitorial branch exists but not current', async () => {
+  test('ensureGitorialBranch should force checkout when local gitorial branch exists but not current', async() => {
     // Mock git object
     const mockGit = {
       branch: sandbox.stub().resolves({

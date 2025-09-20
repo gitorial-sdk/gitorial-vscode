@@ -6,9 +6,15 @@ describe('TutorialBuilder.extractStepsFromCommits', () => {
   it('includes readme steps and preserves chronological order (oldest first)', () => {
     const commits = [
       // Git log typically newest first, we simulate that order and expect builder to reverse
-      { hash: 'c3', message: 'action: third', authorName: 'a', authorEmail: 'a@a', date: '3' },
-      { hash: 'c2', message: 'readme: introduction', authorName: 'a', authorEmail: 'a@a', date: '2' },
-      { hash: 'c1', message: 'section: start', authorName: 'a', authorEmail: 'a@a', date: '1' },
+      {
+        hash: 'c3', message: 'action: third', authorName: 'a', authorEmail: 'a@a', date: '3',
+      },
+      {
+        hash: 'c2', message: 'readme: introduction', authorName: 'a', authorEmail: 'a@a', date: '2',
+      },
+      {
+        hash: 'c1', message: 'section: start', authorName: 'a', authorEmail: 'a@a', date: '1',
+      },
     ];
 
     const id = 'owner/repo' as Domain.TutorialId;

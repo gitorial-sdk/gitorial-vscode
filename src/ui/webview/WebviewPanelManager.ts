@@ -68,8 +68,7 @@ export class WebviewPanelManager implements IWebviewPanelManager {
       {
         enableScripts: true,
         localResourceRoots: [
-          vscode.Uri.joinPath(this.extensionUri, 'out'),
-          vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist'),
+          vscode.Uri.joinPath(this.extensionUri, 'out'), vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist'),
         ],
         retainContextWhenHidden: true,
       },

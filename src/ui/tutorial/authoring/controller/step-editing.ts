@@ -12,10 +12,11 @@ export class Controller implements IClearable {
   private originalStepCommit: string | null = null;
   private saveListenerDisposable: vscode.Disposable | null = null;
 
-  constructor(private readonly systemController: SystemController,
+  constructor(
+    private readonly systemController: SystemController,
     private readonly manifestController: Manifest.Controller,
     private readonly gitFactory: IGitOperationsFactory,
-    private readonly currentWorkspace: string,
+    private readonly currentWorkspace: string
   ) {
     this.gitFactory = gitFactory;
   }
@@ -29,11 +30,21 @@ export class Controller implements IClearable {
     }
   }
 
-
-  async handleMessage(message: Extract<
-    UI.Messages.WebviewToExtensionAuthorMessage,
-    { type: 'addStep' | 'removeStep' | 'updateStep' | 'reorderStep' | 'startEditingStep' | 'saveStepChanges' | 'cancelStepEditing' }
-    >): Promise<Result<void, string>> {
+  async handleMessage(
+    message: Extract<
+      UI.Messages.WebviewToExtensionAuthorMessage,
+      {
+        type:
+          | 'addStep'
+          | 'removeStep'
+          | 'updateStep'
+          | 'reorderStep'
+          | 'startEditingStep'
+          | 'saveStepChanges'
+          | 'cancelStepEditing';
+      }
+    >
+  ): Promise<Result<void, string>> {
     switch (message.type) {
       case 'addStep':
         await this.add(message.payload.step, message.payload.index);
@@ -101,9 +112,13 @@ export class Controller implements IClearable {
   private async reorder(fromIndex: number, toIndex: number): Promise<void> {
     console.log('AuthorModeController: Reorder step');
     const manifest = await this.manifestController.getOrLoadManifest();
-    if (fromIndex === toIndex ||
-            fromIndex < 0 || fromIndex >= manifest.steps.length ||
-            toIndex < 0 || toIndex >= manifest.steps.length) {
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      fromIndex >= manifest.steps.length ||
+      toIndex < 0 ||
+      toIndex >= manifest.steps.length
+    ) {
       return;
     }
 
@@ -130,7 +145,9 @@ export class Controller implements IClearable {
       console.log(`🔍 AuthorModeController: Manifest loaded with ${manifest.steps.length} steps`);
 
       if (stepIndex < 0 || stepIndex >= manifest.steps.length) {
-        console.log(`🚨 AuthorModeController: Invalid step index ${stepIndex}, manifest has ${manifest.steps.length} steps`);
+        console.log(
+          `🚨 AuthorModeController: Invalid step index ${stepIndex}, manifest has ${manifest.steps.length} steps`
+        );
         await this.systemController.sendEditingError(stepIndex, 'Invalid step index');
         return;
       }
@@ -161,7 +178,7 @@ export class Controller implements IClearable {
         console.error(`🚨 AuthorMode: Invalid commit hash format: "${step.commit}"`, sanitizeError);
         await this.systemController.sendEditingError(
           stepIndex,
-          `Invalid commit hash format: ${step.commit}. Please regenerate the manifest from the gitorial branch.`,
+          `Invalid commit hash format: ${step.commit}. Please regenerate the manifest from the gitorial branch.`
         );
         return;
       }
@@ -185,7 +202,7 @@ export class Controller implements IClearable {
         // Try to regenerate manifest from gitorial branch
         console.log('🔄 AuthorMode: Attempting to regenerate manifest from gitorial branch...');
         try {
-          const freshManifest = await this.manifestController.readManifestOrImport(this.currentWorkspace);
+          const freshManifest = await this.manifestController.readManifestOrImport();
           this.manifestController.currentManifest = freshManifest;
           await this.systemController.sendAuthorManifest(freshManifest, false);
 
@@ -197,7 +214,7 @@ export class Controller implements IClearable {
           } else {
             await this.systemController.sendEditingError(
               stepIndex,
-              `Step ${stepIndex + 1} not found in regenerated manifest. The gitorial branch may be incomplete.`,
+              `Step ${stepIndex + 1} not found in regenerated manifest. The gitorial branch may be incomplete.`
             );
             return;
           }
@@ -205,7 +222,7 @@ export class Controller implements IClearable {
           console.error('🚨 AuthorMode: Failed to regenerate manifest:', regenerateError);
           await this.systemController.sendEditingError(
             stepIndex,
-            `Commit "${sanitizedCommit}" does not exist. Failed to regenerate manifest: ${regenerateError instanceof Error ? regenerateError.message : String(regenerateError)}`,
+            `Commit "${sanitizedCommit}" does not exist. Failed to regenerate manifest: ${regenerateError instanceof Error ? regenerateError.message : String(regenerateError)}`
           );
           return;
         }
@@ -220,7 +237,7 @@ export class Controller implements IClearable {
         console.error(`🚨 AuthorMode: Failed to checkout commit: "${sanitizedCommit}"`, checkoutError);
         await this.systemController.sendEditingError(
           stepIndex,
-          `Failed to checkout commit "${sanitizedCommit}": ${checkoutError instanceof Error ? checkoutError.message : String(checkoutError)}`,
+          `Failed to checkout commit "${sanitizedCommit}": ${checkoutError instanceof Error ? checkoutError.message : String(checkoutError)}`
         );
         return;
       }
@@ -230,7 +247,7 @@ export class Controller implements IClearable {
       this.originalStepCommit = step.commit;
 
       // Listen for document saves while editing so the webview can enable the Save button
-      this.saveListenerDisposable = vscode.workspace.onDidSaveTextDocument(async(_doc) => {
+      this.saveListenerDisposable = vscode.workspace.onDidSaveTextDocument(async _doc => {
         try {
           if (this.currentlyEditingStep !== null) {
             // Notify webview so UI reflects unsaved changes; user must click Save in the panel
@@ -243,21 +260,19 @@ export class Controller implements IClearable {
 
       // Send success response
       await this.systemController.sendEditingStarted(stepIndex, step);
-
     } catch (error) {
       console.error('🚨 AuthorModeController: Error starting step editing:', error);
       console.error('🚨 AuthorModeController: Error details:', {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : 'No stack trace',
         stepIndex,
-        currentManifest: this.manifestController.currentManifest ? {
-          steps: this.manifestController.currentManifest.steps.map(s => ({ title: s.title, commit: s.commit })),
-        } : 'No manifest loaded',
+        currentManifest: this.manifestController.currentManifest
+          ? {
+              steps: this.manifestController.currentManifest.steps.map(s => ({ title: s.title, commit: s.commit })),
+            }
+          : 'No manifest loaded',
       });
-      await this.systemController.sendEditingError(
-        stepIndex,
-        error instanceof Error ? error.message : String(error),
-      );
+      await this.systemController.sendEditingError(stepIndex, error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -339,13 +354,9 @@ export class Controller implements IClearable {
 
       // Send success response with the updated manifest
       await this.systemController.sendEditingSaved(stepIndex, finalManifest);
-
     } catch (error) {
       console.error('AuthorModeController: Error saving step changes:', error);
-      await this.systemController.sendEditingError(
-        stepIndex,
-        error instanceof Error ? error.message : String(error),
-      );
+      await this.systemController.sendEditingError(stepIndex, error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -384,7 +395,6 @@ export class Controller implements IClearable {
 
       // Send success response
       await this.systemController.sendEditingCancelled(stepIndex);
-
     } catch (error) {
       console.error('AuthorModeController: Error cancelling step editing:', error);
 
@@ -392,10 +402,7 @@ export class Controller implements IClearable {
       this.currentlyEditingStep = null;
       this.originalStepCommit = null;
 
-      await this.systemController.sendEditingError(
-        stepIndex,
-        error instanceof Error ? error.message : String(error),
-      );
+      await this.systemController.sendEditingError(stepIndex, error instanceof Error ? error.message : String(error));
     }
   }
 }

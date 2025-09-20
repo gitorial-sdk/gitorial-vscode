@@ -46,7 +46,7 @@ suite('Integration: Clone Tutorial Workflow', () => {
 
         const expectedClonePath = IntegrationTestUtils.getExpectedRepositoryPath(INTEGRATION_TEST_CONFIG.DIRECTORIES.TEST_REPO_NAME);
 
-        await IntegrationTestUtils.waitForCondition(async () => {
+        await IntegrationTestUtils.waitForCondition(async() => {
           try {
             await fs.access(expectedClonePath);
             return true;

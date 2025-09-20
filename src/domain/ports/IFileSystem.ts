@@ -21,6 +21,14 @@ export interface IFileSystem {
   isDirectory(path: string): Promise<boolean>;
 
   /**
+   * @param path The absolute path where the directory should be created.
+   * @returns A promise that resolves to true if the directory was created successfully,
+   *          or false if the directory already exists.
+   * @throws Error if the directory cannot be created due to permissions or other file system errors.
+   */
+  createDirectory(path: string): Promise<boolean>;
+
+  /**
    * Checks if a given path is a directory and contains a specific subdirectory as a direct child.
    * @param parentDirectoryPath The absolute path of the potential parent directory.
    * @param subdirectoryName The name of the subdirectory to look for.
