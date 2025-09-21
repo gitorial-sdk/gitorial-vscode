@@ -4,7 +4,7 @@
   import { tutorialStore } from '../stores/tutorialStore.svelte';
 
   interface Props {
-    stepType: Domain.StepType;
+    stepType: Domain.Commit.Type;
     isShowingSolution: boolean;
     hasNext: boolean;
     hasPrev: boolean;

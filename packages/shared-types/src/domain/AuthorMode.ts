@@ -1,12 +1,15 @@
-import type { StepType } from './StepType';
+import type { Type } from './commit';
 
 /**
  * Author mode domain types - kept in sync with main AuthorManifest implementation
  */
 
 export type ManifestStep = {
+  /**
+   * This is a commit hash which is supposed to be exactly 40 characters long
+   */
   commit: string;
-  type: StepType;
+  type: Type;
   title: string;
 };
 

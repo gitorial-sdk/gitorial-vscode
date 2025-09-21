@@ -3,8 +3,8 @@ import { Domain } from '@gitorial/shared-types';
 import { CommitList } from './CommitList';
 import { Commit } from './Commit';
 
-type TCommitListRule<T extends string> = Domain.CommitList.Validation.Rule<T>
-type TListValidationError<T extends string> = Domain.CommitList.Validation.Error<T>
+type TCommitListRule<T extends string> = Domain.CommitList.Validation.Rule<T>;
+type TListValidationError<T extends string> = Domain.CommitList.Validation.Error<T>;
 type TCommit = Domain.Commit.Base;
 type TCommitError<T extends string> = Domain.Commit.Validation.Error<T>;
 
@@ -33,10 +33,7 @@ export class DraftCommitList<TCode extends string = string> {
    * @param rules - Rules to validate with during {@link finalize}
    * @returns A new {@link DraftCommitList} seeded with the list content
    */
-  static beginFrom<T extends string>(
-    list: CommitList<T>,
-    rules: ReadonlyArray<TCommitListRule<T>>,
-  ) {
+  static beginFrom<T extends string>(list: CommitList<T>, rules: ReadonlyArray<TCommitListRule<T>>) {
     const commits = list.toArray().map(c => c.data);
     return new DraftCommitList<T>(commits, rules);
   }
@@ -51,10 +48,7 @@ export class DraftCommitList<TCode extends string = string> {
     return new DraftCommitList<T>([], rules);
   }
 
-  private constructor(
-    working: ReadonlyArray<TCommit>,
-    rules: ReadonlyArray<TCommitListRule<TCode>>,
-  ) {
+  private constructor(working: ReadonlyArray<TCommit>, rules: ReadonlyArray<TCommitListRule<TCode>>) {
     this.working = working;
     this.rules = rules;
   }
@@ -68,11 +62,13 @@ export class DraftCommitList<TCode extends string = string> {
    * @returns Result.Ok with {@link CommitList} on success; Result.Err with the first
    *          {@link Shared.ValidationError} on failure.
    */
-  finalize(rules?: ReadonlyArray<TCommitListRule<TCode>>): Result<CommitList<TCode>, TListValidationError<TCode> | TCommitError<TCode>> {
+  finalize(
+    rules?: ReadonlyArray<TCommitListRule<TCode>>
+  ): Result<CommitList<TCode>, TListValidationError<TCode> | TCommitError<TCode>> {
     const active = rules ?? this.rules;
     let checkedCommits: Array<Commit> = [];
     for (const [index, c] of this.working.entries()) {
-      const checked = Commit.newWithType(c.type, c.title, c.changedFiles, c.toDoComments);
+      const checked = Commit.newWithType(c.type, c.title, c.hash, c.changedFiles, c.toDoComments);
       if (checked.isErr()) {
         const { code, message } = checked.error;
         return err({ index, code: code as TCode, message });
@@ -95,9 +91,7 @@ export class DraftCommitList<TCode extends string = string> {
    */
   appendCommit(commit: TCommit) {
     if (this.working[this.working.length - 1].type === 'readme') {
-      this.working = [
-        ...this.working.slice(0, this.working.length - 1), commit, this.working[this.working.length - 1],
-      ];
+      this.working = [...this.working.slice(0, this.working.length - 1), commit, this.working[this.working.length - 1]];
     } else {
       this.working = [...this.working, commit];
     }

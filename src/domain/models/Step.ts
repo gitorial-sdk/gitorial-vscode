@@ -9,7 +9,7 @@ export class Step {
   public readonly id: string;
   public readonly title: string;
   public readonly commitHash: string;
-  public readonly type: Domain.StepType;
+  public readonly type: Domain.Commit.Type;
   public readonly index: number;
 
   constructor(data: Domain.StepData) {

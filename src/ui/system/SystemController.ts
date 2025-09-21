@@ -18,23 +18,20 @@ export class SystemController implements IWebviewSystemMessageHandler {
     private readonly contextState: IContextState,
     private readonly configurationState: IConfigurationState,
     private readonly webviewPanelManager: IWebviewPanelManager,
-    readonly userInteraction: IUserInteraction,
-    private readonly authorManifestBackupStore: IStateStorage
+    readonly userInteraction: IUserInteraction
   ) {}
 
   public static async new(
     contextStore: IContextState,
     configurationStore: IConfigurationState,
     webviewPanelManager: IWebviewPanelManager,
-    userInteraction: IUserInteraction,
-    authorManifestBackupStore: IStateStorage
+    userInteraction: IUserInteraction
   ): Promise<SystemController> {
     const systemController = new SystemController(
       contextStore,
       configurationStore,
       webviewPanelManager,
-      userInteraction,
-      authorManifestBackupStore
+      userInteraction
     );
     await systemController.initializeAuthorModeState();
     systemController.registerConfigurationListener();
@@ -256,20 +253,6 @@ export class SystemController implements IWebviewSystemMessageHandler {
   }
 
   /**
-   * Clears the backup of the author manifest for a specific repository.
-   * @param repoPath - The repository path
-   */
-  public async clearAuthorManifestBackup(repoPath: string): Promise<void> {
-    try {
-      const key = `authorManifestBackup_${repoPath}`;
-      await this.authorManifestBackupStore.update(key, undefined);
-      console.log(`🧹 SystemController: Cleared corrupted backup for ${repoPath}`);
-    } catch (error) {
-      console.error('Failed to clear author manifest backup:', error);
-    }
-  }
-
-  /**
    * Sends publish result information to the webview.
    * @param success - Whether the publish operation was successful
    * @param error - Error message if the publish failed
@@ -452,52 +435,6 @@ export class SystemController implements IWebviewSystemMessageHandler {
     await this.userInteraction.showErrorMessage(`Webview Error: ${payload.message}`);
     if (payload.details) {
       await this.userInteraction.showErrorMessage(payload.details);
-    }
-  }
-
-  /**
-   * Saves a backup of the author manifest for a specific repository.
-   * @param repoPath - The repository path
-   * @param manifest - The manifest data to backup
-   */
-  public async saveAuthorManifestBackup(repoPath: string, manifest: Domain.AuthorManifestData): Promise<void> {
-    const key = `authorManifestBackup_${repoPath}`;
-    await this.authorManifestBackupStore.update(key, manifest);
-  }
-  /**
-   * Retrieves a backup of the author manifest for a specific repository.
-   * @param repoPath - The repository path
-   * @returns The backup manifest data or null if not found
-   */
-  public getAuthorManifestBackup(repoPath: string): Domain.AuthorManifestData | null {
-    try {
-      const backup = this.authorManifestBackupStore.get(
-        `authorManifestBackup_${repoPath}`,
-        null
-      ) as Domain.AuthorManifestData | null;
-
-      // Validate backup data for corrupted commit hashes
-      if (backup && backup.steps) {
-        for (const step of backup.steps) {
-          if (
-            !step.commit ||
-            step.commit.length !== 40 ||
-            step.commit.includes('HEAD.') ||
-            step.commit.includes('.c74')
-          ) {
-            console.warn(
-              `🚨 SystemController: Corrupted commit hash detected in backup: "${step.commit}" - clearing backup`
-            );
-            this.clearAuthorManifestBackup(repoPath);
-            return null;
-          }
-        }
-      }
-
-      return backup;
-    } catch (error) {
-      console.error('Failed to retrieve author manifest backup:', error);
-      return null;
     }
   }
 }

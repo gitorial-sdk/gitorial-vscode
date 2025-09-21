@@ -282,8 +282,8 @@ export interface IGitOperations {
   ensureGitorialBranch(): Promise<void>;
 
   /**
-   * Gets the names of files added or modified *by the specified commit* compared to its direct parent.
-   * If it's the initial commit, lists all files tracked in that commit.
+   * Returns the list of files that were added or modified in the specified commit,
+   * relative to its direct parent. That is, it shows what changes this commit introduced.
    * @param commitHash The hash of the commit to inspect.
    * @returns A promise that resolves to an array of relative file paths.
    */

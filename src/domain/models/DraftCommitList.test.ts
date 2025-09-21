@@ -6,20 +6,34 @@ import { Commit } from './Commit';
 
 describe('Domain DraftCommitList', () => {
   const validSequence: Commit[] = [
-    Commit.newFromObject(c('section', 'Introduction', ['README.md']))._unsafeUnwrap(),
-    Commit.newFromObject(c('action', 'Cargo Init'))._unsafeUnwrap(),
-    Commit.newFromObject(c('action', 'rustfmt config + fmt'))._unsafeUnwrap(),
-    Commit.newFromObject(c('section', 'balances pallet', ['README.md']))._unsafeUnwrap(),
-    Commit.newFromObject(c('template', 'introduce balances module', ['pallets/balances/src/lib.rs'], [{ filePath: 'pallets/balances/src/lib.rs', lines: [1, 10] }]))._unsafeUnwrap(),
-    Commit.newFromObject(c('solution', 'introduce balances module', ['pallets/balances/src/lib.rs'], []))._unsafeUnwrap(),
-    Commit.newFromObject(c('readme', 'Repo End', ['README.md']))._unsafeUnwrap(),
+    Commit.newFromObject(c('section', 'Introduction', ['README.md'])),
+    Commit.newFromObject(c('action', 'Cargo Init')),
+    Commit.newFromObject(c('action', 'rustfmt config + fmt')),
+    Commit.newFromObject(c('section', 'balances pallet', ['README.md'])),
+    Commit.newFromObject(
+      c(
+        'template',
+        'introduce balances module',
+        ['pallets/balances/src/lib.rs'],
+        [{ realtiveFilePath: 'pallets/balances/src/lib.rs' }]
+      )
+    ),
+    Commit.newFromObject(c('solution', 'introduce balances module', ['pallets/balances/src/lib.rs'], [])),
+    Commit.newFromObject(c('readme', 'Repo End', ['README.md'])),
   ];
 
   it('append successfully', () => {
     const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)._unsafeUnwrap();
     const draft = list.toDraft();
 
-    draft.appendCommit(c('template', 'some template', ['pallets/balances/src/lib.rs'], [{ filePath: 'pallets/balances/src/lib.rs', lines: [2, 3] }]));
+    draft.appendCommit(
+      c(
+        'template',
+        'some template',
+        ['pallets/balances/src/lib.rs'],
+        [{ realtiveFilePath: 'pallets/balances/src/lib.rs' }]
+      )
+    );
     draft.appendCommit(c('solution', 'some solution', ['pallets/balances/src/lib.rs'], []));
     const result = draft.finalize();
     console.log(result);
@@ -56,5 +70,3 @@ describe('Domain DraftCommitList', () => {
     expect(result.isOk()).to.equal(true);
   });
 });
-
-

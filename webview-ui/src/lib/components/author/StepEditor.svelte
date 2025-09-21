@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { Domain } from "@gitorial/shared-types";
 
-  let { 
-    step, 
-    stepIndex, 
-    onSave, 
-    onCancel, 
-    onValidateCommit 
+  let {
+    step,
+    stepIndex,
+    onSave,
+    onCancel,
+    onValidateCommit
   } = $props<{
     step: Domain.ManifestStep | null;
     stepIndex: number | null;
@@ -15,34 +15,34 @@
     onValidateCommit: (commitHash: string) => void;
   }>();
 
-  const stepTypes: Array<{ value: Domain.StepType; label: string; description: string; icon: string }> = [
-    { 
-      value: 'section', 
-      label: 'Section', 
+  const stepTypes: Array<{ value: Domain.Commit.Type; label: string; description: string; icon: string }> = [
+    {
+      value: 'section',
+      label: 'Section',
       description: 'A new section or chapter in the tutorial',
       icon: '📚'
     },
-    { 
-      value: 'template', 
-      label: 'Template', 
+    {
+      value: 'template',
+      label: 'Template',
       description: 'Provides a starting template for the learner',
       icon: '📝'
     },
-    { 
-      value: 'solution', 
-      label: 'Solution', 
+    {
+      value: 'solution',
+      label: 'Solution',
       description: 'Shows the solution to a template step',
       icon: '✅'
     },
-    { 
-      value: 'action', 
-      label: 'Action', 
+    {
+      value: 'action',
+      label: 'Action',
       description: 'An action or task for the learner to perform',
       icon: '⚡'
     },
-    { 
-      value: 'readme', 
-      label: 'README', 
+    {
+      value: 'readme',
+      label: 'README',
       description: 'Documentation or explanation step',
       icon: '📖'
     },
@@ -51,7 +51,7 @@
   // Form state
   let formData = $state({
     commit: step?.commit || '',
-    type: step?.type || 'section' as Domain.StepType,
+    type: step?.type || 'section' as Domain.Commit.Type,
     title: step?.title || '',
   });
 
@@ -95,7 +95,7 @@
     if (event) {
       event.preventDefault();
     }
-    
+
     if (!validateForm()) return;
 
     const stepData: Domain.ManifestStep = {
@@ -120,7 +120,7 @@
 
     isValidating = true;
     onValidateCommit(commitHash);
-    
+
     // Simulate validation result (in real implementation, this would come from the extension)
     setTimeout(() => {
       isValidating = false;
@@ -133,7 +133,7 @@
     errors.commit = '';
   }
 
-  function handleTypeChange(newType: Domain.StepType) {
+  function handleTypeChange(newType: Domain.Commit.Type) {
     formData.type = newType;
   }
 
@@ -184,7 +184,7 @@
             autocomplete="off"
             spellcheck="false"
           />
-          
+
           <button
             type="button"
             class="validate-button"
@@ -250,11 +250,11 @@
           class:error={errors.title}
           maxlength="100"
         />
-        
+
         {#if errors.title}
           <div class="error-message">{errors.title}</div>
         {/if}
-        
+
         <div class="char-count">
           {formData.title.length}/100 characters
         </div>
@@ -265,9 +265,9 @@
         <button type="button" class="cancel-button" onclick={handleCancel}>
           Cancel
         </button>
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           class="save-button"
           disabled={!formData.commit.trim() || !formData.title.trim()}
         >

@@ -10,6 +10,14 @@ import * as Manifest from './manifest';
 import * as StepEditing from './step-editing';
 import { IFileSystem } from '@domain/ports/IFileSystem';
 import { TutorialController } from '@ui/tutorial/controller';
+import { IManifestBackupService } from '@ui/ports/IManifestBackupService';
+import { ManifestBackupService } from '@domain/services/authoring/manifest/backup';
+import { IStateStorage } from '@domain/ports/IStateStorage';
+import { IManifestBuilderService } from '@ui/ports/IManifestBuilderService';
+import { ManifestBuilderService } from '@domain/services/authoring/manifest/builder';
+import { IGitChanges } from '@ui/ports/IGitChanges';
+import { DiffService } from '@domain/services/DiffService';
+import { IGitChangesFactory } from '@ui/ports/IGitChangesFactory';
 
 export interface IClearable {
   clearCachedData(): Promise<void>;
@@ -27,22 +35,40 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
 
   constructor(
     private systemController: SystemController,
-    gitFactory: IGitOperationsFactory,
+    gitOperationsFactory: IGitOperationsFactory,
+    gitChangesFactory: IGitChangesFactory,
     activeTutorialStateRepository: IActiveTutorialStateRepository,
     workspacePath: string,
     fs: IFileSystem,
-    private readonly tutorialController: TutorialController
+    private readonly tutorialController: TutorialController,
+    backupStorage: IStateStorage,
+    diffService: DiffService
   ) {
-    this.manifestController = new Manifest.Controller(systemController, gitFactory, fs, workspacePath);
+    const gitChanges = gitChangesFactory.createFromPath(workspacePath);
+
+    // Create the primary manifest backup service
+    const manifestBackupService: IManifestBackupService = new ManifestBackupService(backupStorage, fs);
+    const manifestBuilderService: IManifestBuilderService = new ManifestBuilderService(
+      gitOperationsFactory,
+      gitChanges,
+      diffService
+    );
+
+    this.manifestController = new Manifest.Controller(
+      systemController,
+      workspacePath,
+      manifestBackupService,
+      manifestBuilderService
+    );
     this.stepEditingController = new StepEditing.Controller(
       systemController,
       this.manifestController,
-      gitFactory,
+      gitOperationsFactory,
       workspacePath
     );
     this.publishingController = new Publishing.Controller(
       this.manifestController,
-      gitFactory,
+      gitOperationsFactory,
       workspacePath,
       activeTutorialStateRepository,
       systemController

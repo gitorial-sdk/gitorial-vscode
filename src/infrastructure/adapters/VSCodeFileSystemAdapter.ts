@@ -39,10 +39,12 @@ export class VSCodeFileSystemAdapter implements IFileSystem {
       throw error;
     }
   }
+
   async readFile(path: string): Promise<string> {
     const content = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
     return Buffer.from(content).toString('utf-8');
   }
+
   async writeFile(path: string, contents: string): Promise<void> {
     const uri = vscode.Uri.file(path);
     const encoder = new TextEncoder();
@@ -56,8 +58,9 @@ export class VSCodeFileSystemAdapter implements IFileSystem {
     }
     await vscode.workspace.fs.writeFile(uri, data);
   }
-  join(path1: string, path2: string): string {
-    return vscode.Uri.joinPath(vscode.Uri.file(path1), path2).fsPath;
+
+  join(path1: string, ...pathSegments: string[]): string {
+    return vscode.Uri.joinPath(vscode.Uri.file(path1), ...pathSegments).fsPath;
   }
 
   relative(fromPath: string, toPath: string): string {

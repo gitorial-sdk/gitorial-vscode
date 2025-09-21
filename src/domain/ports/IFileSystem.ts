@@ -1,3 +1,5 @@
+//TODO: use 'neverthrow' in the future instead of throwing errors
+
 /**
  * Defines an interface (port) for abstracting file system operations.
  * This allows the domain layer to request file system actions (like checking existence,
@@ -77,7 +79,7 @@ export interface IFileSystem {
    * @param path2 The second path.
    * @returns The joined path.
    */
-  join(path1: string, path2: string): string;
+  join(base: string, ...pathSegements: string[]): string;
 
   /**
    * Calculates the relative path from one path to another.

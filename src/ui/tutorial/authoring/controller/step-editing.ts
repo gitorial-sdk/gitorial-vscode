@@ -81,7 +81,7 @@ export class Controller implements IClearable {
     const insertAt = typeof index === 'number' && index >= 0 && index <= steps.length ? index : steps.length;
     steps.splice(insertAt, 0, step);
     this.manifestController.currentManifest = { ...manifest, steps };
-    await this.manifestController.write();
+    await this.manifestController.save(manifest);
   }
 
   private async remove(index: number): Promise<void> {
@@ -93,7 +93,7 @@ export class Controller implements IClearable {
 
     const steps = manifest.steps.filter((_, i) => i !== index);
     this.manifestController.currentManifest = { ...manifest, steps };
-    await this.manifestController.write();
+    await this.manifestController.save(manifest);
   }
 
   private async update(index: number, step: Domain.ManifestStep): Promise<void> {
@@ -106,7 +106,7 @@ export class Controller implements IClearable {
     const steps = [...manifest.steps];
     steps[index] = step;
     this.manifestController.currentManifest = { ...manifest, steps };
-    await this.manifestController.write();
+    await this.manifestController.save(manifest);
   }
 
   private async reorder(fromIndex: number, toIndex: number): Promise<void> {
@@ -126,7 +126,7 @@ export class Controller implements IClearable {
     const [moved] = steps.splice(fromIndex, 1);
     steps.splice(toIndex, 0, moved);
     this.manifestController.currentManifest = { ...manifest, steps };
-    await this.manifestController.write();
+    await this.manifestController.save(manifest);
   }
 
   private async edit(stepIndex: number): Promise<void> {
@@ -340,7 +340,7 @@ export class Controller implements IClearable {
 
       // Update our stored manifest with the new commit hash
       this.manifestController.currentManifest = finalManifest;
-      await this.manifestController.write();
+      await this.manifestController.save(finalManifest);
 
       // Clear editing state
       this.currentlyEditingStep = null;

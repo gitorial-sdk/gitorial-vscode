@@ -4,6 +4,7 @@ import { V1 } from './index';
 import { Result, err, ok } from 'neverthrow';
 import { Error } from '../types';
 import { Errors } from './errors';
+import { ToDoComment } from '../../ToDoComment';
 
 export const Validator = {
   parseMessage: parseMessageV1,
@@ -12,8 +13,9 @@ export const Validator = {
   },
   buildCommitFromMessage(
     message: string,
+    hash: string,
     changedFiles: ReadonlyArray<string>,
-    toDoComments: ReadonlyArray<{ filePath: string; lines: ReadonlyArray<number> }>,
+    toDoComments: ReadonlyArray<ToDoComment>
   ): Result<Base, Error<keyof typeof Errors>> {
     const parsed = parseMessageV1(message);
     if (parsed.isErr()) {
@@ -23,8 +25,9 @@ export const Validator = {
     const commit: Base = {
       type,
       title,
+      hash,
       changedFiles: [...changedFiles],
-      toDoComments: toDoComments.map(t => ({ filePath: t.filePath, lines: [...t.lines] })),
+      toDoComments: toDoComments.map(t => ({ realtiveFilePath: t.realtiveFilePath })),
     };
     const content = V1.RulesByType[type].validate(commit);
     if (content.isErr()) {

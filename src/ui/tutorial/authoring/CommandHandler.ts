@@ -32,7 +32,6 @@ export class AuthoringCommandHandler {
     try {
       console.log('🧹 CLEAR CORRUPTED DATA: Starting cleanup...');
 
-      await this.systemController.clearAuthorManifestBackup(this.workspacePath);
       await this.authorModeController.clearCachedData();
 
       console.log('✅ CLEAR CORRUPTED DATA: Cleanup complete!');

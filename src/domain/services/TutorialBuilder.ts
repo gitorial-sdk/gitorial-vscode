@@ -6,13 +6,7 @@ import { DomainCommit } from '../ports/IGitOperations';
 import { Step } from '../models/Step';
 
 export class TutorialBuilder {
-  private static readonly VALID_STEP_TYPES: ReadonlyArray<Domain.StepType> = [
-    'section',
-    'template',
-    'solution',
-    'action',
-    'readme',
-  ];
+  private static readonly VALID_STEP_TYPES: ReadonlyArray<Domain.Commit.Type> = Domain.Commit.Types;
 
   private static readonly REPO_URL_PATTERNS = [
     {
@@ -25,10 +19,7 @@ export class TutorialBuilder {
     },
   ];
 
-  public static async buildFromLocalPath(
-    repoPath: string,
-    gitService: GitService,
-  ): Promise<Tutorial | null> {
+  public static async buildFromLocalPath(repoPath: string, gitService: GitService): Promise<Tutorial | null> {
     const repoUrl = await gitService.getRepoUrl();
     if (!repoUrl) {
       throw new Error('For now a gitorial needs to be linked to a remote origin');
@@ -112,8 +103,8 @@ export class TutorialBuilder {
   /**
    * Converts raw commit data (from IGitOperations) into Step domain models.
    */
-
   public static extractStepsFromCommits(commits: DomainCommit[], tutorialId: Domain.TutorialId): Step[] {
+    //TODO: use our new classes inside src/domain/models/ to parse steps
     const chronologicalCommits = [...commits].reverse();
 
     console.log(`🔍 TutorialBuilder: Processing ${chronologicalCommits.length} commits for tutorial ${tutorialId}`);
@@ -129,13 +120,11 @@ export class TutorialBuilder {
       }
 
       const parsedType = message.substring(0, colonIndex).toLowerCase();
-      if (!this.VALID_STEP_TYPES.includes(parsedType as Domain.StepType)) {
-        throw new Error(
-          `TutorialBuilder: Invalid step type "${parsedType}" in commit message: "${message}".`,
-        );
+      if (!this.VALID_STEP_TYPES.includes(parsedType as Domain.Commit.Type)) {
+        throw new Error(`TutorialBuilder: Invalid step type "${parsedType}" in commit message: "${message}".`);
       }
 
-      const stepType = parsedType as Domain.StepType;
+      const stepType = parsedType as Domain.Commit.Type;
       const stepTitle = message.substring(colonIndex + 1).trim() || 'Unnamed Step';
 
       const stepData: Domain.StepData = {

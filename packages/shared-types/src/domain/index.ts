@@ -1,5 +1,4 @@
 export * from './TutorialId';
-export * from './StepType';
 export * from './StepData';
 export * from './AuthorMode';
 

@@ -1,9 +1,9 @@
-import type { StepType } from './StepType';
+import { Type } from './commit';
 
 export interface StepData {
   id: string;
   title: string;
   commitHash: string;
-  type: StepType;
+  type: Type;
   index: number;
 }

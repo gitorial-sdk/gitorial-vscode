@@ -123,6 +123,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   const authorManifestBackupState = new AuthorManifestState(globalState);
 
   // --- Factories ---
+  //? TODO: Why do we need factories? Why dont we just create instances of them and pass around?
   const gitOperationsFactory = new GitOperationsFactory();
   const gitChangesFactory = new GitChangesFactory();
 
@@ -202,8 +203,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     contextState,
     configurationState,
     webviewPanelManager,
-    userInteractionAdapter,
-    authorManifestBackupState
+    userInteractionAdapter
   );
 
   const tutorialController = new TutorialController(
@@ -223,10 +223,13 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   const authorModeController = new AuthorModeController(
     systemController,
     gitOperationsFactory,
+    gitChangesFactory,
     activeTutorialStateRepository,
     workspacePath,
     fileSystemAdapter,
-    tutorialController
+    tutorialController,
+    authorManifestBackupState,
+    diffService
   );
 
   // Set the tutorial controller reference in system controller

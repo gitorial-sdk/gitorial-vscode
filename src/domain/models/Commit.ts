@@ -8,35 +8,57 @@ type TToDoComment = Domain.Commit.ToDoComment;
 
 export class Commit {
   private _data: TCommit;
-  private constructor(type: TCommitType, title: string, changedFiles: Array<string>, toDoComments: Array<TToDoComment>) {
+  private constructor(
+    type: TCommitType,
+    title: string,
+    hash: string,
+    changedFiles: Array<string>,
+    toDoComments: Array<TToDoComment>
+  ) {
     this._data = {
-      type, title, changedFiles, toDoComments: toDoComments,
+      type,
+      title,
+      hash,
+      changedFiles,
+      toDoComments,
     };
   }
 
-  public static new(message: string, changedFiles: Array<string>, toDoComments: Array<TToDoComment>): Result<Commit, TCommitError<string>> {
-    return Commit.validate(message, changedFiles, toDoComments);
+  public static new(
+    message: string,
+    hash: string,
+    changedFiles: Array<string>,
+    toDoComments: Array<TToDoComment>
+  ): Result<Commit, TCommitError<string>> {
+    return Commit.validate(message, hash, changedFiles, toDoComments);
   }
 
-  public static newWithType(type: TCommitType, title: string, changedFiles: Array<string>, toDoComments: Array<TToDoComment>): Result<Commit, TCommitError<string>> {
-    return ok(new Commit(type, title, changedFiles, toDoComments));
+  public static newWithType(
+    type: TCommitType,
+    title: string,
+    hash: string,
+    changedFiles: Array<string>,
+    toDoComments: Array<TToDoComment>
+  ): Result<Commit, TCommitError<string>> {
+    return ok(new Commit(type, title, hash, changedFiles, toDoComments));
   }
 
-  public static newFromObject(data: TCommit): Result<Commit, TCommitError<string>> {
-    return ok(new Commit(data.type, data.title, data.changedFiles, data.toDoComments));
+  public static newFromObject(data: TCommit) {
+    return new Commit(data.type, data.title, data.hash, data.changedFiles, data.toDoComments);
   }
 
   private static validate(
     message: string,
+    hash: string,
     changedFiles: Array<string>,
-    toDoComments: Array<TToDoComment>,
+    toDoComments: Array<TToDoComment>
   ): Result<Commit, TCommitError<string>> {
-    const built = Domain.Commit.V1.Validator.buildCommitFromMessage(message, changedFiles, toDoComments);
+    const built = Domain.Commit.V1.Validator.buildCommitFromMessage(message, hash, changedFiles, toDoComments);
     if (built.isErr()) {
       return err(built.error);
     }
-    const { type, title } = built._unsafeUnwrap();
-    return ok(new Commit(type, title, changedFiles, toDoComments));
+
+    return ok(this.newFromObject(built._unsafeUnwrap()));
   }
 
   public toString(): string {

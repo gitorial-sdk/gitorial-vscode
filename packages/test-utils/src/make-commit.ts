@@ -5,6 +5,5 @@ export const c = (
   title: string,
   changedFiles: string[] = [],
   toDoComments: Domain.Commit.ToDoComment[] = [],
-): Domain.Commit.Base => ({ type, title, changedFiles, toDoComments });
-
-
+  hash: string = ''
+): Domain.Commit.Base => ({ type, title, changedFiles, toDoComments, hash });
