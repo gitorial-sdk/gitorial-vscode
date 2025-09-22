@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Tutorial } from '../../domain/models/Tutorial';
-import { IGitChanges } from '../ports/IGitChanges';
 import { DiffService } from '../../domain/services/DiffService';
 import { TabTrackingService } from '../tutorial/services/TabTrackingService';
 import { EditorManager } from './manager/EditorManager';
@@ -14,7 +13,7 @@ export class TutorialSolutionWorkflow {
 
   constructor(
     private readonly diffService: DiffService,
-    private readonly editorManager: EditorManager,
+    private readonly editorManager: EditorManager
   ) {
     this.tabTrackingService = new TabTrackingService();
   }
@@ -22,23 +21,20 @@ export class TutorialSolutionWorkflow {
   /**
    * Handles toggling between showing/hiding solutions for a tutorial step
    */
-  async toggleSolution(tutorial: Readonly<Tutorial>, gitAdapter: IGitChanges): Promise<void> {
+  async toggleSolution(tutorial: Readonly<Tutorial>): Promise<void> {
     this.tabTrackingService.setTutorialPath(tutorial.localPath);
 
     if (tutorial.isShowingSolution) {
-      await this._showSolution(tutorial, gitAdapter);
+      await this._showSolution(tutorial);
     } else {
-      await this._hideSolution(tutorial, gitAdapter);
+      await this._hideSolution(tutorial);
     }
   }
 
   /**
    * Shows the solution by displaying diff views
    */
-  private async _showSolution(
-    tutorial: Readonly<Tutorial>,
-    gitAdapter: IGitChanges,
-  ): Promise<void> {
+  private async _showSolution(tutorial: Readonly<Tutorial>): Promise<void> {
     // Get the preferred focus file from tab tracking service
     let preferredFocusFile: string | undefined;
     const lastActiveFile = this.tabTrackingService.getLastActiveTutorialFile();
@@ -50,24 +46,25 @@ export class TutorialSolutionWorkflow {
 
     //TODO: we have two methods to restore/focus tabs, one is in TabTrackingService, the other is in DiffService.showStepSolution.
     //We should use one method (pref. TabTrackingService) to restore focus to the last active tutorial file only.
-    await this.diffService.showStepSolution(tutorial, gitAdapter, preferredFocusFile);
+    await this.diffService.showStepSolution(tutorial, preferredFocusFile);
     await this.editorManager.closeNonDiffTabsInGroup(vscode.ViewColumn.Two);
   }
 
   /**
    * Hides the solution by closing diff views and restoring normal file tabs
    */
-  private async _hideSolution(
-    tutorial: Readonly<Tutorial>,
-    gitAdapter: IGitChanges,
-  ): Promise<void> {
+  private async _hideSolution(tutorial: Readonly<Tutorial>): Promise<void> {
     const lastActiveTutorialFile = this.tabTrackingService.getLastActiveTutorialFile();
-    const changedFiles = await this.diffService.getDiffModelsForParent(tutorial, gitAdapter);
+    const result = await this.diffService.getFiles(tutorial.activeStep.commitHash, 'solution-change');
+    if (result.isErr()) {
+      throw new Error(`DiffService threw an error: ${result.error}`);
+    }
+    const changedFiles = result.value;
 
     await this.editorManager.updateSidePanelFiles(
       tutorial.activeStep,
       changedFiles.map(f => f.relativePath),
-      tutorial.localPath,
+      tutorial.localPath
     ); //FIXME: this and '_closeDiffTabsInGroupTwo' both close tabs
 
     await this.editorManager.closeDiffTabs(vscode.ViewColumn.Two);
@@ -77,10 +74,7 @@ export class TutorialSolutionWorkflow {
       try {
         await this.tabTrackingService.restoreFocusToFile(lastActiveTutorialFile);
       } catch (error) {
-        console.error(
-          'TutorialSolutionManager: Error restoring focus using TabTrackingService:',
-          error,
-        );
+        console.error('TutorialSolutionManager: Error restoring focus using TabTrackingService:', error);
       }
     }
   }

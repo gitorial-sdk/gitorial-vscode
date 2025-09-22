@@ -8,8 +8,8 @@ describe('V1 TemplateRule', () => {
   it('passes when template is immediately followed by solution', () => {
     const seq: TCommit[] = [
       c('section', 'Intro', ['README.md']),
-      c('template', 'Step A', ['src/a.ts'])
-      , c('solution', 'Step A', ['src/a.ts']),
+      c('template', 'Step A', ['src/a.ts']),
+      c('solution', 'Step A', ['src/a.ts']),
       c('readme', 'End', ['README.md']),
     ];
     const res = TemplateRule.validate(seq);
@@ -50,5 +50,3 @@ describe('V1 TemplateRule', () => {
     expect(err.code).to.equal(Errors.SolutionMustFollowTemplateOrAction);
   });
 });
-
-

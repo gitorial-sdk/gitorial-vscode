@@ -1,9 +1,9 @@
 import { Domain } from '@gitorial/shared-types';
 
 export interface StoredTutorialState {
-  tutorialId: Domain.TutorialId;
-  currentStepId: string;
-  openFileUris: string[];
+  tutorialId    : Domain.TutorialId;
+  currentStepId : string;
+  openFileUris  : string[];
 }
 
 /**
@@ -17,11 +17,7 @@ export interface IActiveTutorialStateRepository {
    * @param currentStepId The ID of the current step in the active tutorial.
    * @returns A promise that resolves when the state has been saved.
    */
-  saveActiveTutorial(
-    tutorialId: Domain.TutorialId,
-    currentStepId: string,
-    openFileUris: string[]
-  ): Promise<void>;
+  saveActiveTutorial(tutorialId: Domain.TutorialId, currentStepId: string, openFileUris: string[]): Promise<void>;
 
   /**
    * Retrieves the active tutorial's ID and its current step ID.

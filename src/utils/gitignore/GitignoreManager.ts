@@ -5,7 +5,7 @@ import { IFileSystem } from '@domain/ports/IFileSystem';
  * Language-specific .gitignore templates
  */
 const GITIGNORE_TEMPLATES = {
-  rust: [
+  rust : [
     '# Rust build artifacts',
     'target/',
     'Cargo.lock',
@@ -39,7 +39,7 @@ const GITIGNORE_TEMPLATES = {
     '',
   ].join('\n'),
 
-  javascript: [
+  javascript : [
     '# Dependencies',
     'node_modules/',
     'npm-debug.log*',
@@ -68,7 +68,7 @@ const GITIGNORE_TEMPLATES = {
     '',
   ].join('\n'),
 
-  typescript: [
+  typescript : [
     '# Dependencies',
     'node_modules/',
     'npm-debug.log*',
@@ -98,7 +98,7 @@ const GITIGNORE_TEMPLATES = {
     '',
   ].join('\n'),
 
-  python: [
+  python : [
     '# Python build artifacts',
     '__pycache__/',
     '*.py[cod]',
@@ -141,7 +141,7 @@ const GITIGNORE_TEMPLATES = {
     '',
   ].join('\n'),
 
-  go: [
+  go : [
     '# Go build artifacts',
     '*.exe',
     '*.exe~',
@@ -171,7 +171,7 @@ const GITIGNORE_TEMPLATES = {
     '',
   ].join('\n'),
 
-  java: [
+  java : [
     '# Java build artifacts',
     '*.class',
     '*.jar',
@@ -210,7 +210,7 @@ const GITIGNORE_TEMPLATES = {
     '',
   ].join('\n'),
 
-  csharp: [
+  csharp : [
     '# Build artifacts',
     'bin/',
     'obj/',
@@ -263,35 +263,32 @@ export class GitignoreManager {
       // Check for language-specific marker files (order matters - most specific first)
       const languageMarkers: Array<{ language: ProjectLanguage; files: string[] }> = [
         {
-          language: 'rust',
-          files: ['Cargo.toml', 'Cargo.lock'],
+          language : 'rust',
+          files    : ['Cargo.toml', 'Cargo.lock'],
         },
         {
-          language: 'typescript',
-          files: ['tsconfig.json', 'package.json'], // Will check for .ts files later if package.json exists
+          language : 'typescript',
+          files    : ['tsconfig.json', 'package.json'], // Will check for .ts files later if package.json exists
         },
         {
-          language: 'javascript',
-          files: ['package.json', 'yarn.lock', 'package-lock.json'],
+          language : 'javascript',
+          files    : ['package.json', 'yarn.lock', 'package-lock.json'],
         },
         {
-          language: 'python',
-          files: ['requirements.txt',
-            'setup.py',
-            'pyproject.toml',
-            'Pipfile'],
+          language : 'python',
+          files    : ['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile'],
         },
         {
-          language: 'go',
-          files: ['go.mod', 'go.sum'],
+          language : 'go',
+          files    : ['go.mod', 'go.sum'],
         },
         {
-          language: 'java',
-          files: ['pom.xml', 'build.gradle', 'gradle.properties'],
+          language : 'java',
+          files    : ['pom.xml', 'build.gradle', 'gradle.properties'],
         },
         {
-          language: 'csharp',
-          files: ['.csproj', '.sln'], // Will check for actual files with these extensions
+          language : 'csharp',
+          files    : ['.csproj', '.sln'], // Will check for actual files with these extensions
         },
       ];
 
@@ -337,13 +334,7 @@ export class GitignoreManager {
    */
   private async checkForCSharpProjectFiles(projectPath: string): Promise<boolean> {
     // Common C# project file patterns to check
-    const patterns = [
-      'App.csproj',
-      'Program.csproj',
-      'Project.csproj',
-      'Solution.sln',
-      'App.sln',
-    ];
+    const patterns = ['App.csproj', 'Program.csproj', 'Project.csproj', 'Solution.sln', 'App.sln'];
 
     for (const pattern of patterns) {
       const filePath = this.fs.join(projectPath, pattern);
@@ -410,39 +401,20 @@ export class GitignoreManager {
    */
   private hasEssentialPatterns(content: string, language: ProjectLanguage): boolean {
     const essentialPatterns: Record<ProjectLanguage, string[]> = {
-      rust: ['target/',
-        'target\\',
-        '.gitorial/',
-        '.vscode/',
-        '.rust-analyzer/'],
-      javascript: ['node_modules/', 'node_modules\\', '.gitorial/'],
-      typescript: ['node_modules/',
-        'node_modules\\',
-        'dist/',
-        'dist\\',
-        '.gitorial/'],
-      python: ['__pycache__/',
-        '__pycache__\\',
-        '*.pyc',
-        '.gitorial/'],
-      go: ['*.exe', '*.out', '.gitorial/'],
-      java: ['target/',
-        'target\\',
-        '*.class',
-        '.gitorial/'],
-      csharp: ['bin/',
-        'bin\\',
-        'obj/',
-        'obj\\',
-        '.gitorial/'],
-      unknown: ['.gitorial/'],
+      rust       : ['target/', 'target\\', '.gitorial/', '.vscode/', '.rust-analyzer/'],
+      javascript : ['node_modules/', 'node_modules\\', '.gitorial/'],
+      typescript : ['node_modules/', 'node_modules\\', 'dist/', 'dist\\', '.gitorial/'],
+      python     : ['__pycache__/', '__pycache__\\', '*.pyc', '.gitorial/'],
+      go         : ['*.exe', '*.out', '.gitorial/'],
+      java       : ['target/', 'target\\', '*.class', '.gitorial/'],
+      csharp     : ['bin/', 'bin\\', 'obj/', 'obj\\', '.gitorial/'],
+      unknown    : ['.gitorial/'],
     };
 
     const patterns = essentialPatterns[language];
     const lowercaseContent = content.toLowerCase();
 
-    return patterns.some(pattern =>
-      lowercaseContent.includes(pattern.toLowerCase()));
+    return patterns.some(pattern => lowercaseContent.includes(pattern.toLowerCase()));
   }
 
   /**
@@ -454,10 +426,10 @@ export class GitignoreManager {
   private async appendEssentialPatterns(
     gitignorePath: string,
     existingContent: string,
-    language: ProjectLanguage,
+    language: ProjectLanguage
   ): Promise<void> {
     const essentialPatterns: Record<ProjectLanguage, string[]> = {
-      rust: [
+      rust : [
         '',
         '# Essential Rust patterns added by Gitorial',
         'target/',
@@ -467,15 +439,8 @@ export class GitignoreManager {
         '.rust-analyzer/',
         'rust-project.json',
       ],
-      javascript: [
-        '',
-        '# Essential JavaScript patterns added by Gitorial',
-        'node_modules/',
-        'dist/',
-        '.gitorial/',
-        '.env',
-      ],
-      typescript: [
+      javascript : ['', '# Essential JavaScript patterns added by Gitorial', 'node_modules/', 'dist/', '.gitorial/', '.env'],
+      typescript : [
         '',
         '# Essential TypeScript patterns added by Gitorial',
         'node_modules/',
@@ -484,43 +449,11 @@ export class GitignoreManager {
         '*.tsbuildinfo',
         '.env',
       ],
-      python: [
-        '',
-        '# Essential Python patterns added by Gitorial',
-        '__pycache__/',
-        '*.pyc',
-        '.gitorial/',
-        'venv/',
-        '.env',
-      ],
-      go: [
-        '',
-        '# Essential Go patterns added by Gitorial',
-        '*.exe',
-        '*.out',
-        '.gitorial/',
-        'vendor/',
-      ],
-      java: [
-        '',
-        '# Essential Java patterns added by Gitorial',
-        'target/',
-        '*.class',
-        '.gitorial/',
-        '.gradle/',
-      ],
-      csharp: [
-        '',
-        '# Essential C# patterns added by Gitorial',
-        'bin/',
-        'obj/',
-        '.gitorial/',
-        '*.exe',
-        '*.dll',
-      ],
-      unknown: [
-        '', '# Essential Gitorial patterns', '.gitorial/',
-      ],
+      python  : ['', '# Essential Python patterns added by Gitorial', '__pycache__/', '*.pyc', '.gitorial/', 'venv/', '.env'],
+      go      : ['', '# Essential Go patterns added by Gitorial', '*.exe', '*.out', '.gitorial/', 'vendor/'],
+      java    : ['', '# Essential Java patterns added by Gitorial', 'target/', '*.class', '.gitorial/', '.gradle/'],
+      csharp  : ['', '# Essential C# patterns added by Gitorial', 'bin/', 'obj/', '.gitorial/', '*.exe', '*.dll'],
+      unknown : ['', '# Essential Gitorial patterns', '.gitorial/'],
     };
 
     const patterns = essentialPatterns[language];

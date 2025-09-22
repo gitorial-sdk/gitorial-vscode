@@ -6,15 +6,22 @@ import { ok, Result } from 'neverthrow';
 import { UI } from '@gitorial/shared-types';
 import { IClearable } from '.';
 
-
 export class Controller implements IClearable {
-  constructor(private readonly manifestController: Manifest.Controller, private readonly gitFactory: IGitOperationsFactory, private readonly workspacePath: string, private readonly activeTutorialStateRepository: IActiveTutorialStateRepository, private readonly systemController: SystemController) {}
+  constructor(
+    private readonly manifestController: Manifest.Controller,
+    private readonly gitFactory: IGitOperationsFactory,
+    private readonly workspacePath: string,
+    private readonly activeTutorialStateRepository: IActiveTutorialStateRepository,
+    private readonly systemController: SystemController
+  ) {}
 
   async clearCachedData(): Promise<void> {
     return Promise.resolve();
   }
 
-  async handleMessage(message: Extract<UI.Messages.WebviewToExtensionAuthorMessage, { type: 'publishTutorial' | 'previewTutorial' }>): Promise<Result<void, string>> {
+  async handleMessage(
+    message: Extract<UI.Messages.WebviewToExtensionAuthorMessage, { type: 'publishTutorial' | 'previewTutorial' }>
+  ): Promise<Result<void, string>> {
 
     switch (message.type) {
       case 'publishTutorial':
@@ -36,9 +43,9 @@ export class Controller implements IClearable {
       const git = this.gitFactory.fromPath(this.workspacePath);
 
       const steps = manifest.steps.map(s => ({
-        commit: s.commit,
-        type: s.type,
-        title: s.title,
+        commit : s.commit,
+        type   : s.type,
+        title  : s.title,
       }));
 
       // Use step-isolation-friendly rebuild method that preserves step isolation

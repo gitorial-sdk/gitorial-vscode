@@ -34,7 +34,7 @@ export class Controller implements IClearable {
     message: Extract<
       UI.Messages.WebviewToExtensionAuthorMessage,
       {
-        type:
+        type :
           | 'addStep'
           | 'removeStep'
           | 'updateStep'
@@ -145,9 +145,7 @@ export class Controller implements IClearable {
       console.log(`🔍 AuthorModeController: Manifest loaded with ${manifest.steps.length} steps`);
 
       if (stepIndex < 0 || stepIndex >= manifest.steps.length) {
-        console.log(
-          `🚨 AuthorModeController: Invalid step index ${stepIndex}, manifest has ${manifest.steps.length} steps`
-        );
+        console.log(`🚨 AuthorModeController: Invalid step index ${stepIndex}, manifest has ${manifest.steps.length} steps`);
         await this.systemController.sendEditingError(stepIndex, 'Invalid step index');
         return;
       }
@@ -160,9 +158,9 @@ export class Controller implements IClearable {
 
       const step = manifest.steps[stepIndex];
       console.log(`🔍 AuthorModeController: Step ${stepIndex} details:`, {
-        title: step.title,
-        type: step.type,
-        commit: step.commit,
+        title  : step.title,
+        type   : step.type,
+        commit : step.commit,
       });
 
       // Validate commit hash before attempting checkout
@@ -263,12 +261,12 @@ export class Controller implements IClearable {
     } catch (error) {
       console.error('🚨 AuthorModeController: Error starting step editing:', error);
       console.error('🚨 AuthorModeController: Error details:', {
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'No stack trace',
+        message         : error instanceof Error ? error.message : String(error),
+        stack           : error instanceof Error ? error.stack : 'No stack trace',
         stepIndex,
-        currentManifest: this.manifestController.currentManifest
+        currentManifest : this.manifestController.currentManifest
           ? {
-              steps: this.manifestController.currentManifest.steps.map(s => ({ title: s.title, commit: s.commit })),
+              steps : this.manifestController.currentManifest.steps.map(s => ({ title: s.title, commit: s.commit })),
             }
           : 'No manifest loaded',
       });

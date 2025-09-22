@@ -23,32 +23,32 @@ export interface DiffFile {
   /**
    * Function to get the content of the file for the left side of the diff (e.g., current step).
    */
-  leftContentProvider: () => Promise<string>;
+  leftContentProvider : () => Promise<string>;
 
   /**
    * Function to get the content of the file for the right side of the diff (e.g., next step/solution).
    */
-  rightContentProvider: () => Promise<string>;
+  rightContentProvider : () => Promise<string>;
 
   /**
    * Relative path within the repository, used for display and URI construction.
    */
-  relativePath: string;
+  relativePath : string;
 
   /**
    * Identifier (e.g., commit hash) for the left side content, used for unique URI scheme generation.
    */
-  leftCommitId: string;
+  leftCommitId : string;
 
   /**
    * Identifier (e.g., commit hash) for the right side content, used for unique URI scheme generation.
    */
-  rightCommitId: string;
+  rightCommitId : string;
 
   /**
    * Short version of an identifier (e.g., commit hash) for display in the diff tab title.
    */
-  titleCommitId: string;
+  titleCommitId : string;
 }
 
 /**

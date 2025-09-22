@@ -21,9 +21,5 @@ export interface IGitOperationsFactory {
    *                         It receives a string message describing the current progress.
    * @returns A promise that resolves to an IGitOperations instance for the cloned repository.
    */
-  fromClone(
-    repoUrl: string,
-    targetPath: string,
-    progressCallback?: (message: string) => void
-  ): Promise<IGitOperations>;
+  fromClone(repoUrl: string, targetPath: string, progressCallback?: (message: string) => void): Promise<IGitOperations>;
 }

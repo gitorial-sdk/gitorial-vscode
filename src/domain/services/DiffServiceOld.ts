@@ -3,8 +3,6 @@ import { DiffModel, DiffChangeType } from '../models/DiffModel';
 import { DiffFilePayload, IGitChanges } from '../../ui/ports/IGitChanges';
 import { IDiffDisplayer, DiffFile } from 'src/ui/ports/IDiffDisplayer';
 import { IFileSystem } from 'src/domain/ports/IFileSystem';
-import { Domain } from '@gitorial/shared-types';
-import { GitAdapter } from '@infra/adapters/GitAdapter';
 
 // GOAL IS TO MAKE THIS SERVICE COMPATIBLE WITH OUR MANIFEST BUILDER AND THE DIFF VIEWER
 // OR RE-USE SOME PARTS OF IT /EXTRACT SOME PARTS OF IT + OPEN UP ANOTHER SERVICE
@@ -70,11 +68,7 @@ export class DiffService {
       const changedFiles = await gitAdapter.getCommitDiff(commitHash);
 
       return changedFiles.map(file => {
-        const changeType = file.isNew
-          ? DiffChangeType.ADDED
-          : file.isDeleted
-            ? DiffChangeType.DELETED
-            : DiffChangeType.MODIFIED;
+        const changeType = file.isNew ? DiffChangeType.ADDED : file.isDeleted ? DiffChangeType.DELETED : DiffChangeType.MODIFIED;
 
         return new DiffModel(file.relativeFilePath, file.absoluteFilePath, commitHash, changeType);
       });
@@ -84,20 +78,63 @@ export class DiffService {
     }
   }
 
-  public async filterNoiseFiles(commit: string, gitAdapter: IGitChanges): Promise<DiffFilePayload[]> {
-    const commitDiffPayloads = await gitAdapter.getCommitDiff(commit);
+  /**
+   * Filters out noise files (lock files, node_modules, etc.) from diff payloads or diff models
+   */
+  public filterNoiseFiles<T extends DiffFilePayload | DiffModel>(diffItems: T[]): T[] {
+    return diffItems.filter(item => {
+      // Handle both DiffFilePayload (has relativeFilePath) and DiffModel (has relativePath)
+      const filePath = 'relativeFilePath' in item ? item.relativeFilePath : item.relativePath;
+      return !this.isNoiseFile(filePath);
+    });
+  }
 
-    const filteredDiffPayloads = commitDiffPayloads.filter(payload => {
-      if (this.isNoiseFile(payload.relativeFilePath)) {
-        return false;
-      }
-
-      return (
+  /**
+   * Filters diff payloads to only include files with educational content (TODO, FIXME, etc.)
+   */
+  public filterForEducationalContent(diffPayloads: DiffFilePayload[]): DiffFilePayload[] {
+    return diffPayloads.filter(
+      payload =>
         (payload.originalContent && this.hasEducationalContent(payload.originalContent)) ||
         (payload.modifiedContent && this.hasEducationalContent(payload.modifiedContent))
-      );
+    );
+  }
+
+  /**
+   * Filters out documentation files that shouldn't appear in solution diffs
+   * (README.md, .gitignore, docs/, etc.)
+   */
+  public filterSolutionFiles(diffPayloads: DiffFilePayload[]): DiffFilePayload[] {
+    return diffPayloads.filter(payload => {
+      const fileName = payload.relativeFilePath.substring(payload.relativeFilePath.lastIndexOf('/') + 1)
+        .toLowerCase();
+
+      // Filter out documentation and configuration files from solution display
+      const solutionNoiseFiles = [
+        'readme.md',
+        '.gitignore',
+        'license',
+        'license.txt',
+        'license.md',
+        'changelog.md',
+        'contributing.md',
+      ];
+
+      return !solutionNoiseFiles.includes(fileName) &&
+        !payload.relativeFilePath.toLowerCase()
+          .startsWith('docs/');
     });
-    return filteredDiffPayloads;
+  }
+
+  /**
+   * Combined filter for solution display: removes noise files, solution-specific files,
+   * and keeps only educational content
+   */
+  public async filterForSolutionDisplay(commit: string, gitAdapter: IGitChanges): Promise<DiffFilePayload[]> {
+    const commitDiffPayloads = await gitAdapter.getCommitDiff(commit);
+    const withoutNoise = this.filterNoiseFiles(commitDiffPayloads);
+    const withoutSolutionNoise = this.filterSolutionFiles(withoutNoise);
+    return this.filterForEducationalContent(withoutSolutionNoise);
   }
 
   public async showStepSolution(
@@ -118,7 +155,8 @@ export class DiffService {
     }
 
     try {
-      const filteredDiffPayloads = await this.filterNoiseFiles(nextStep.commitHash, gitAdapter);
+      // Use the specialized solution display filter that removes README.md and other documentation files
+      const filteredDiffPayloads = await this.filterForSolutionDisplay(nextStep.commitHash, gitAdapter);
       if (filteredDiffPayloads.length === 0) {
         console.log(
           `TutorialService: No files with 'TODO:' in current step (after filtering) found in solution diff for step '${tutorial.activeStep.title}'.`
@@ -130,7 +168,7 @@ export class DiffService {
         const absoluteFilePath = this.fs.join(tutorial.localPath, payload.relativeFilePath);
 
         return {
-          leftContentProvider: async () => {
+          leftContentProvider : async () => {
             try {
               return (await this.fs.pathExists(absoluteFilePath)) ? await this.fs.readFile(absoluteFilePath) : '';
             } catch (error) {
@@ -138,11 +176,11 @@ export class DiffService {
               return `// Error reading current file: ${error}`;
             }
           },
-          rightContentProvider: async () => payload.modifiedContent || '',
-          relativePath: payload.relativeFilePath,
-          leftCommitId: 'working-dir',
-          rightCommitId: nextStep.commitHash,
-          titleCommitId: nextStep.commitHash.slice(0, 7),
+          rightContentProvider : async () => payload.modifiedContent || '',
+          relativePath         : payload.relativeFilePath,
+          leftCommitId         : 'working-dir',
+          rightCommitId        : nextStep.commitHash,
+          titleCommitId        : nextStep.commitHash.slice(0, 7),
         };
       });
 

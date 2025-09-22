@@ -42,7 +42,8 @@ export class VSCodeFileSystemAdapter implements IFileSystem {
 
   async readFile(path: string): Promise<string> {
     const content = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
-    return Buffer.from(content).toString('utf-8');
+    return Buffer.from(content)
+      .toString('utf-8');
   }
 
   async writeFile(path: string, contents: string): Promise<void> {
@@ -64,8 +65,10 @@ export class VSCodeFileSystemAdapter implements IFileSystem {
   }
 
   relative(fromPath: string, toPath: string): string {
-    const fromParts = fromPath.split('/').filter(Boolean);
-    const toParts = toPath.split('/').filter(Boolean);
+    const fromParts = fromPath.split('/')
+      .filter(Boolean);
+    const toParts = toPath.split('/')
+      .filter(Boolean);
 
     let commonPrefixLength = 0;
     for (let i = 0; i < Math.min(fromParts.length, toParts.length); i++) {

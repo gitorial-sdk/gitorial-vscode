@@ -15,7 +15,7 @@ suite('Integration: Author Mode E2E Workflow', () => {
   let _extensionContext: vscode.Extension<any>;
   let sharedClonedRepoPath: string;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.SUITE_SETUP);
 
     await IntegrationTestUtils.configureExtensionSetting('gitorial', 'cloneLocation', 'subdirectory');
@@ -40,7 +40,7 @@ suite('Integration: Author Mode E2E Workflow', () => {
       console.warn('⚠️ Author Mode E2E: Clone command failed during setup, checking for existing repository...');
     }
 
-    sharedClonedRepoPath = await IntegrationTestUtils.findClonedRepository('rust-state-machine') || '';
+    sharedClonedRepoPath = (await IntegrationTestUtils.findClonedRepository('rust-state-machine')) || '';
 
     if (sharedClonedRepoPath) {
       IntegrationTestUtils.trackTutorialPath(sharedClonedRepoPath);
@@ -50,14 +50,17 @@ suite('Integration: Author Mode E2E Workflow', () => {
     }
   });
 
-  suiteTeardown(async function() {
+  suiteTeardown(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.CLEANUP);
 
     console.log('🧹 Author Mode E2E: Starting suite cleanup...');
 
     // Verify repository exists before cleanup
     if (sharedClonedRepoPath) {
-      const repoExistsBeforeCleanup = await fs.access(sharedClonedRepoPath).then(() => true).catch(() => false);
+      const repoExistsBeforeCleanup = await fs
+        .access(sharedClonedRepoPath)
+        .then(() => true)
+        .catch(() => false);
       console.log('📊 Author Mode E2E: Repository exists before cleanup:', repoExistsBeforeCleanup);
 
       if (repoExistsBeforeCleanup) {
@@ -71,7 +74,10 @@ suite('Integration: Author Mode E2E Workflow', () => {
 
     // Verify repository was cleaned up
     if (sharedClonedRepoPath) {
-      const repoExistsAfterCleanup = await fs.access(sharedClonedRepoPath).then(() => true).catch(() => false);
+      const repoExistsAfterCleanup = await fs
+        .access(sharedClonedRepoPath)
+        .then(() => true)
+        .catch(() => false);
       console.log('📊 Author Mode E2E: Repository exists after cleanup:', repoExistsAfterCleanup);
 
       if (!repoExistsAfterCleanup) {
@@ -85,7 +91,7 @@ suite('Integration: Author Mode E2E Workflow', () => {
   });
 
   suite('Complete Author Mode Workflow', () => {
-    test('should complete full workflow: Tutorial → Author Mode → Edit → Publish → Verify', async function() {
+    test('should complete full workflow: Tutorial → Author Mode → Edit → Publish → Verify', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.NETWORK_OPERATION);
 
       if (!sharedClonedRepoPath) {
@@ -108,7 +114,10 @@ suite('Integration: Author Mode E2E Workflow', () => {
       console.log('📖 Author Mode E2E: Working directly with cloned repository for author mode testing');
 
       // Verify we have the repository and can work with it directly
-      const repoExists = await fs.access(sharedClonedRepoPath).then(() => true).catch(() => false);
+      const repoExists = await fs
+        .access(sharedClonedRepoPath)
+        .then(() => true)
+        .catch(() => false);
       assert.ok(repoExists, 'Cloned repository should exist');
       console.log('✅ Author Mode E2E: Repository accessible for direct author mode testing');
 
@@ -153,10 +162,12 @@ suite('Integration: Author Mode E2E Workflow', () => {
         console.log('📄 Author Mode E2E: Original content length:', originalContent.length);
 
         // Make a comprehensive, verifiable change to the Hello World program
-        const modifiedContent = originalContent.replace(
-          'println!("Hello, world!");',
-          'println!("Hello from Author Mode E2E Test!");\n    println!("This change was made in author mode and should be visible in tutorial mode!");\n    \n    // Enhanced functionality added by Author Mode E2E Test\n    println!("Testing author mode workflow modifications");\n    author_mode_test_enhancement();',
-        ) + '\n\n// Enhanced by Author Mode E2E Test\nfn author_mode_test_enhancement() {\n    println!("Enhanced functionality added by author mode!");\n}\n\n#[cfg(test)]\nmod author_mode_tests {\n    use super::*;\n    \n    #[test]\n    fn test_author_mode_enhancement() {\n        // This test verifies author mode changes\n        author_mode_test_enhancement();\n    }\n}';
+        const modifiedContent =
+          originalContent.replace(
+            'println!("Hello, world!");',
+            'println!("Hello from Author Mode E2E Test!");\n    println!("This change was made in author mode and should be visible in tutorial mode!");\n    \n    // Enhanced functionality added by Author Mode E2E Test\n    println!("Testing author mode workflow modifications");\n    author_mode_test_enhancement();'
+          ) +
+          '\n\n// Enhanced by Author Mode E2E Test\nfn author_mode_test_enhancement() {\n    println!("Enhanced functionality added by author mode!");\n}\n\n#[cfg(test)]\nmod author_mode_tests {\n    use super::*;\n    \n    #[test]\n    fn test_author_mode_enhancement() {\n        // This test verifies author mode changes\n        author_mode_test_enhancement();\n    }\n}';
 
         console.log('📄 Author Mode E2E: Modified content:', modifiedContent.trim());
 
@@ -183,7 +194,11 @@ suite('Integration: Author Mode E2E Workflow', () => {
         assert.ok(status.trim().length > 0, 'Should detect changes after editing');
 
         // Create new commit
-        await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['commit', '-m', 'author-mode: Modified Hello World for E2E testing']);
+        await IntegrationTestUtils.execGit(sharedClonedRepoPath, [
+          'commit',
+          '-m',
+          'author-mode: Modified Hello World for E2E testing',
+        ]);
         const newCommitHash = await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['rev-parse', 'HEAD']);
         console.log('💾 Author Mode E2E: Created new commit:', newCommitHash.trim());
 
@@ -201,12 +216,23 @@ suite('Integration: Author Mode E2E Workflow', () => {
         try {
           await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['checkout', 'gitorial']);
           const gitorialLog = await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['log', '--pretty=%H %s', '-5']);
-          console.log('📊 Author Mode E2E: Recent gitorial commits:', gitorialLog.split('\n').slice(0, 3));
+          console.log(
+            '📊 Author Mode E2E: Recent gitorial commits:',
+            gitorialLog.split('\n')
+              .slice(0, 3)
+          );
 
           // Check if our changes are reflected in gitorial branch
           const gitorialCommits = gitorialLog.split('\n');
-          const enhancementCommit = gitorialCommits.find(line =>
-            line.includes('Enhanced') || line.includes('author-mode') || line.includes(newCommitHash.trim().substring(0, 7)));
+          const enhancementCommit = gitorialCommits.find(
+            line =>
+              line.includes('Enhanced') ||
+              line.includes('author-mode') ||
+              line.includes(
+                newCommitHash.trim()
+                  .substring(0, 7)
+              )
+          );
 
           if (enhancementCommit) {
             console.log('✅ Author Mode E2E: Enhancement commit found in gitorial branch');
@@ -233,7 +259,8 @@ suite('Integration: Author Mode E2E Workflow', () => {
         // CRITICAL: Test the original "HEAD.c74" issue by validating commit hashes individually
         console.log('🔍 Author Mode E2E: Validating commit hashes to prevent HEAD.c74 issue...');
         const allCommits = await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['log', '--pretty=%H', '-10']);
-        const commitHashes = allCommits.split('\n').filter(line => line.trim().length > 0);
+        const commitHashes = allCommits.split('\n')
+          .filter(line => line.trim().length > 0);
 
         let validHashCount = 0;
         let invalidHashFound = false;
@@ -287,11 +314,13 @@ suite('Integration: Author Mode E2E Workflow', () => {
         console.log('📄 Author Mode E2E: Content when accessing modified step:', tutorialViewContent.trim());
 
         // This is the CRITICAL assertion - changes should be visible
-        const hasBasicChanges = tutorialViewContent.includes('Hello from Author Mode E2E Test!') &&
-                                tutorialViewContent.includes('This change was made in author mode');
-        const hasEnhancements = tutorialViewContent.includes('author_mode_test_enhancement') &&
-                               tutorialViewContent.includes('Enhanced by Author Mode E2E Test') &&
-                               tutorialViewContent.includes('mod author_mode_tests');
+        const hasBasicChanges =
+          tutorialViewContent.includes('Hello from Author Mode E2E Test!') &&
+          tutorialViewContent.includes('This change was made in author mode');
+        const hasEnhancements =
+          tutorialViewContent.includes('author_mode_test_enhancement') &&
+          tutorialViewContent.includes('Enhanced by Author Mode E2E Test') &&
+          tutorialViewContent.includes('mod author_mode_tests');
 
         if (hasBasicChanges && hasEnhancements) {
           console.log('🎉 Author Mode E2E: SUCCESS - All changes are visible when navigating to modified step in tutorial mode!');
@@ -315,11 +344,16 @@ suite('Integration: Author Mode E2E Workflow', () => {
         try {
           // Check that our enhanced commit exists in git log
           const gitLog = await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['log', '--pretty=%H %s', '-10']);
-          const commits = gitLog.split('\n').filter(Boolean);
+          const commits = gitLog.split('\n')
+            .filter(Boolean);
 
-          const enhancedCommitInLog = commits.find(line =>
-            line.includes(newCommitHash.trim().substring(0, 7)) ||
-              line.includes('author-mode'));
+          const enhancedCommitInLog = commits.find(
+            line =>
+              line.includes(
+                newCommitHash.trim()
+                  .substring(0, 7)
+              ) || line.includes('author-mode')
+          );
 
           if (enhancedCommitInLog) {
             console.log('✅ Author Mode E2E: Enhanced commit found in git log:', enhancedCommitInLog);
@@ -422,7 +456,10 @@ suite('Integration: Author Mode E2E Workflow', () => {
         console.log('🧹 Author Mode E2E: Cleanup path tracked:', sharedClonedRepoPath);
 
         // Verify repository exists before cleanup (proves we created it)
-        const repoExistsBeforeCleanup = await fs.access(sharedClonedRepoPath).then(() => true).catch(() => false);
+        const repoExistsBeforeCleanup = await fs
+          .access(sharedClonedRepoPath)
+          .then(() => true)
+          .catch(() => false);
         console.log('📊 Author Mode E2E: Repository exists before cleanup:', repoExistsBeforeCleanup);
         assert.ok(repoExistsBeforeCleanup, 'Repository should exist before cleanup');
 
@@ -432,7 +469,7 @@ suite('Integration: Author Mode E2E Workflow', () => {
       }
     });
 
-    test('should verify author mode git operation fixes', async function() {
+    test('should verify author mode git operation fixes', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       if (!sharedClonedRepoPath) {
@@ -444,7 +481,11 @@ suite('Integration: Author Mode E2E Workflow', () => {
 
       // Test git status detection (the fix we made to AuthorModeController)
       const testFile = path.join(sharedClonedRepoPath, 'author-mode-test.txt');
-      await fs.writeFile(testFile, `Author mode test file created at ${new Date().toISOString()}\nTesting git operations functionality`);
+      await fs.writeFile(
+        testFile,
+        `Author mode test file created at ${new Date()
+          .toISOString()}\nTesting git operations functionality`
+      );
 
       await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['add', testFile]);
       const status = await IntegrationTestUtils.execGit(sharedClonedRepoPath, ['status', '--porcelain']);

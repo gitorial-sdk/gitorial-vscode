@@ -23,24 +23,24 @@ export class TutorialViewModelConverter {
       }
 
       return {
-        id: step.id,
-        title: step.title,
-        commitHash: step.commitHash,
-        type: step.type,
-        isActive: step.id === currentStepId,
-        htmlContent: stepHtmlContent,
+        id          : step.id,
+        title       : step.title,
+        commitHash  : step.commitHash,
+        type        : step.type,
+        isActive    : step.id === currentStepId,
+        htmlContent : stepHtmlContent,
       };
     });
 
     return {
-      id: tutorial.id,
-      title: tutorial.title,
-      steps: stepsViewModel,
-      currentStep: {
-        id: currentStepId,
-        index: currentStepIndex,
+      id          : tutorial.id,
+      title       : tutorial.title,
+      steps       : stepsViewModel,
+      currentStep : {
+        id    : currentStepId,
+        index : currentStepIndex,
       },
-      isShowingSolution: tutorial.isShowingSolution,
+      isShowingSolution : tutorial.isShowingSolution,
     };
   }
 }

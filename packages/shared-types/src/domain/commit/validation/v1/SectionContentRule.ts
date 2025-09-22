@@ -2,10 +2,8 @@ import { err, ok } from 'neverthrow';
 import { Errors } from '../../../commit-list/validation/v1/errors';
 import { Rule } from '../types';
 
-export const SectionContentRule: Rule<
-  typeof Errors.SectionMustChangeReadmeOnly | typeof Errors.SectionMustChangeReadme
-> = {
-  errorCodes: [Errors.SectionMustChangeReadmeOnly, Errors.SectionMustChangeReadme] as const,
+export const SectionContentRule: Rule<typeof Errors.SectionMustChangeReadmeOnly | typeof Errors.SectionMustChangeReadme> = {
+  errorCodes : [Errors.SectionMustChangeReadmeOnly, Errors.SectionMustChangeReadme] as const,
   validate(commit) {
     if (commit.type !== 'section') {
       return ok(void 0);
@@ -23,5 +21,3 @@ export const SectionContentRule: Rule<
     return ok(void 0);
   },
 };
-
-

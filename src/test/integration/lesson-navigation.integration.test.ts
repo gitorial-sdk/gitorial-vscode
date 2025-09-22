@@ -13,7 +13,7 @@ suite('Integration: Lesson Navigation', () => {
   let _extensionContext: vscode.Extension<any>;
   let sharedClonedRepoPath: string;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.SUITE_SETUP);
 
     await IntegrationTestUtils.configureExtensionSetting('gitorial', 'cloneLocation', 'subdirectory');
@@ -35,21 +35,21 @@ suite('Integration: Lesson Navigation', () => {
       console.warn('Clone command failed during setup, continuing with tests');
     }
 
-    sharedClonedRepoPath = await IntegrationTestUtils.findClonedRepository('rust-state-machine') || '';
+    sharedClonedRepoPath = (await IntegrationTestUtils.findClonedRepository('rust-state-machine')) || '';
 
     if (sharedClonedRepoPath) {
       IntegrationTestUtils.trackTutorialPath(sharedClonedRepoPath);
     }
   });
 
-  suiteTeardown(async function() {
+  suiteTeardown(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.CLEANUP);
     await IntegrationTestUtils.cleanup();
     await IntegrationTestUtils.cleanupIntegrationExecutionDirectory();
   });
 
   suite('Repository State Verification', () => {
-    test('should verify cloned repository state is clean', async function() {
+    test('should verify cloned repository state is clean', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.QUICK_OPERATION);
 
       const isClean = await IntegrationTestUtils.isRepositoryClean(sharedClonedRepoPath);
@@ -57,14 +57,13 @@ suite('Integration: Lesson Navigation', () => {
 
       const currentBranch = await IntegrationTestUtils.getCurrentBranch(sharedClonedRepoPath);
 
-      const isValidState = currentBranch === 'gitorial' ||
-                           (currentBranch.length >= 7 && /^[a-f0-9]+$/.test(currentBranch));
+      const isValidState = currentBranch === 'gitorial' || (currentBranch.length >= 7 && /^[a-f0-9]+$/.test(currentBranch));
       assert.ok(isValidState, `Repository should be on gitorial branch or valid commit, got: ${currentBranch}`);
     });
   });
 
   suite('Navigation Command Testing', () => {
-    test('should execute navigation commands without errors', async function() {
+    test('should execute navigation commands without errors', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       if (!sharedClonedRepoPath) {
@@ -105,7 +104,7 @@ suite('Integration: Lesson Navigation', () => {
       }
     });
 
-    test('should handle tutorial loading workflow', async function() {
+    test('should handle tutorial loading workflow', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       if (!sharedClonedRepoPath) {

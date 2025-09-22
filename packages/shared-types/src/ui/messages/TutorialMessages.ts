@@ -8,9 +8,9 @@ import type { Tutorial } from '../viewmodels/Tutorial';
 export type ExtensionToWebviewTutorialMessage =
   | { category: 'tutorial'; type: 'data-updated'; payload: Tutorial }
   | {
-      category: 'tutorial';
-      type: 'step-changed';
-      payload: { stepIndex: number; htmlContent: string };
+      category : 'tutorial';
+      type     : 'step-changed';
+      payload  : { stepIndex: number; htmlContent: string };
     }
   | { category: 'tutorial'; type: 'solution-toggled'; payload: { isShowingSolution: boolean } };
 

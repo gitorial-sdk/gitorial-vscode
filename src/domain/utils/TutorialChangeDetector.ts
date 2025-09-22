@@ -17,10 +17,7 @@ export class TutorialChangeDetector {
   /**
    * Detects the type of change between two tutorial view models
    */
-  detectChange(
-    newViewModel: UI.ViewModels.Tutorial,
-    oldViewModel: UI.ViewModels.Tutorial | null,
-  ): TutorialViewChangeType {
+  detectChange(newViewModel: UI.ViewModels.Tutorial, oldViewModel: UI.ViewModels.Tutorial | null): TutorialViewChangeType {
     if (!oldViewModel) {
       return TutorialViewChangeType.None;
     }

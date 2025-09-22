@@ -28,8 +28,8 @@ export class WebviewMessageHandler {
   constructor(
     private readonly tutorialMessageHandler: IWebviewTutorialMessageHandler,
     private readonly systemMessageHandler: IWebviewSystemMessageHandler,
-    private readonly authorMessageHandler: IWebviewAuthorMessageHandler,
-  ) { }
+    private readonly authorMessageHandler: IWebviewAuthorMessageHandler
+  ) {}
 
   /**
    * Handles messages received from the webview panel.

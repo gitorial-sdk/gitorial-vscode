@@ -16,7 +16,7 @@ export interface IDB {
 export class StateDB implements IDB {
   constructor(
     private prefix: string,
-    private mementoAdapter: MementoAdapter,
+    private mementoAdapter: MementoAdapter
   ) {}
 
   private getPrefixedKey(key: string): string {

@@ -14,9 +14,7 @@ export class TutorialUriHandler implements vscode.UriHandler {
 
   public async handleUri(uri: vscode.Uri): Promise<void> {
     console.log(`TutorialUriHandler received URI: ${uri.toString()}`);
-    const {
-      scheme, authority, path: uriPath, query,
-    } = uri;
+    const { scheme, authority, path: uriPath, query } = uri;
 
     const pathPrefix = uriPath.startsWith('/') || uriPath === '' ? '' : '/';
     const authorityString = authority ? `//${authority}` : '';
@@ -33,7 +31,7 @@ export class TutorialUriHandler implements vscode.UriHandler {
       case UriCommand.Sync:
         const { repoUrl, commitHash } = parseResult.payload;
         console.log(
-          `TutorialUriHandler: Processing '${parseResult.command}' command. RepoURL: ${repoUrl}, Commit: ${commitHash}`,
+          `TutorialUriHandler: Processing '${parseResult.command}' command. RepoURL: ${repoUrl}, Commit: ${commitHash}`
         );
         await this.tutorialController.handleExternalTutorialRequest({ repoUrl, commitHash });
         break;

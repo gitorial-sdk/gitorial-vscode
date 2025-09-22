@@ -35,5 +35,3 @@ describe('V1 SectionContentRule (commit-level)', () => {
     expect(err.code).to.equal(Errors.SectionMustChangeReadmeOnly);
   });
 });
-
-

@@ -10,14 +10,14 @@
  * `DiffFile` objects before being passed to `IDiffDisplayer.displayDiff()`.
  */
 export interface DiffFilePayload {
-  absoluteFilePath: string; // This might still be useful for context, even if not directly used for diff content URIs
-  relativeFilePath: string;
-  commitHash: string; // The commit where the change *culminated* (e.g. nextStep.commitHash)
-  originalContent?: string; // Content before changes (e.g. currentStep content)
-  modifiedContent?: string; // Content after changes (e.g. nextStep content)
-  isNew?: boolean;
-  isDeleted?: boolean;
-  isModified?: boolean;
+  absoluteFilePath : string; // This might still be useful for context, even if not directly used for diff content URIs
+  relativeFilePath : string;
+  commitHash       : string; // The commit where the change *culminated* (e.g. nextStep.commitHash)
+  originalContent? : string; // Content before changes (e.g. currentStep content)
+  modifiedContent? : string; // Content after changes (e.g. nextStep content)
+  isNew?           : boolean;
+  isDeleted?       : boolean;
+  isModified?      : boolean;
 }
 
 export interface IGitChanges {

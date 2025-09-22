@@ -21,9 +21,7 @@ export class DiffDisplayerAdapter implements IDiffDisplayer {
     // Open the preferred diff last so it gets focus
     if (preferredDiff) {
       await this.openSingleDiff(preferredDiff);
-      console.log(
-        `DiffDisplayerAdapter: Opened preferred diff for ${preferredFocusFile} last to ensure focus`,
-      );
+      console.log(`DiffDisplayerAdapter: Opened preferred diff for ${preferredFocusFile} last to ensure focus`);
     }
   }
 
@@ -37,15 +35,12 @@ export class DiffDisplayerAdapter implements IDiffDisplayer {
     try {
       // Create a content provider for the left (original) version of the file
       leftProviderDisposable = vscode.workspace.registerTextDocumentContentProvider(leftScheme, {
-        provideTextDocumentContent: async(_uri: vscode.Uri): Promise<string> => {
+        provideTextDocumentContent : async (_uri: vscode.Uri): Promise<string> => {
           // const filePath = uri.path.startsWith('/') ? uri.path.slice(1) : uri.path; // Not needed if provider knows its file
           try {
             return await file.leftContentProvider();
           } catch (error) {
-            console.error(
-              `Error in leftContentProvider for ${file.relativePath} (commit ${file.leftCommitId}):`,
-              error,
-            );
+            console.error(`Error in leftContentProvider for ${file.relativePath} (commit ${file.leftCommitId}):`, error);
             return `// Error loading content for ${file.relativePath} from ${file.leftCommitId}\n// ${error}`;
           }
         },
@@ -53,14 +48,11 @@ export class DiffDisplayerAdapter implements IDiffDisplayer {
 
       // Create a content provider for the right (modified/solution) version of the file
       rightProviderDisposable = vscode.workspace.registerTextDocumentContentProvider(rightScheme, {
-        provideTextDocumentContent: async(_uri: vscode.Uri): Promise<string> => {
+        provideTextDocumentContent : async (_uri: vscode.Uri): Promise<string> => {
           try {
             return await file.rightContentProvider();
           } catch (error) {
-            console.error(
-              `Error in rightContentProvider for ${file.relativePath} (commit ${file.rightCommitId}):`,
-              error,
-            );
+            console.error(`Error in rightContentProvider for ${file.relativePath} (commit ${file.rightCommitId}):`, error);
             return `// Error loading content for ${file.relativePath} from ${file.rightCommitId}\n// ${error}`;
           }
         },
@@ -68,9 +60,7 @@ export class DiffDisplayerAdapter implements IDiffDisplayer {
 
       // Create URIs for left and right versions
       // Ensure relativePath doesn't start with a slash for the URI path part if scheme is not 'file'
-      const uriPath = file.relativePath.startsWith('/')
-        ? file.relativePath.slice(1)
-        : file.relativePath;
+      const uriPath = file.relativePath.startsWith('/') ? file.relativePath.slice(1) : file.relativePath;
       const leftUri = vscode.Uri.parse(`${leftScheme}:${uriPath}`);
       const rightUri = vscode.Uri.parse(`${rightScheme}:${uriPath}`);
 
@@ -83,7 +73,7 @@ export class DiffDisplayerAdapter implements IDiffDisplayer {
         leftUri, // Left side (e.g., current step)
         rightUri, // Right side (e.g., next step/solution)
         diffTitle,
-        { preview: false, viewColumn: vscode.ViewColumn.Two },
+        { preview: false, viewColumn: vscode.ViewColumn.Two }
       );
     } finally {
       // Always dispose of the content providers

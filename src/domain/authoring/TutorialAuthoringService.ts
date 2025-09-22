@@ -1,4 +1,3 @@
-
 /*
 How will tutorial authoring work?
 
@@ -23,9 +22,7 @@ import { Tutorial } from '@domain/models/Tutorial';
 type AuthoringServiceError = 'Not implemented';
 
 export class TutorialAuthoringService {
-  constructor(
-        private readonly tutorialRepository: ITutorialRepository,
-  ) {}
+  constructor(private readonly tutorialRepository: ITutorialRepository) {}
 
   public toggleAuthorMode(): void {}
   private _isAuthorMode(): boolean {

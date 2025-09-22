@@ -8,10 +8,10 @@ import { IWebviewTutorialMessageHandler } from '@ui/webview/WebviewMessageHandle
  * Internal interface for change analysis
  */
 interface ChangeAnalysis {
-  tutorialChanged: boolean;
-  stepChanged: boolean;
-  solutionStateChanged: boolean;
-  contentChanged: boolean;
+  tutorialChanged      : boolean;
+  stepChanged          : boolean;
+  solutionStateChanged : boolean;
+  contentChanged       : boolean;
 }
 
 /**
@@ -34,8 +34,8 @@ export class Controller {
   constructor(
     private readonly viewModelConverter: TutorialViewModelConverter,
     private readonly webviewPanelManager: WebviewPanelManager,
-    private readonly webviewMessageHandler: IWebviewTutorialMessageHandler,
-  ) { }
+    private readonly webviewMessageHandler: IWebviewTutorialMessageHandler
+  ) {}
 
   /**
    * Initialize webview with tutorial (first time only)
@@ -93,9 +93,9 @@ export class Controller {
    */
   public async showLoading(message: string = 'Loading tutorial...'): Promise<void> {
     const systemMessage: UI.Messages.ExtensionToWebviewSystemMessage = {
-      category: 'system',
-      type: 'loading-state',
-      payload: { isLoading: true, message },
+      category : 'system',
+      type     : 'loading-state',
+      payload  : { isLoading: true, message },
     };
 
     await this.webviewPanelManager.sendMessage(systemMessage);
@@ -106,9 +106,9 @@ export class Controller {
    */
   public async hideLoading(): Promise<void> {
     const systemMessage: UI.Messages.ExtensionToWebviewSystemMessage = {
-      category: 'system',
-      type: 'loading-state',
-      payload: { isLoading: false, message: '' },
+      category : 'system',
+      type     : 'loading-state',
+      payload  : { isLoading: false, message: '' },
     };
 
     await this.webviewPanelManager.sendMessage(systemMessage);
@@ -166,18 +166,16 @@ export class Controller {
     // If this is the first load (prev is undefined), treat everything as changed
     if (!prev) {
       return {
-        tutorialChanged: true,
-        stepChanged: true,
-        solutionStateChanged: true,
-        contentChanged: true,
+        tutorialChanged      : true,
+        stepChanged          : true,
+        solutionStateChanged : true,
+        contentChanged       : true,
       };
     }
 
     const tutorialChanged = prev.id !== curr.id;
     const stepChanged = prev.currentStep.index !== curr.currentStep.index;
-    const solutionStateChanged =
-      curr?.isShowingSolution !== undefined &&
-      prev?.isShowingSolution !== curr.isShowingSolution;
+    const solutionStateChanged = curr?.isShowingSolution !== undefined && prev?.isShowingSolution !== curr.isShowingSolution;
 
     const prevStep = prev?.steps.at(curr.currentStep.index);
     const currStep = curr.steps.at(curr.currentStep.index);
@@ -192,7 +190,7 @@ export class Controller {
       tutorialChanged,
       stepChanged,
       solutionStateChanged,
-      contentChanged: contentChanged || stepCommitChanged,
+      contentChanged : contentChanged || stepCommitChanged,
     };
   }
 
@@ -200,25 +198,20 @@ export class Controller {
    * Handle complete tutorial change (different tutorial loaded)
    */
   private async _handleTutorialChange(tutorial: Readonly<UI.ViewModels.Tutorial>): Promise<void> {
-    console.log(
-      `WebviewController: Tutorial changed from ${this.tutorialViewModel?.id} to ${tutorial.id}`,
-    );
+    console.log(`WebviewController: Tutorial changed from ${this.tutorialViewModel?.id} to ${tutorial.id}`);
     await this._handleFullUpdate(tutorial);
   }
-
-
 
   /**
    * Handle step change within same tutorial
    */
   private async _handleStepChange(tutorial: Readonly<UI.ViewModels.Tutorial>): Promise<void> {
-    const htmlContent =
-      tutorial.steps[tutorial.currentStep.index].htmlContent ?? '<p></p>';
+    const htmlContent = tutorial.steps[tutorial.currentStep.index].htmlContent ?? '<p></p>';
 
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
-      category: 'tutorial',
-      type: 'step-changed',
-      payload: { stepIndex: tutorial.currentStep.index, htmlContent },
+      category : 'tutorial',
+      type     : 'step-changed',
+      payload  : { stepIndex: tutorial.currentStep.index, htmlContent },
     };
 
     await this.webviewPanelManager.sendMessage(message);
@@ -231,9 +224,9 @@ export class Controller {
     const isShowingSolution = tutorial.isShowingSolution;
 
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
-      category: 'tutorial',
-      type: 'solution-toggled',
-      payload: { isShowingSolution },
+      category : 'tutorial',
+      type     : 'solution-toggled',
+      payload  : { isShowingSolution },
     };
 
     await this.webviewPanelManager.sendMessage(message);
@@ -246,9 +239,9 @@ export class Controller {
     }
 
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
-      category: 'tutorial',
-      type: 'data-updated',
-      payload: tutorial,
+      category : 'tutorial',
+      type     : 'data-updated',
+      payload  : tutorial,
     };
 
     await this.webviewPanelManager.sendMessage(message);
@@ -267,9 +260,9 @@ export class Controller {
    */
   private async _sendFullTutorialUpdate(tutorial: Readonly<UI.ViewModels.Tutorial>): Promise<void> {
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
-      category: 'tutorial',
-      type: 'data-updated',
-      payload: tutorial,
+      category : 'tutorial',
+      type     : 'data-updated',
+      payload  : tutorial,
     };
 
     await this.webviewPanelManager.sendMessage(message);

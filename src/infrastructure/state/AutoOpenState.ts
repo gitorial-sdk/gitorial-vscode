@@ -2,9 +2,9 @@ import { Domain } from '@gitorial/shared-types';
 import { GlobalState, IDB } from './GlobalState';
 
 interface AutoOpenStateData {
-  timestamp: number;
-  tutorialId: Domain.TutorialId;
-  commitHash?: string;
+  timestamp   : number;
+  tutorialId  : Domain.TutorialId;
+  commitHash? : string;
 }
 
 export class AutoOpenState {

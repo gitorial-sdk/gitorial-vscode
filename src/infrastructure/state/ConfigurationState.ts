@@ -6,7 +6,7 @@ export class ConfigurationState implements IConfigurationState {
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    configurationSection: string = 'gitorial',
+    configurationSection: string = 'gitorial'
   ) {
     this.configurationSection = configurationSection;
   }
@@ -31,9 +31,9 @@ export class ConfigurationState implements IConfigurationState {
    * Listens for configuration changes in VS Code settings
    */
   onDidChange(callback: (event: { affectsConfiguration: (section: string) => boolean }) => void): void {
-    const disposable = vscode.workspace.onDidChangeConfiguration((event) => {
+    const disposable = vscode.workspace.onDidChangeConfiguration(event => {
       callback({
-        affectsConfiguration: (section: string) => event.affectsConfiguration(section),
+        affectsConfiguration : (section: string) => event.affectsConfiguration(section),
       });
     });
 
@@ -45,9 +45,6 @@ export class ConfigurationState implements IConfigurationState {
 /**
  * Factory function to create a ConfigurationState instance
  */
-export function createConfigurationState(
-  context: vscode.ExtensionContext,
-  configurationSection?: string,
-): IConfigurationState {
+export function createConfigurationState(context: vscode.ExtensionContext, configurationSection?: string): IConfigurationState {
   return new ConfigurationState(context, configurationSection);
 }

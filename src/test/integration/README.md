@@ -13,25 +13,29 @@ This directory contains integration tests for the Gitorial VS Code extension. Th
 ### Test Categories
 
 #### 🔄 Core Workflows
+
 - Tutorial opening from workspace
-- Tutorial opening from custom directory  
+- Tutorial opening from custom directory
 - Step navigation (forward/backward)
 - Solution viewing
 - Working directory state preservation
 
 #### 📥 Clone Workflows
+
 - Successful repository cloning
 - Clone error handling (invalid URLs, network issues)
 - Clone-to-tutorial integration
 - User experience and progress feedback
 
 #### 🔧 Git Integration
+
 - Repository state management
 - Branch switching (gitorial branch)
 - Uncommitted changes handling
 - Repository validation
 
 #### ⚠️ Error Scenarios
+
 - Invalid repository directories
 - Missing git repositories
 - Corrupted repository states
@@ -39,6 +43,7 @@ This directory contains integration tests for the Gitorial VS Code extension. Th
 - Permission errors
 
 #### 💾 State Management
+
 - Tutorial state persistence
 - Workspace state handling
 - Session recovery
@@ -82,6 +87,7 @@ Integration tests are integrated with the build pipeline:
 ### Isolated Test Environment
 
 Each test runs in an isolated environment with:
+
 - Temporary test directories
 - Mock git repositories
 - Isolated VS Code workspace
@@ -90,6 +96,7 @@ Each test runs in an isolated environment with:
 ### Test Fixtures
 
 The test utilities provide:
+
 - **Mock Repositories**: Realistic tutorial repositories with gitorial branches
 - **Test Workspaces**: VS Code workspace environments
 - **Remote Repositories**: Mock remote repositories for clone testing
@@ -98,6 +105,7 @@ The test utilities provide:
 ### Cleanup
 
 All test artifacts are automatically cleaned up:
+
 - Temporary directories removed
 - VS Code state reset
 - Mock services disposed
@@ -130,19 +138,19 @@ suite('My Integration Test Suite', () => {
 
   test('should test specific workflow', async function() {
     this.timeout(15000);
-    
+
     // Setup
     const testRepo = await IntegrationTestUtils.createTestRepository();
-    
+
     // Execute
     await IntegrationTestUtils.executeCommand('gitorial.someCommand');
-    
+
     // Verify
     const result = await IntegrationTestUtils.waitForCondition(() => {
       // Check condition
       return true;
     });
-    
+
     assert.ok(result, 'Expected condition should be met');
   });
 });
@@ -193,6 +201,7 @@ pnpm run test:integration -- --grep "specific test name" --timeout 0
 ### VS Code Extension Host
 
 Tests run in the VS Code Extension Development Host, which provides:
+
 - Full VS Code API access
 - Extension activation simulation
 - Webview panel creation
@@ -201,6 +210,7 @@ Tests run in the VS Code Extension Development Host, which provides:
 ### Logging
 
 Tests include comprehensive logging:
+
 - 🚀 Setup and initialization
 - 📂 File operations
 - 🎯 Command execution
@@ -253,6 +263,7 @@ Integration tests integrate with GitHub Actions workflow:
 ### Test Reports
 
 Tests generate reports for:
+
 - Test results and coverage
 - Performance metrics
 - Error logs and debugging info
@@ -261,6 +272,7 @@ Tests generate reports for:
 ### Failure Handling
 
 On test failures:
+
 - Detailed error logs are captured
 - Test artifacts are preserved for debugging
 - Screenshots (if available) are saved

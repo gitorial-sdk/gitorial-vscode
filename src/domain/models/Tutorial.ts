@@ -14,14 +14,14 @@ import { EnrichedStep } from './EnrichedStep';
 import { Markdown } from './Markdown';
 
 export interface TutorialData {
-  id: Domain.TutorialId;
-  title: string;
-  steps: Step[];
-  activeStepIndex: number;
-  repoUrl?: string; //Optional: A tutorial might be purely local
-  localPath: string;
-  workspaceFolder?: string;
-  lastPersistedOpenTabFsPaths?: string[];
+  id                           : Domain.TutorialId;
+  title                        : string;
+  steps                        : Step[];
+  activeStepIndex              : number;
+  repoUrl?                     : string; //Optional: A tutorial might be purely local
+  localPath                    : string;
+  workspaceFolder?             : string;
+  lastPersistedOpenTabFsPaths? : string[];
 }
 
 /**

@@ -1,5 +1,6 @@
 const tsParser = require('@typescript-eslint/parser');
 const typescriptEslint = require('@typescript-eslint/eslint-plugin');
+const neverthrow = require('eslint-plugin-neverthrow');
 
 module.exports = [
   {
@@ -22,6 +23,7 @@ module.exports = [
     files: ['**/*.ts'],
     plugins: {
       '@typescript-eslint': typescriptEslint,
+      'neverthrow': neverthrow,
     },
     languageOptions: {
       parser: tsParser,
@@ -48,11 +50,11 @@ module.exports = [
           argsIgnorePattern: '^_',
           caughtErrorsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-        }
+        },
       ],
 
       // Code quality and logic rules (non-formatting)
-      curly: ['warn', 'all'], // Always require braces
+      curly: ['warn', 'multi-line'], // Only require braces for multi-line statements
 
       // Forbid deep imports into workspace packages; enforce public entrypoints
       'no-restricted-imports': [
@@ -60,10 +62,7 @@ module.exports = [
         {
           patterns: [
             {
-              group: [
-                '@gitorial/*/src/**',
-                '@gitorial/*/dist/**',
-              ],
+              group: ['@gitorial/*/src/**', '@gitorial/*/dist/**'],
               message:
                 'Do not deep import from monorepo packages (src/dist). Use the package public subpaths (e.g. "@gitorial/shared-types/commit").',
             },
@@ -73,6 +72,12 @@ module.exports = [
                 'Do not import workspace packages via relative paths. Use the package name instead (e.g. "@gitorial/shared-types").',
             },
           ],
+        },
+      ],
+      'newline-per-chained-call': [
+        'error',
+        {
+          ignoreChainWithDepth: 1, // Break after 1 chained call
         },
       ],
     },

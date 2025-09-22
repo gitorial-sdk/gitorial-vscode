@@ -42,9 +42,7 @@ export class TabTrackingService {
    * @param viewColumn The view column to open the file in (defaults to Two)
    * @returns Promise that resolves when focus is restored, or rejects if failed
    */
-  public async restoreFocusToLastFile(
-    viewColumn: vscode.ViewColumn = vscode.ViewColumn.Two,
-  ): Promise<void> {
+  public async restoreFocusToLastFile(viewColumn: vscode.ViewColumn = vscode.ViewColumn.Two): Promise<void> {
     if (!this._lastActiveTutorialFile) {
       throw new Error('No last active tutorial file to restore focus to');
     }
@@ -58,10 +56,7 @@ export class TabTrackingService {
    * @param viewColumn The view column to search in
    * @returns The tab if found, null otherwise
    */
-  private _findExistingTabForFile(
-    fileUri: vscode.Uri,
-    viewColumn: vscode.ViewColumn,
-  ): vscode.Tab | null {
+  private _findExistingTabForFile(fileUri: vscode.Uri, viewColumn: vscode.ViewColumn): vscode.Tab | null {
     const targetGroup = vscode.window.tabGroups.all.find(group => group.viewColumn === viewColumn);
     if (!targetGroup) {
       return null;
@@ -82,10 +77,7 @@ export class TabTrackingService {
         return true;
       }*/
         if (input && input.original && input.modified) {
-          return (
-            input.original.toString() === fileUri.toString() ||
-            input.modified.toString() === fileUri.toString()
-          );
+          return input.original.toString() === fileUri.toString() || input.modified.toString() === fileUri.toString();
         }
 
         return false;
@@ -106,26 +98,23 @@ export class TabTrackingService {
       if (input?.uri) {
         // Regular file tab - open the document to focus it
         await vscode.window.showTextDocument(input.uri, {
-          viewColumn: group.viewColumn,
-          preview: false,
-          preserveFocus: false,
+          viewColumn    : group.viewColumn,
+          preview       : false,
+          preserveFocus : false,
         });
       } else if (input && input.original && input.modified) {
         // Diff tab - for focus restoration, open the modified version (current/working version)
         // This is more useful than trying to recreate the diff view
         await vscode.window.showTextDocument(input.modified, {
-          viewColumn: group.viewColumn,
-          preview: false,
-          preserveFocus: false,
+          viewColumn    : group.viewColumn,
+          preview       : false,
+          preserveFocus : false,
         });
       }
     }
   }
 
-  public async restoreFocusToFile(
-    file: vscode.Uri,
-    viewColumn: vscode.ViewColumn = vscode.ViewColumn.Two,
-  ): Promise<void> {
+  public async restoreFocusToFile(file: vscode.Uri, viewColumn: vscode.ViewColumn = vscode.ViewColumn.Two): Promise<void> {
     try {
       // First, check if there's already an open tab for this file
       const existingTab = this._findExistingTabForFile(file, viewColumn);
@@ -141,12 +130,10 @@ export class TabTrackingService {
 
         await vscode.window.showTextDocument(actualFileUri, {
           viewColumn,
-          preview: false,
-          preserveFocus: false,
+          preview       : false,
+          preserveFocus : false,
         });
-        console.log(
-          `TabTrackingService: Opened new tab and restored focus to ${actualFileUri.fsPath}`,
-        );
+        console.log(`TabTrackingService: Opened new tab and restored focus to ${actualFileUri.fsPath}`);
       }
     } catch (error) {
       console.error(`TabTrackingService: Error restoring focus to ${file.fsPath}:`, error);
@@ -196,7 +183,7 @@ export class TabTrackingService {
         if (editor) {
           this._onEditorActivated(editor);
         }
-      }),
+      })
     );
   }
 
@@ -227,14 +214,12 @@ export class TabTrackingService {
 
           // Case 2: Diff view tab - check both original and modified URIs
           if (input && input.original && input.modified) {
-            return (
-              input.original.toString() === editorUri.toString() ||
-              input.modified.toString() === editorUri.toString()
-            );
+            return input.original.toString() === editorUri.toString() || input.modified.toString() === editorUri.toString();
           }
 
           return false;
-        }));
+        })
+      );
 
       if (activeGroup?.viewColumn === vscode.ViewColumn.Two) {
         this._lastActiveTutorialFile = editorUri;

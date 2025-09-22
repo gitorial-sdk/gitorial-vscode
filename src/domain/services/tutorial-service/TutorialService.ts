@@ -12,9 +12,9 @@ import { NavigationManager } from './manager/NavigationManager';
 import { StateManager } from './manager/StateManager';
 
 export interface LoadTutorialOptions {
-  initialStepCommitHash?: string;
-  showSolution?: boolean;
-  initialOpenTabFsPaths?: string[];
+  initialStepCommitHash? : string;
+  showSolution?          : boolean;
+  initialOpenTabFsPaths? : string[];
 }
 
 export class TutorialService {
@@ -29,17 +29,14 @@ export class TutorialService {
     private readonly gitOperationsFactory: IGitOperationsFactory,
     stepContentRepository: IStepContentRepository,
     private readonly activeTutorialStateRepository: IActiveTutorialStateRepository,
-    workspaceId?: string,
+    workspaceId?: string
   ) {
     this.contentManager = new ContentManager(stepContentRepository);
     this.navigationManager = new NavigationManager(activeTutorialStateRepository, this.contentManager);
     this.stateManager = new StateManager(activeTutorialStateRepository, workspaceId);
   }
 
-  public async loadTutorialFromPath(
-    localPath: string,
-    options: LoadTutorialOptions = {},
-  ): Promise<Tutorial | null> {
+  public async loadTutorialFromPath(localPath: string, options: LoadTutorialOptions = {}): Promise<Tutorial | null> {
     this._gitOperations = this.gitOperationsFactory.fromPath(localPath);
 
     try {
@@ -65,7 +62,7 @@ export class TutorialService {
   public async cloneAndLoadTutorial(
     repoUrl: string,
     targetPath: string,
-    options: LoadTutorialOptions = {},
+    options: LoadTutorialOptions = {}
   ): Promise<Tutorial | null> {
     try {
       this._gitOperations = await this.gitOperationsFactory.fromClone(repoUrl, targetPath);
@@ -81,7 +78,9 @@ export class TutorialService {
 
       const tutorial = await this.repository.findByPath(targetPath);
       if (!tutorial) {
-        throw new Error(`TutorialService: Failed to find tutorial at path ${targetPath} despite successful clone and branch setup`);
+        throw new Error(
+          `TutorialService: Failed to find tutorial at path ${targetPath} despite successful clone and branch setup`
+        );
       }
 
       await this._activateTutorial(tutorial, options);
@@ -102,10 +101,7 @@ export class TutorialService {
     await this.stateManager.clearActiveTutorialState();
   }
 
-  private async _activateTutorial(
-    tutorial: Tutorial,
-    options: LoadTutorialOptions = {},
-  ): Promise<void> {
+  private async _activateTutorial(tutorial: Tutorial, options: LoadTutorialOptions = {}): Promise<void> {
     this._tutorial = tutorial;
     this._tutorial.isShowingSolution = !!options.showSolution;
 
@@ -221,8 +217,6 @@ export class TutorialService {
     const targetStep = this._tutorial.activeStep;
     await this.contentManager.enrichStep(this._tutorial, targetStep);
   }
-
-
 
   /**
    * Consistently prepares a step for activation

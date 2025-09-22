@@ -30,7 +30,7 @@ export class DiffModel {
     absolutePath: string,
     commitHash: string,
     changeType: DiffChangeType = DiffChangeType.MODIFIED,
-    isBinary: boolean = false,
+    isBinary: boolean = false
   ) {
     this.relativePath = relativePath;
     this.absolutePath = absolutePath;
@@ -50,7 +50,8 @@ export class DiffModel {
    * Get the filename without path
    */
   get filename(): string {
-    return this.relativePath.split('/').pop() || this.relativePath;
+    return this.relativePath.split('/')
+      .pop() || this.relativePath;
   }
 
   /**
@@ -77,18 +78,14 @@ export class DiffModel {
       data.absolutePath || '',
       data.commitHash || '',
       data.changeType || DiffChangeType.MODIFIED,
-      data.isBinary || false,
+      data.isBinary || false
     );
   }
 
   /**
    * Create multiple DiffModels from file paths
    */
-  public static createFromPaths(
-    relativePaths: string[],
-    basePath: string,
-    commitHash: string,
-  ): DiffModel[] {
+  public static createFromPaths(relativePaths: string[], basePath: string, commitHash: string): DiffModel[] {
     return relativePaths.map(relativePath => {
       const absolutePath = `${basePath}/${relativePath}`;
       return new DiffModel(relativePath, absolutePath, commitHash);

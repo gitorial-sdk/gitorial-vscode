@@ -17,9 +17,14 @@ export class CommandHandler {
     systemController: SystemController,
     authorModeController: AuthorModeController,
     private readonly userInteraction: IUserInteraction,
-    workspacePath: string,
+    workspacePath: string
   ) {
-    this.authoringCommandHandler = new AuthoringCommandHandler(systemController, authorModeController, userInteraction, workspacePath);
+    this.authoringCommandHandler = new AuthoringCommandHandler(
+      systemController,
+      authorModeController,
+      userInteraction,
+      workspacePath
+    );
   }
 
   /**
@@ -87,32 +92,28 @@ export class CommandHandler {
    * @param context The extension context to push disposables to.
    */
   public register(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.openTutorial', () => this.handleOpenLocalTutorial()));
+
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.cloneTutorial', () => this.handleCloneTutorial()));
+
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.openTutorial', () => this.handleOpenLocalTutorial()),
+      vscode.commands.registerCommand('gitorial.openWorkspaceTutorial', () => this.handleOpenWorkspaceTutorial())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.cloneTutorial', () => this.handleCloneTutorial()),
+      vscode.commands.registerCommand('gitorial.navigateToNextStep', () => this.handleNavigateToNextStep())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.openWorkspaceTutorial', () => this.handleOpenWorkspaceTutorial()),
+      vscode.commands.registerCommand('gitorial.navigateToPreviousStep', () => this.handleNavigateToPreviousStep())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.navigateToNextStep', () => this.handleNavigateToNextStep()),
+      vscode.commands.registerCommand('gitorial.cleanupTemporaryFolders', () => this.handleCleanupTemporaryFolders())
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.navigateToPreviousStep', () => this.handleNavigateToPreviousStep()),
-    );
-
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.cleanupTemporaryFolders', () => this.handleCleanupTemporaryFolders()),
-    );
-
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.resetClonePreferences', () => this.handleResetClonePreferences()),
+      vscode.commands.registerCommand('gitorial.resetClonePreferences', () => this.handleResetClonePreferences())
     );
 
     this.authoringCommandHandler.register(context);

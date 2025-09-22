@@ -73,7 +73,7 @@ export class CommitHashSanitizer {
   public static sanitizeManifestStep<T extends { commit: string }>(step: T): T {
     return {
       ...step,
-      commit: this.sanitize(step.commit),
+      commit : this.sanitize(step.commit),
     };
   }
 
@@ -86,10 +86,7 @@ export class CommitHashSanitizer {
     const trimmed = input.trim();
 
     // Check for common malformation patterns
-    if (trimmed.includes('HEAD ') ||
-        trimmed.includes('commit ') ||
-        trimmed.includes('origin/') ||
-        trimmed.length > 40) {
+    if (trimmed.includes('HEAD ') || trimmed.includes('commit ') || trimmed.includes('origin/') || trimmed.length > 40) {
       console.warn(`${context}: Detected potentially malformed commit hash: "${input}"`);
     }
   }

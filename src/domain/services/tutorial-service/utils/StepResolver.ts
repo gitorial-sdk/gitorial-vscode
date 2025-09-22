@@ -5,14 +5,10 @@ import { LoadTutorialOptions } from '@domain/services/tutorial-service';
 
 export class StepResolver {
   /**
-     * Resolves which step to activate based on options and persisted state
-     * Priority: options.initialStepCommitHash > persistedState.currentStepId > first step
-     */
-  static resolveTargetStep(
-    tutorial: Tutorial,
-    options: LoadTutorialOptions,
-    persistedState?: StoredTutorialState,
-  ): Step {
+   * Resolves which step to activate based on options and persisted state
+   * Priority: options.initialStepCommitHash > persistedState.currentStepId > first step
+   */
+  static resolveTargetStep(tutorial: Tutorial, options: LoadTutorialOptions, persistedState?: StoredTutorialState): Step {
     // Priority 1: Explicit commit hash from options (e.g., from external links)
     if (options.initialStepCommitHash) {
       const step = this.findStepByCommitHash(tutorial, options.initialStepCommitHash);

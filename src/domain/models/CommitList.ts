@@ -3,8 +3,8 @@ import { err, ok, Result } from 'neverthrow';
 import { DraftCommitList } from './DraftCommitList';
 import { Commit } from './Commit';
 
-type TCommitListRule<T extends string> = Domain.CommitList.Validation.Rule<T>
-type TListValidationError<T extends string> = Domain.CommitList.Validation.Error<T>
+type TCommitListRule<T extends string> = Domain.CommitList.Validation.Rule<T>;
+type TListValidationError<T extends string> = Domain.CommitList.Validation.Error<T>;
 
 export class CommitList<TCode extends string = string> {
   private _list: ReadonlyArray<Commit>;
@@ -18,7 +18,7 @@ export class CommitList<TCode extends string = string> {
   // Note: method-level generic (T extends string), not the class generic
   public static new<T extends string>(
     commits: ReadonlyArray<Commit>,
-    rules: ReadonlyArray<TCommitListRule<T>>,
+    rules: ReadonlyArray<TCommitListRule<T>>
   ): Result<CommitList<T>, TListValidationError<T>> {
     const result = CommitList._validateList<T>(commits, rules);
     if (result.isErr()) {
@@ -40,7 +40,7 @@ export class CommitList<TCode extends string = string> {
 
   private static _validateList<T extends string>(
     commits: ReadonlyArray<Commit>,
-    rules: ReadonlyArray<TCommitListRule<T>>,
+    rules: ReadonlyArray<TCommitListRule<T>>
   ): Result<void, TListValidationError<T>> {
     const commitsData = commits.map(c => c.data);
     for (const rule of rules) {

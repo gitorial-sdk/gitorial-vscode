@@ -10,11 +10,11 @@ export class VSCodeProgressReporter implements IProgressReporter {
   reportStart(title: string, onCancel?: () => void): void {
     vscode.window.withProgress(
       {
-        location: vscode.ProgressLocation.Notification,
+        location    : vscode.ProgressLocation.Notification,
         title,
-        cancellable: onCancel !== undefined,
+        cancellable : onCancel !== undefined,
       },
-      async(progress, token) => {
+      async (progress, token) => {
         this.progressInstance = progress;
         if (onCancel) {
           token.onCancellationRequested(() => {
@@ -26,7 +26,7 @@ export class VSCodeProgressReporter implements IProgressReporter {
         await new Promise<void>(resolve => {
           this.resolveProgress = resolve;
         });
-      },
+      }
     );
   }
 

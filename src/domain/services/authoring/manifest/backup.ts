@@ -10,9 +10,9 @@ const MANIFEST = 'manifest.json';
 const MANIFEST_FOLDER = '.gitorial';
 
 export const DEFAULT: Domain.AuthorManifestData = {
-  authoringBranch: 'main',
-  publishBranch: 'gitorial',
-  steps: [],
+  authoringBranch : 'main',
+  publishBranch   : 'gitorial',
+  steps           : [],
 };
 
 /**
@@ -30,10 +30,7 @@ export class ManifestBackupService implements IManifestBackupService {
     private readonly fs?: IFileSystem
   ) {}
 
-  public async save(
-    repoPath: string,
-    manifest: Domain.AuthorManifestData
-  ): Promise<Result<void, ManifestBackupServiceError>> {
+  public async save(repoPath: string, manifest: Domain.AuthorManifestData): Promise<Result<void, ManifestBackupServiceError>> {
     const key = this.getBackupKey(repoPath);
 
     for (const step of manifest.steps) {

@@ -1,18 +1,18 @@
 import { URL } from 'url';
 
 export interface UrlValidationResult {
-  isValid: boolean;
-  normalizedUrl?: string;
-  error?: string;
+  isValid        : boolean;
+  normalizedUrl? : string;
+  error?         : string;
 }
 
 export interface UrlValidationOptions {
-  allowedProtocols?: string[];
-  allowedHosts?: string[];
+  allowedProtocols?       : string[];
+  allowedHosts?           : string[];
   // When true, only secure protocols are accepted. Secure means HTTPS or SSH.
   // Name kept for backwards compatibility.
-  requireSecureProtocols?: boolean;
-  maxLength?: number;
+  requireSecureProtocols? : boolean;
+  maxLength?              : number;
 }
 
 /**
@@ -21,25 +21,16 @@ export interface UrlValidationOptions {
  */
 export class UrlValidator {
   private static readonly DEFAULT_OPTIONS: Required<UrlValidationOptions> = {
-    allowedProtocols: ['https', 'ssh'],
-    allowedHosts: [
-      'github.com',
-      'gitlab.com',
-      'bitbucket.org',
-      'codeberg.org',
-      'sourceforge.net',
-    ],
-    requireSecureProtocols: true,
-    maxLength: 2048,
+    allowedProtocols       : ['https', 'ssh'],
+    allowedHosts           : ['github.com', 'gitlab.com', 'bitbucket.org', 'codeberg.org', 'sourceforge.net'],
+    requireSecureProtocols : true,
+    maxLength              : 2048,
   };
 
   /**
    * Validates a repository URL for security and format compliance
    */
-  public static validateRepositoryUrl(
-    url: string,
-    options: UrlValidationOptions = {},
-  ): UrlValidationResult {
+  public static validateRepositoryUrl(url: string, options: UrlValidationOptions = {}): UrlValidationResult {
     const opts = { ...this.DEFAULT_OPTIONS, ...options };
 
     try {
@@ -70,8 +61,8 @@ export class UrlValidator {
       // Protocol validation
       if (!opts.allowedProtocols.includes(parsedUrl.protocol.replace(':', ''))) {
         return {
-          isValid: false,
-          error: `Protocol '${parsedUrl.protocol}' not allowed. Allowed protocols: ${opts.allowedProtocols.join(', ')}`,
+          isValid : false,
+          error   : `Protocol '${parsedUrl.protocol}' not allowed. Allowed protocols: ${opts.allowedProtocols.join(', ')}`,
         };
       }
 
@@ -84,8 +75,8 @@ export class UrlValidator {
       const hostname = parsedUrl.hostname.toLowerCase();
       if (!this.isHostAllowed(hostname, opts.allowedHosts)) {
         return {
-          isValid: false,
-          error: `Host '${hostname}' not allowed. Allowed hosts: ${opts.allowedHosts.join(', ')}`,
+          isValid : false,
+          error   : `Host '${hostname}' not allowed. Allowed hosts: ${opts.allowedHosts.join(', ')}`,
         };
       }
 
@@ -102,8 +93,8 @@ export class UrlValidator {
 
     } catch (error) {
       return {
-        isValid: false,
-        error: `URL validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        isValid : false,
+        error   : `URL validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -161,13 +152,13 @@ export class UrlValidator {
   private static performSecurityChecks(url: URL): UrlValidationResult {
     // Check for suspicious patterns in path
     const suspiciousPatterns = [
-      /\.\./,  // Path traversal
-      /\/\//,  // Double slashes (potential redirect)
-      /%2e%2e/i,  // URL encoded path traversal (..)
-      /%2f%2e%2e%2f/i,  // URL encoded path traversal (/../)
-      /%00/i,  // Null byte injection
-      /%3c%3e/i,  // URL encoded HTML injection (<>)
-      /[<>'"]/,  // HTML injection characters
+      /\.\./, // Path traversal
+      /\/\//, // Double slashes (potential redirect)
+      /%2e%2e/i, // URL encoded path traversal (..)
+      /%2f%2e%2e%2f/i, // URL encoded path traversal (/../)
+      /%00/i, // Null byte injection
+      /%3c%3e/i, // URL encoded HTML injection (<>)
+      /[<>'"]/, // HTML injection characters
     ];
 
     for (const pattern of suspiciousPatterns) {
@@ -178,11 +169,7 @@ export class UrlValidator {
 
     // Disallow embedded credentials; allow SSH with 'git' username and no password
     if (url.username || url.password) {
-      const isAllowedSshUser =
-        url.protocol === 'ssh:' &&
-        !!url.username &&
-        url.username.toLowerCase() === 'git' &&
-        !url.password;
+      const isAllowedSshUser = url.protocol === 'ssh:' && !!url.username && url.username.toLowerCase() === 'git' && !url.password;
       if (!isAllowedSshUser) {
         return { isValid: false, error: 'Credentials in repository URLs are not allowed' };
       }
@@ -195,7 +182,8 @@ export class UrlValidator {
 
     // Validate repository path structure
     if (url.protocol === 'https:' || url.protocol === 'ssh:') {
-      const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+      const pathParts = url.pathname.split('/')
+        .filter(part => part.length > 0);
       if (pathParts.length < 2) {
         return { isValid: false, error: 'Repository URL must include owner and repository name' };
       }
@@ -209,7 +197,8 @@ export class UrlValidator {
    */
   private static normalizeUrl(url: URL): string {
     // Remove trailing slash and .git extension
-    const normalizedPath = url.pathname.replace(/\/$/, '').replace(/\.git$/, '');
+    const normalizedPath = url.pathname.replace(/\/$/, '')
+      .replace(/\.git$/, '');
 
     // Preserve SSH userinfo and port when present
     const userInfo = url.username ? `${url.username}@` : '';
@@ -231,9 +220,9 @@ export class UrlValidator {
    * Extracts safe repository information from validated URL
    */
   public static extractRepositoryInfo(url: string): {
-    platform: string;
-    owner: string;
-    repo: string;
+    platform : string;
+    owner    : string;
+    repo     : string;
   } | null {
     const validation = this.validateRepositoryUrl(url);
     if (!validation.isValid || !validation.normalizedUrl) {
@@ -242,7 +231,8 @@ export class UrlValidator {
 
     try {
       const parsedUrl = new URL(validation.normalizedUrl);
-      const pathParts = parsedUrl.pathname.split('/').filter(part => part.length > 0);
+      const pathParts = parsedUrl.pathname.split('/')
+        .filter(part => part.length > 0);
 
       if (pathParts.length < 2) {
         return null;
@@ -251,12 +241,11 @@ export class UrlValidator {
       const platform = parsedUrl.hostname.split('.')[0]; // github, gitlab, etc.
       return {
         platform,
-        owner: pathParts[0],
-        repo: pathParts[1],
+        owner : pathParts[0],
+        repo  : pathParts[1],
       };
     } catch {
       return null;
     }
   }
 }
-

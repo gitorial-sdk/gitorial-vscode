@@ -3,28 +3,24 @@
 // (e.g., selecting a path). This keeps the domain independent of vscode.window.
 
 export interface PathSelectionOptions {
-  canSelectFiles?: boolean;
-  canSelectFolders?: boolean;
-  canSelectMany?: boolean;
-  openLabel?: string;
-  title?: string;
-  defaultUri?: string; // Should be a string representation of a URI
+  canSelectFiles?   : boolean;
+  canSelectFolders? : boolean;
+  canSelectMany?    : boolean;
+  openLabel?        : string;
+  title?            : string;
+  defaultUri?       : string; // Should be a string representation of a URI
 }
 
 export type OpenDialogOptions = {
-  canSelectFolders?: boolean;
-  canSelectFiles?: boolean;
-  openLabel?: string;
-  title?: string;
+  canSelectFolders? : boolean;
+  canSelectFiles?   : boolean;
+  openLabel?        : string;
+  title?            : string;
 };
 
 export interface IUserInteraction {
   showOpenDialog(options: OpenDialogOptions): Promise<undefined | string>;
-  showInputBox(options: {
-    prompt: string;
-    placeHolder?: string;
-    defaultValue?: string;
-  }): Promise<undefined | string>;
+  showInputBox(options: { prompt: string; placeHolder?: string; defaultValue?: string }): Promise<undefined | string>;
   showInformationMessage(message: string, options?: { copy?: { data: string } }): Promise<void>;
   showWarningMessage<T extends string>(message: string, options?: MessageOptions, ...items: T[]): Promise<T | undefined>;
   showErrorMessage(message: string): Promise<void>;
@@ -43,11 +39,7 @@ export interface IUserInteraction {
    * @param defaultValue Optional pre-filled value.
    * @returns The entered string or undefined if cancelled.
    */
-  getInput(
-    prompt: string,
-    placeHolder?: string,
-    defaultValue?: string
-  ): Promise<string | undefined>;
+  getInput(prompt: string, placeHolder?: string, defaultValue?: string): Promise<string | undefined>;
 
   /**
    * Asks the user for confirmation with a modal message.
@@ -58,11 +50,11 @@ export interface IUserInteraction {
    * @returns A promise that resolves to true if the user confirmed, false otherwise.
    */
   askConfirmation(opt: {
-    message: string;
-    detail?: string;
-    confirmActionTitle?: string;
-    cancelActionTitle?: string;
-  }): Promise<boolean>;
+    message             : string;
+    detail?             : string;
+    confirmActionTitle? : string;
+    cancelActionTitle?  : string;
+  }) : Promise<boolean>;
 
   /**
    * Presents the user with a list of options to choose from.
@@ -74,24 +66,23 @@ export interface IUserInteraction {
   pickOption(options: string[], prompt?: string, placeHolder?: string): Promise<string | undefined>;
 }
 
-
 /**
-	 * Options to configure the behavior of the message.
-	 *
-	 * @see {@link window.showInformationMessage showInformationMessage}
-	 * @see {@link window.showWarningMessage showWarningMessage}
-	 * @see {@link window.showErrorMessage showErrorMessage}
-	 */
+ * Options to configure the behavior of the message.
+ *
+ * @see {@link window.showInformationMessage showInformationMessage}
+ * @see {@link window.showWarningMessage showWarningMessage}
+ * @see {@link window.showErrorMessage showErrorMessage}
+ */
 export interface MessageOptions {
 
-		/**
-		 * Indicates that this message should be modal.
-		 */
-		modal?: boolean;
+  /**
+   * Indicates that this message should be modal.
+   */
+  modal? : boolean;
 
-		/**
-		 * Human-readable detail message that is rendered less prominent. _Note_ that detail
-		 * is only shown for {@link MessageOptions.modal modal} messages.
-		 */
-		detail?: string;
-	}
+  /**
+   * Human-readable detail message that is rendered less prominent. _Note_ that detail
+   * is only shown for {@link MessageOptions.modal modal} messages.
+   */
+  detail? : string;
+}

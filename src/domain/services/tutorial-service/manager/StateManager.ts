@@ -7,8 +7,8 @@ import { IActiveTutorialStateRepository } from '../../../repositories/IActiveTut
 export class StateManager {
   constructor(
     private readonly activeTutorialStateRepository: IActiveTutorialStateRepository,
-    private readonly workspaceId?: string,
-  ) { }
+    private readonly workspaceId?: string
+  ) {}
 
   /**
    * Saves the current tutorial state to persistent storage
@@ -19,7 +19,7 @@ export class StateManager {
       await this.activeTutorialStateRepository.saveActiveTutorial(
         tutorial.id,
         tutorial.activeStep.id,
-        tutorial.lastPersistedOpenTabFsPaths || [],
+        tutorial.lastPersistedOpenTabFsPaths || []
       );
     } catch (error) {
       console.error('StateManager: Failed to save active tutorial state:', error);
@@ -34,17 +34,11 @@ export class StateManager {
    */
   async updatePersistedOpenTabs(tutorial: Tutorial, openTabFsPaths: string[]): Promise<void> {
     if (!this.workspaceId) {
-      console.warn(
-        'StateManager: Cannot update persisted open tabs. No active workspace.',
-      );
+      console.warn('StateManager: Cannot update persisted open tabs. No active workspace.');
       return;
     }
 
-    await this.activeTutorialStateRepository.saveActiveTutorial(
-      tutorial.id,
-      tutorial.activeStep.id,
-      openTabFsPaths,
-    );
+    await this.activeTutorialStateRepository.saveActiveTutorial(tutorial.id, tutorial.activeStep.id, openTabFsPaths);
 
     tutorial.setLastPersistedOpenTabFsPaths(openTabFsPaths);
   }

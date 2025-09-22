@@ -52,7 +52,7 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
     changeDetector: TutorialChangeDetector,
     gitChangesFactory: IGitChangesFactory,
     markdownConverter: IMarkdownConverter,
-    webviewPanelManager: WebviewPanelManager,
+    webviewPanelManager: WebviewPanelManager
   ) {
     this.lifecycleController = new Lifecycle.Controller(
       progressReporter,
@@ -60,19 +60,11 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
       this.tutorialService,
       this.autoOpenState,
       this.userInteraction,
-      gitChangesFactory,
+      gitChangesFactory
     );
-    this.navigationController = new Navigation.Controller(
-      this.tutorialService,
-      this.userInteraction,
-    );
+    this.navigationController = new Navigation.Controller(this.tutorialService, this.userInteraction);
     this.externalController = new External.Controller(this.tutorialService, this.userInteraction);
-    this.editorController = new Editor.Controller(
-      fs,
-      tutorialDisplayService,
-      solutionWorkflow,
-      changeDetector,
-    );
+    this.editorController = new Editor.Controller(fs, tutorialDisplayService, solutionWorkflow, changeDetector);
 
     const viewModelConverter = new TutorialViewModelConverter(markdownConverter);
     this.webviewController = new Webview.Controller(viewModelConverter, webviewPanelManager, this);
@@ -121,7 +113,7 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
       this._gitChanges = gitChanges;
 
       await this.editorController.prepareForTutorial();
-      await this.editorController.display(tutorial, gitChanges);
+      await this.editorController.display(tutorial);
 
       // Now display in webview after git changes are set
       await this.webviewController.display(tutorial);
@@ -130,7 +122,7 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
         // Show a user-friendly error message
         if (result.error.includes('failed to load tutorial from path')) {
           this.userInteraction.showErrorMessage(
-            'Could not load tutorial from the selected folder. Please ensure the folder contains a valid Gitorial tutorial with a gitorial branch.',
+            'Could not load tutorial from the selected folder. Please ensure the folder contains a valid Gitorial tutorial with a gitorial branch.'
           );
         } else {
           this.userInteraction.showErrorMessage(`Failed to open tutorial: ${result.error}`);
@@ -201,23 +193,21 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
 
   private async _openLocalTutorial(options?: Lifecycle.OpenOptions): Promise<void> {
     const path = await this._pickFolder({
-      title: 'Open Local Gitorial Tutorial',
-      openLabel: 'Select Tutorial Folder',
+      title     : 'Open Local Gitorial Tutorial',
+      openLabel : 'Select Tutorial Folder',
     });
 
     if (path) {
-      await this._handleLifecycleResult(
-        this.lifecycleController.openFromPath({ path, ...options }),
-      );
+      await this._handleLifecycleResult(this.lifecycleController.openFromPath({ path, ...options }));
     }
   }
 
   private _pickFolder(options: { title: string; openLabel: string }): Promise<string | undefined> {
     return this.userInteraction.showOpenDialog({
-      canSelectFolders: true,
-      canSelectFiles: false,
-      openLabel: options.openLabel,
-      title: options.title,
+      canSelectFolders : true,
+      canSelectFiles   : false,
+      openLabel        : options.openLabel,
+      title            : options.title,
     });
   }
 
@@ -240,7 +230,7 @@ export class TutorialController implements IWebviewTutorialMessageHandler {
     const hasEffect = await this.navigationController.handleNavigationMessage(message);
     if (hasEffect) {
       const tutorial = this.tutorialService.tutorial!;
-      await this.editorController.display(tutorial, this._gitChanges);
+      await this.editorController.display(tutorial);
       await this.webviewController.display(tutorial);
     } else {
       console.warn('Received unknown command from webview:', message);

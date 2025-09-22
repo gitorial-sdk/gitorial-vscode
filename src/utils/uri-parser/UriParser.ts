@@ -6,19 +6,19 @@ enum UriCommand {
 }
 
 type SyncPayload = {
-  commitHash: string;
-  repoUrl: string;
+  commitHash : string;
+  repoUrl    : string;
 };
 
 type CommandPayloads = {
-  [UriCommand.Sync]: SyncPayload;
+  [UriCommand.Sync] : SyncPayload;
 };
 
 type ParseResult =
   | {
-      [K in UriCommand]: {
-        command: K;
-        payload: CommandPayloads[K];
+      [K in UriCommand] : {
+        command : K;
+        payload : CommandPayloads[K];
       };
     }[UriCommand]
   | Error;
@@ -48,7 +48,8 @@ class UriParser {
       // Extract the command name from the pathname (e.g., "/sync" -> "sync")
       // URI path commands are expected to be lowercase.
       const commandNameFromUri = url.pathname.startsWith('/')
-        ? url.pathname.substring(1).toLowerCase()
+        ? url.pathname.substring(1)
+            .toLowerCase()
         : url.pathname.toLowerCase();
 
       let matchedCommand: UriCommand | null = null;
@@ -58,9 +59,7 @@ class UriParser {
       }
 
       if (!matchedCommand) {
-        return new Error(
-          `Unknown or unsupported URI command: ${commandNameFromUri} from URI: ${uri.toString()}`,
-        );
+        return new Error(`Unknown or unsupported URI command: ${commandNameFromUri} from URI: ${uri.toString()}`);
       }
 
       switch (matchedCommand) {
@@ -69,15 +68,11 @@ class UriParser {
           if (!(payload instanceof Error)) {
             return { command: UriCommand.Sync, payload };
           }
-          return new Error(
-            `Failed to parse payload for Sync command from URI: ${uri.toString()}\n${payload.message}`,
-          );
+          return new Error(`Failed to parse payload for Sync command from URI: ${uri.toString()}\n${payload.message}`);
         }
         default:
           console.warn(`Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`);
-          return new Error(
-            `Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`,
-          );
+          return new Error(`Unhandled matched command: ${matchedCommand} from URI: ${uri.toString()}`);
       }
     } catch (error) {
       console.error(`Error parsing URI: ${uri.toString()}`, error);
@@ -99,23 +94,19 @@ class UriParser {
     const platform = searchParams.get('platform');
 
     if (!SUPPORTED_PLATFORMS.includes(platform as (typeof SUPPORTED_PLATFORMS)[number])) {
-      return new Error(
-        `Unsupported platform: ${platform} for Sync command in query: ${searchParams.toString()}`,
-      );
+      return new Error(`Unsupported platform: ${platform} for Sync command in query: ${searchParams.toString()}`);
     }
 
     if (creator && repo && commitHash) {
       return {
         commitHash,
-        repoUrl: `https://${platform}.com/${creator}/${repo}`,
+        repoUrl : `https://${platform}.com/${creator}/${repo}`,
       };
     }
     return new Error(
-      `Missing required parameters (creator, repo, commitHash) for Sync command in query: ${searchParams.toString()}`,
+      `Missing required parameters (creator, repo, commitHash) for Sync command in query: ${searchParams.toString()}`
     );
   }
 }
 
-export {
-  UriParser, UriCommand, SyncPayload, CommandPayloads, ParseResult,
-};
+export { UriParser, UriCommand, SyncPayload, CommandPayloads, ParseResult };

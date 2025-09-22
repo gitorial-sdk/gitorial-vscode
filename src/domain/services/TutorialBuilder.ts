@@ -10,12 +10,12 @@ export class TutorialBuilder {
 
   private static readonly REPO_URL_PATTERNS = [
     {
-      platform: 'github',
-      pattern: /github\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i,
+      platform : 'github',
+      pattern  : /github\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i,
     },
     {
-      platform: 'gitlab',
-      pattern: /gitlab\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i,
+      platform : 'gitlab',
+      pattern  : /gitlab\.com[\/:]([^\/]+)\/([^\/\.]+)(\.git)?$/i,
     },
   ];
 
@@ -44,9 +44,9 @@ export class TutorialBuilder {
       id,
       title,
       repoUrl,
-      localPath: repoPath,
+      localPath       : repoPath,
       steps,
-      activeStepIndex: 0,
+      activeStepIndex : 0,
     };
 
     return new Tutorial(tutorialData);
@@ -61,17 +61,17 @@ export class TutorialBuilder {
   }
 
   public static extractRepoDetails(repoUrl: string): {
-    platform: string;
-    owner: string;
-    repo: string;
+    platform : string;
+    owner    : string;
+    repo     : string;
   } | null {
     for (const { platform, pattern } of this.REPO_URL_PATTERNS) {
       const match = repoUrl.match(pattern);
       if (match) {
         return {
           platform,
-          owner: match[1],
-          repo: match[2],
+          owner : match[1],
+          repo  : match[2],
         };
       }
     }
@@ -104,7 +104,7 @@ export class TutorialBuilder {
    * Converts raw commit data (from IGitOperations) into Step domain models.
    */
   public static extractStepsFromCommits(commits: DomainCommit[], tutorialId: Domain.TutorialId): Step[] {
-    //TODO: use our new classes inside src/domain/models/ to parse steps
+    //TODO : use our new classes inside src/domain/models/ to parse steps
     const chronologicalCommits = [...commits].reverse();
 
     console.log(`🔍 TutorialBuilder: Processing ${chronologicalCommits.length} commits for tutorial ${tutorialId}`);
@@ -119,19 +119,22 @@ export class TutorialBuilder {
         throw new Error(`TutorialBuilder: Commit message "${message}" missing type prefix.`);
       }
 
-      const parsedType = message.substring(0, colonIndex).toLowerCase();
+      const parsedType = message.substring(0, colonIndex)
+        .toLowerCase();
       if (!this.VALID_STEP_TYPES.includes(parsedType as Domain.Commit.Type)) {
         throw new Error(`TutorialBuilder: Invalid step type "${parsedType}" in commit message: "${message}".`);
       }
 
       const stepType = parsedType as Domain.Commit.Type;
-      const stepTitle = message.substring(colonIndex + 1).trim() || 'Unnamed Step';
+      const stepTitle =
+        message.substring(colonIndex + 1)
+          .trim() || 'Unnamed Step';
 
       const stepData: Domain.StepData = {
-        id: `${tutorialId}-step-${index + 1}-${commit.hash.substring(0, 7)}`,
-        title: stepTitle,
-        commitHash: commit.hash,
-        type: stepType,
+        id         : `${tutorialId}-step-${index + 1}-${commit.hash.substring(0, 7)}`,
+        title      : stepTitle,
+        commitHash : commit.hash,
+        type       : stepType,
         index,
       };
 

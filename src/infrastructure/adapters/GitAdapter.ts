@@ -3,13 +3,7 @@
 - Provides Git operations (clone, checkout, etc.)
 */
 
-import simpleGit, {
-  SimpleGit,
-  BranchSummary,
-  RemoteWithRefs,
-  CheckRepoActions,
-  TaskOptions,
-} from 'simple-git';
+import simpleGit, { SimpleGit, BranchSummary, RemoteWithRefs, CheckRepoActions, TaskOptions } from 'simple-git';
 import * as path from 'path'; //TODO: Remove this import and use IFileSystem instead
 import * as fs from 'fs';
 import { IGitOperations, DefaultLogFields, ListLogLine } from '../../domain/ports/IGitOperations';
@@ -35,15 +29,12 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   /**
    * Clone a repository to a target directory
    */
-  static async cloneRepo(
-    repoUrl: string,
-    targetPath: string,
-    progressCallback?: (message: string) => void,
-  ): Promise<void> {
+  static async cloneRepo(repoUrl: string, targetPath: string, progressCallback?: (message: string) => void): Promise<void> {
     if (progressCallback) {
       progressCallback(`Cloning ${repoUrl} into ${targetPath}...`);
     }
-    await simpleGit().clone(repoUrl, targetPath);
+    await simpleGit()
+      .clone(repoUrl, targetPath);
     if (progressCallback) {
       progressCallback('Cloned successfully.');
     }
@@ -84,24 +75,22 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     const isOnGitorialBranch = await this._isCurrentlyOnGitorialBranch(branches);
 
     if (isOnGitorialBranch) {
-      console.log('GitAdapter: Already on \'gitorial\' branch. No checkout needed.');
+      console.log("GitAdapter: Already on 'gitorial' branch. No checkout needed.");
       return;
     }
 
     // 2. Check if local 'gitorial' branch exists (but not current), try to force checkout
     if (branches.all.includes('gitorial')) {
       try {
-        console.log(
-          'GitAdapter: Local \'gitorial\' branch found. Attempting force checkout (dropping local changes)...',
-        );
+        console.log("GitAdapter: Local 'gitorial' branch found. Attempting force checkout (dropping local changes)...");
         //TODO: Remove the force checkout and prompt the user to commit or stash their changes instead!
         await this.git.checkout(['-f', 'gitorial']);
-        console.log('GitAdapter: Successfully force checked out local \'gitorial\' branch.');
+        console.log("GitAdapter: Successfully force checked out local 'gitorial' branch.");
         return;
       } catch (checkoutError: any) {
         console.warn(
-          'GitAdapter: Failed to force checkout existing local \'gitorial\' branch. Will try to set up from remote.',
-          checkoutError,
+          "GitAdapter: Failed to force checkout existing local 'gitorial' branch. Will try to set up from remote.",
+          checkoutError
         );
 
         // Check if this is a "reference is not a tree" error indicating corrupted commit hash
@@ -125,7 +114,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     // 3. Look for a remote 'gitorial' branch and set up tracking
     console.log('GitAdapter: Searching for remote gitorial branches in:', branches.all);
     const remoteGitorialCandidate = branches.all.find(
-      branch => branch.startsWith('remotes/') && GitAdapter._isGitorialBranchNamePattern(branch),
+      branch => branch.startsWith('remotes/') && GitAdapter._isGitorialBranchNamePattern(branch)
     );
 
     if (remoteGitorialCandidate) {
@@ -136,60 +125,52 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       if (parts.length >= 3 && parts[0] === 'remotes') {
         remoteName = parts[1]; // e.g., "origin"
-        remoteBranchName = parts.slice(2).join('/'); // e.g., "gitorial" or "feature/gitorial"
+        remoteBranchName = parts.slice(2)
+          .join('/'); // e.g., "gitorial" or "feature/gitorial"
       } else {
         // This case should ideally not happen if branch.startsWith('remotes/') is true
         // and _isGitorialBranchNamePattern is robust.
         // However, to be safe, let's log and attempt a sensible default.
         console.warn(
-          `GitAdapter: Unexpected remote branch format: ${remoteGitorialCandidate}. Using default remote '${remoteName}' and branch '${remoteBranchName}'.`,
+          `GitAdapter: Unexpected remote branch format: ${remoteGitorialCandidate}. Using default remote '${remoteName}' and branch '${remoteBranchName}'.`
         );
       }
 
       const trackingBranch = `${remoteName}/${remoteBranchName}`;
-      console.log(
-        `GitAdapter: Attempting to create and track local 'gitorial' from '${trackingBranch}' (force checkout)...`,
-      );
+      console.log(`GitAdapter: Attempting to create and track local 'gitorial' from '${trackingBranch}' (force checkout)...`);
 
       try {
         // Try to checkout a new local branch 'gitorial' tracking the remote one with force
-        await this.git.checkout(['-B',
-          'gitorial',
-          '--track',
-          trackingBranch]);
+        await this.git.checkout(['-B', 'gitorial', '--track', trackingBranch]);
         console.log(
-          `GitAdapter: Successfully created and force checked out local 'gitorial' branch tracking '${trackingBranch}'.`,
+          `GitAdapter: Successfully created and force checked out local 'gitorial' branch tracking '${trackingBranch}'.`
         );
         return;
       } catch (error) {
         console.warn(
-          `GitAdapter: Failed to create tracking branch 'gitorial' from '${trackingBranch}' directly. Error: ${error instanceof Error ? error.message : String(error)}. Attempting fetch and force checkout...`,
+          `GitAdapter: Failed to create tracking branch 'gitorial' from '${trackingBranch}' directly. Error: ${error instanceof Error ? error.message : String(error)}. Attempting fetch and force checkout...`
         );
         // Fallback: Fetch the specific remote branch to a local 'gitorial' branch, then force checkout 'gitorial'.
         // This handles cases where the remote branch might exist but isn't locally known well enough for --track to work immediately.
         try {
           await this.git.fetch(remoteName, `${remoteBranchName}:gitorial`); // Fetch remoteBranchName from remoteName into local 'gitorial'
-          console.log(
-            `GitAdapter: Fetched '${trackingBranch}' to local 'gitorial'. Attempting force checkout...`,
-          );
+          console.log(`GitAdapter: Fetched '${trackingBranch}' to local 'gitorial'. Attempting force checkout...`);
           await this.git.checkout(['-f', 'gitorial']); // Force checkout the newly fetched local 'gitorial'
-          console.log('GitAdapter: Successfully force checked out \'gitorial\' after fetch.');
+          console.log("GitAdapter: Successfully force checked out 'gitorial' after fetch.");
           return;
         } catch (fetchCheckoutError) {
           console.error(
             `GitAdapter: Critical error setting up 'gitorial' branch from remote '${trackingBranch}' after fetch attempt.`,
-            fetchCheckoutError,
+            fetchCheckoutError
           );
           throw new Error(
-            `Failed to set up 'gitorial' branch from remote '${trackingBranch}': ${fetchCheckoutError instanceof Error ? fetchCheckoutError.message : String(fetchCheckoutError)}`,
+            `Failed to set up 'gitorial' branch from remote '${trackingBranch}': ${fetchCheckoutError instanceof Error ? fetchCheckoutError.message : String(fetchCheckoutError)}`
           );
         }
       }
     } else {
       // 4. If we still can't find a gitorial branch, try the more comprehensive approach from isValidGitorialRepository
-      console.log(
-        'GitAdapter: No gitorial branch found in branches.all, trying comprehensive remote search...',
-      );
+      console.log('GitAdapter: No gitorial branch found in branches.all, trying comprehensive remote search...');
       const { remotes } = await this.getRepoInfo();
 
       let foundRemoteGitorial = false;
@@ -204,10 +185,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
             const remoteRefs = await this.git.listRemote(['--heads', remote.name]);
             const gitorialRef = remoteRefs
               .split('\n')
-              .find(
-                ref =>
-                  ref.includes('\trefs/heads/gitorial') || ref.split('\t')[1]?.includes('gitorial'),
-              );
+              .find(ref => ref.includes('\trefs/heads/gitorial') || ref.split('\t')[1]?.includes('gitorial'));
 
             if (gitorialRef) {
               foundRemoteGitorial = true;
@@ -217,28 +195,20 @@ export class GitAdapter implements IGitOperations, IGitChanges {
               break;
             }
           } catch (remoteError) {
-            console.warn(
-              `GitAdapter: Could not check remote ${remote.name} for gitorial branch:`,
-              remoteError,
-            );
+            console.warn(`GitAdapter: Could not check remote ${remote.name} for gitorial branch:`, remoteError);
           }
         }
       }
 
       if (foundRemoteGitorial) {
         try {
-          console.log(
-            `GitAdapter: Attempting to fetch and checkout gitorial from ${targetRemoteName}/${targetBranchName}...`,
-          );
+          console.log(`GitAdapter: Attempting to fetch and checkout gitorial from ${targetRemoteName}/${targetBranchName}...`);
           await this.git.fetch(targetRemoteName, `${targetBranchName}:gitorial`);
           await this.git.checkout(['-f', 'gitorial']);
           console.log('GitAdapter: Successfully set up gitorial branch from remote.');
           return;
         } catch (setupError: any) {
-          console.error(
-            `GitAdapter: Failed to set up gitorial branch from ${targetRemoteName}/${targetBranchName}:`,
-            setupError,
-          );
+          console.error(`GitAdapter: Failed to set up gitorial branch from ${targetRemoteName}/${targetBranchName}:`, setupError);
 
           // Check if this is a "reference is not a tree" error
           if (setupError.message && setupError.message.includes('reference is not a tree')) {
@@ -261,12 +231,12 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           }
 
           throw new Error(
-            `Failed to set up 'gitorial' branch from remote '${targetRemoteName}/${targetBranchName}': ${setupError instanceof Error ? setupError.message : String(setupError)}`,
+            `Failed to set up 'gitorial' branch from remote '${targetRemoteName}/${targetBranchName}': ${setupError instanceof Error ? setupError.message : String(setupError)}`
           );
         }
       } else {
-        console.error('GitAdapter: No suitable local or remote \'gitorial\' branch found to set up.');
-        throw new Error('No suitable local or remote \'gitorial\' branch found to set up.');
+        console.error("GitAdapter: No suitable local or remote 'gitorial' branch found to set up.");
+        throw new Error("No suitable local or remote 'gitorial' branch found to set up.");
       }
     }
   }
@@ -290,10 +260,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
         return !!commits.find(c => c.hash.startsWith(currentCommitHash));
       } catch (error) {
         // If we can't get commits from gitorial branch, we're probably not on it
-        console.warn(
-          'GitAdapter: Could not get commits from gitorial branch in detached HEAD check:',
-          error,
-        );
+        console.warn('GitAdapter: Could not get commits from gitorial branch in detached HEAD check:', error);
         return false;
       }
     }
@@ -348,8 +315,6 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     return await this.git.show([`${commitHash}:${filePath}`]);
   }
 
-
-
   /**
    * Get commit history
    */
@@ -370,7 +335,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     if (origin && origin.refs && origin.refs.fetch) {
       return origin.refs.fetch;
     } else {
-      throw new Error('Couldn\'t find a repository URL');
+      throw new Error("Couldn't find a repository URL");
     }
   }
 
@@ -392,7 +357,11 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Get repository information
    */
   public async getRepoInfo(): Promise<{ remotes: RemoteWithRefs[]; branches: BranchSummary }> {
-    return Promise.all([this.git.getRemotes(true), this.git.branch()]).then(([remotes, branches]) => ({ remotes, branches }));
+    return Promise.all([this.git.getRemotes(true), this.git.branch()])
+      .then(([remotes, branches]) => ({
+        remotes,
+        branches,
+      }));
   }
 
   /**
@@ -472,8 +441,6 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     return path.basename(this.repoPath);
   }
 
-
-
   public async isGitRepository(): Promise<boolean> {
     return this.git.checkIsRepo(CheckRepoActions.IS_REPO_ROOT);
   }
@@ -484,13 +451,11 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     }
 
     try {
-      const diffOutput = await this.git.diff([
-        `${commitHash}^`,
-        commitHash,
-        '--name-only',
-        '--diff-filter=AM',
-      ]);
-      return diffOutput ? diffOutput.split('\n').filter(line => line.trim().length > 0) : [];
+      const diffOutput = await this.git.diff([`${commitHash}^`, commitHash, '--name-only', '--diff-filter=AM']);
+      return diffOutput
+        ? diffOutput.split('\n')
+            .filter(line => line.trim().length > 0)
+        : [];
     } catch {
       // For initial commit or other errors, return empty array
       return [];
@@ -529,10 +494,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       // Remove all files from Git's index
       try {
-        await this.git.raw(['rm',
-          '-rf',
-          '--cached',
-          '.']);
+        await this.git.raw(['rm', '-rf', '--cached', '.']);
       } catch {
         // Index might be empty, that's fine
       }
@@ -540,15 +502,17 @@ export class GitAdapter implements IGitOperations, IGitChanges {
       // Apply each step by extracting the complete file tree from each commit
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        console.log(`🔍 GitAdapter: Processing step ${i + 1}/${steps.length}: commit="${step.commit}", message="${step.message}"`);
+        console.log(
+          `🔍 GitAdapter: Processing step ${i + 1}/${steps.length}: commit="${step.commit}", message="${step.message}"`
+        );
 
         try {
           // Get all files from this commit
-          const fileList = await this.git.raw(['ls-tree',
-            '-r',
-            '--name-only',
-            step.commit]);
-          const filePaths = fileList.trim().split('\n').filter(path => path.length > 0);
+          const fileList = await this.git.raw(['ls-tree', '-r', '--name-only', step.commit]);
+          const filePaths = fileList
+            .trim()
+            .split('\n')
+            .filter(path => path.length > 0);
 
           console.log(`🔍 GitAdapter: Found ${filePaths.length} files in commit ${step.commit}`);
 
@@ -581,7 +545,6 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           newCommitHashes.push(sanitizedHash);
 
           console.log(`🔍 GitAdapter: Successfully created commit for step ${i + 1}: ${step.message} (${sanitizedHash})`);
-
         } catch (error) {
           console.error(`GitAdapter: Error processing step ${i + 1} (${step.commit}):`, error);
 
@@ -628,7 +591,6 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       // Return the array of new commit hashes
       return newCommitHashes;
-
     } catch (error) {
       console.error('GitAdapter: Error during gitorial branch synthesis:', error);
 
@@ -660,31 +622,28 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     }
   }
 
-
-  private parseNameStatus(
-    diffOutput: string,
-  ): Array<{ status: string; path: string; oldPath?: string }> {
+  private parseNameStatus(diffOutput: string): Array<{ status: string; path: string; oldPath?: string }> {
     if (!diffOutput) {
       return [];
     }
 
-    return diffOutput.trim().split('\n')
-      .filter(line => line.trim())
-      .map(line => {
-        const parts = line.split('\t');
-        const statusChar = parts[0].trim()[0];
+    return (
+      diffOutput
+        .trim()
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const parts = line.split('\t');
+          const statusChar = parts[0].trim()[0];
 
-        if (statusChar === 'R' || statusChar === 'C') {
-          return parts.length === 3
-            ? { status: statusChar, oldPath: parts[1].trim(), path: parts[2].trim() }
-            : null;
-        } else {
-          return parts.length === 2
-            ? { status: statusChar, path: parts[1].trim() }
-            : null;
-        }
-      })
-      .filter((file): file is NonNullable<typeof file> => file !== null);
+          if (statusChar === 'R' || statusChar === 'C') {
+            return parts.length === 3 ? { status: statusChar, oldPath: parts[1].trim(), path: parts[2].trim() } : null;
+          } else {
+            return parts.length === 2 ? { status: statusChar, path: parts[1].trim() } : null;
+          }
+        })
+        .filter((file): file is NonNullable<typeof file> => file !== null)
+    );
   }
 
   private static _isGitorialBranchNamePattern(branchName: string): boolean {
@@ -716,24 +675,13 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     if (isInitialCommit) {
       // For initial commit, list all files as "Added".
       // `git show --pretty="format:" --name-status <commit>` gives "A\tfile"
-      changedFilesRawOutput = await this.git.raw([
-        'show',
-        targetCommitHash,
-        '--pretty=format:',
-        '--name-status',
-        '--no-abbrev',
-      ]);
+      changedFilesRawOutput = await this.git.raw(['show', targetCommitHash, '--pretty=format:', '--name-status', '--no-abbrev']);
     } else {
       // For non-initial commits, use git diff --name-status against the parent.
       if (!parentCommitHash) {
         return [];
       }
-      changedFilesRawOutput = await this.git.raw([
-        'diff',
-        '--name-status',
-        parentCommitHash,
-        targetCommitHash,
-      ]);
+      changedFilesRawOutput = await this.git.raw(['diff', '--name-status', parentCommitHash, targetCommitHash]);
     }
 
     const changedFiles = this.parseNameStatus(changedFilesRawOutput);
@@ -776,12 +724,12 @@ export class GitAdapter implements IGitOperations, IGitChanges {
       payloads.push({
         absoluteFilePath,
         relativeFilePath,
-        commitHash: targetCommitHash,
+        commitHash : targetCommitHash,
         originalContent,
         modifiedContent,
-        isNew: status === 'A' || status === 'C',
-        isDeleted: status === 'D',
-        isModified: status === 'M' || status === 'R' || status === 'T',
+        isNew      : status === 'A' || status === 'C',
+        isDeleted  : status === 'D',
+        isModified : status === 'M' || status === 'R' || status === 'T',
       });
     }
     return payloads;
@@ -803,8 +751,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   public async branchExists(branchName: string): Promise<boolean> {
     try {
       const branchSummary = await this.git.branch(['-a']);
-      return branchSummary.all.some(branch =>
-        branch === branchName || branch === `remotes/origin/${branchName}`);
+      return branchSummary.all.some(branch => branch === branchName || branch === `remotes/origin/${branchName}`);
     } catch {
       return false;
     }
@@ -814,7 +761,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Create a new branch from a base branch
    */
   public async createBranch(branchName: string, baseBranch?: string): Promise<void> {
-    const targetBranch = baseBranch || await this.getCurrentBranch();
+    const targetBranch = baseBranch || (await this.getCurrentBranch());
     await this.git.checkout(['-b', branchName, targetBranch]);
   }
 
@@ -840,24 +787,24 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Get commit information
    */
   public async getCommitInfo(commitHash: string): Promise<{
-    hash: string;
-    message: string;
-    author: string;
-    date: Date;
+    hash    : string;
+    message : string;
+    author  : string;
+    date    : Date;
   } | null> {
     try {
       const log = await this.git.log({
-        from: commitHash,
-        to: commitHash,
-        maxCount: 1,
+        from     : commitHash,
+        to       : commitHash,
+        maxCount : 1,
       });
 
       if (log.latest) {
         return {
-          hash: log.latest.hash,
-          message: log.latest.message,
-          author: log.latest.author_name,
-          date: new Date(log.latest.date),
+          hash    : log.latest.hash,
+          message : log.latest.message,
+          author  : log.latest.author_name,
+          date    : new Date(log.latest.date),
         };
       }
       return null;
@@ -872,11 +819,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    */
   public async cherryPick(commitHash: string, customMessage?: string): Promise<void> {
     if (customMessage) {
-      await this.git.raw(['cherry-pick',
-        '-m',
-        '1',
-        '--edit',
-        commitHash]);
+      await this.git.raw(['cherry-pick', '-m', '1', '--edit', commitHash]);
     } else {
       await this.git.raw(['cherry-pick', commitHash]);
     }
@@ -919,15 +862,15 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Get the status of the working directory
    */
   public async getWorkingDirectoryStatus(): Promise<{
-    staged: string[];
-    unstaged: string[];
-    untracked: string[];
+    staged    : string[];
+    unstaged  : string[];
+    untracked : string[];
   }> {
     const status = await this.git.status();
     return {
-      staged: status.staged,
-      unstaged: status.modified.concat(status.deleted),
-      untracked: status.not_added,
+      staged    : status.staged,
+      unstaged  : status.modified.concat(status.deleted),
+      untracked : status.not_added,
     };
   }
 
@@ -957,7 +900,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Pull the latest changes from the remote repository
    */
   public async pullLatest(branchName?: string): Promise<void> {
-    const targetBranch = branchName || await this.getCurrentBranch();
+    const targetBranch = branchName || (await this.getCurrentBranch());
     await this.git.pull(['origin', targetBranch]);
   }
 
@@ -997,10 +940,10 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * @returns Object containing modified, added, and deleted files with their content
    */
   public async captureCurrentChanges(): Promise<{
-    modified: string[];
-    added: string[];
-    deleted: string[];
-    fileContents: Map<string, string>;
+    modified     : string[];
+    added        : string[];
+    deleted      : string[];
+    fileContents : Map<string, string>;
   }> {
     const status = await this.git.status();
     const fileContents = new Map<string, string>();
@@ -1020,9 +963,9 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     }
 
     return {
-      modified: status.modified,
-      added: status.not_added,
-      deleted: status.deleted,
+      modified : status.modified,
+      added    : status.not_added,
+      deleted  : status.deleted,
       fileContents,
     };
   }
@@ -1046,25 +989,21 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * @returns Object containing file paths and change types
    */
   public async getStepFilesChanged(commitHash: string): Promise<{
-    added: string[];
-    modified: string[];
-    deleted: string[];
+    added    : string[];
+    modified : string[];
+    deleted  : string[];
   }> {
     try {
       // Get diff with file status
-      const diffOutput = await this.git.raw([
-        'diff',
-        '--name-status',
-        `${commitHash}^`,
-        commitHash,
-      ]);
+      const diffOutput = await this.git.raw(['diff', '--name-status', `${commitHash}^`, commitHash]);
 
       const added: string[] = [];
       const modified: string[] = [];
       const deleted: string[] = [];
 
       if (diffOutput) {
-        const lines = diffOutput.split('\n').filter(line => line.trim());
+        const lines = diffOutput.split('\n')
+          .filter(line => line.trim());
         for (const line of lines) {
           const [status, filePath] = line.split('\t');
           if (filePath) {
@@ -1079,7 +1018,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
                 deleted.push(filePath);
                 break;
               default:
-              // Handle other statuses (R for rename, C for copy, etc.)
+                // Handle other statuses (R for rename, C for copy, etc.)
                 modified.push(filePath);
             }
           }
@@ -1101,7 +1040,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   public async updateSingleStepInGitorialBranch(
     stepIndex: number,
     newCommitContent: { commit: string; message: string },
-    totalSteps: number,
+    totalSteps: number
   ): Promise<string> {
     console.log(`🔄 GitAdapter: Updating step ${stepIndex + 1} of ${totalSteps} using patch-based approach`);
 
@@ -1147,10 +1086,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       // Remove everything from index
       try {
-        await this.git.raw(['rm',
-          '-rf',
-          '--cached',
-          '.']);
+        await this.git.raw(['rm', '-rf', '--cached', '.']);
       } catch (_error) {
         // Index might be empty
       }
@@ -1164,11 +1100,11 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           await this.git.raw(['cat-file', '-e', step.commit]);
 
           // Get the file tree from this commit
-          const fileList = await this.git.raw(['ls-tree',
-            '-r',
-            '--name-only',
-            step.commit]);
-          const filePaths = fileList.trim().split('\n').filter(path => path.length > 0);
+          const fileList = await this.git.raw(['ls-tree', '-r', '--name-only', step.commit]);
+          const filePaths = fileList
+            .trim()
+            .split('\n')
+            .filter(path => path.length > 0);
 
           // Clear working directory
           await this.cleanWorkingDirectory();
@@ -1191,7 +1127,6 @@ export class GitAdapter implements IGitOperations, IGitChanges {
           await this.git.add('.');
           const commitMessage = `${step.type}: ${step.title}`;
           await this.git.commit(commitMessage);
-
         } catch (error) {
           console.error(`GitAdapter: Error applying step ${i + 1}:`, error);
           // Create empty commit to maintain sequence
@@ -1200,28 +1135,31 @@ export class GitAdapter implements IGitOperations, IGitChanges {
       }
 
       // Replace old gitorial branch with new one
-      await this.git.checkout('main').catch(() => {
-        // If main doesn't exist, create it from first step
-        return this.git.checkout(['-B', 'main']);
-      });
+      await this.git.checkout('main')
+        .catch(() => {
+          // If main doesn't exist, create it from first step
+          return this.git.checkout(['-B', 'main']);
+        });
 
       // Delete old gitorial branch
-      await this.git.branch(['-D', 'gitorial']).catch(() => { });
+      await this.git.branch(['-D', 'gitorial'])
+        .catch(() => {});
 
       // Rename new branch to gitorial
       await this.git.branch(['-m', 'gitorial-new', 'gitorial']);
       await this.git.checkout('gitorial');
 
       // Clean up backup
-      await this.git.branch(['-D', backupBranch]).catch(() => { });
-
+      await this.git.branch(['-D', backupBranch])
+        .catch(() => {});
     } catch (error) {
       console.error('GitAdapter: Error rebuilding gitorial branch:', error);
 
       // Restore from backup if possible
       try {
         await this.git.checkout(backupBranch);
-        await this.git.branch(['-D', 'gitorial']).catch(() => { });
+        await this.git.branch(['-D', 'gitorial'])
+          .catch(() => {});
         await this.git.branch(['-m', 'gitorial']);
       } catch (restoreError) {
         console.error('GitAdapter: Could not restore from backup:', restoreError);

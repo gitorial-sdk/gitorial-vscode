@@ -40,11 +40,23 @@ export class Commit {
     changedFiles: Array<string>,
     toDoComments: Array<TToDoComment>
   ): Result<Commit, TCommitError<string>> {
-    return ok(new Commit(type, title, hash, changedFiles, toDoComments));
+    const commit = new Commit(type, title, hash, changedFiles, toDoComments);
+    const result = Domain.Commit.V1.Validator.validateContent(commit.data);
+    if (result.isErr()) {
+      const errMsg = result._unsafeUnwrapErr();
+      return err({ code: errMsg.code, message: errMsg.message });
+    }
+    return ok(commit);
   }
 
-  public static newFromObject(data: TCommit) {
-    return new Commit(data.type, data.title, data.hash, data.changedFiles, data.toDoComments);
+  public static newFromObject(data: TCommit): Result<Commit, TCommitError<string>> {
+    const commit = new Commit(data.type, data.title, data.hash, data.changedFiles, data.toDoComments);
+    const result = Domain.Commit.V1.Validator.validateContent(commit.data);
+    if (result.isErr()) {
+      const errMsg = result._unsafeUnwrapErr();
+      return err({ code: errMsg.code, message: errMsg.message });
+    }
+    return ok(commit);
   }
 
   private static validate(
@@ -57,8 +69,8 @@ export class Commit {
     if (built.isErr()) {
       return err(built.error);
     }
-
-    return ok(this.newFromObject(built._unsafeUnwrap()));
+    const data = built._unsafeUnwrap();
+    return ok(new Commit(data.type, data.title, data.hash, data.changedFiles, data.toDoComments));
   }
 
   public toString(): string {

@@ -50,7 +50,7 @@ export class Controller implements IClearable {
 
     const sanitizedManifest: Domain.AuthorManifestData = {
       ...manifest,
-      steps: manifest.steps.map(step => {
+      steps : manifest.steps.map(step => {
         CommitHashSanitizer.logIfMalformed(step.commit, 'AuthorMode-Save');
         return CommitHashSanitizer.sanitizeManifestStep(step);
       }),
@@ -91,11 +91,7 @@ export class Controller implements IClearable {
     console.log('🔍 AuthorModeController: getOrLoadManifest called');
 
     if (this.currentManifest) {
-      console.log(
-        '🔍 AuthorModeController: Returning cached manifest with',
-        this.currentManifest.steps.length,
-        'steps'
-      );
+      console.log('🔍 AuthorModeController: Returning cached manifest with', this.currentManifest.steps.length, 'steps');
       return this.currentManifest;
     }
 

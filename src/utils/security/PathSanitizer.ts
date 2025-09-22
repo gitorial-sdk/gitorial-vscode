@@ -2,18 +2,18 @@ import * as path from 'path';
 import * as os from 'os';
 
 export interface PathValidationResult {
-  isValid: boolean;
-  sanitizedPath?: string;
-  error?: string;
+  isValid        : boolean;
+  sanitizedPath? : string;
+  error?         : string;
 }
 
 export interface PathValidationOptions {
-  allowAbsolute?: boolean;
-  allowRelative?: boolean;
-  restrictToUserHome?: boolean;
-  maxDepth?: number;
-  maxLength?: number;
-  allowedExtensions?: string[];
+  allowAbsolute?      : boolean;
+  allowRelative?      : boolean;
+  restrictToUserHome? : boolean;
+  maxDepth?           : number;
+  maxLength?          : number;
+  allowedExtensions?  : string[];
 }
 
 /**
@@ -22,26 +22,18 @@ export interface PathValidationOptions {
  */
 export class PathSanitizer {
   private static readonly DEFAULT_OPTIONS: Required<PathValidationOptions> = {
-    allowAbsolute: true,
-    allowRelative: false,
-    restrictToUserHome: true,
-    maxDepth: 10,
-    maxLength: 260, // Windows MAX_PATH limit
-    allowedExtensions: ['.git',
-      '.md',
-      '.json',
-      '.txt',
-      '.yml',
-      '.yaml'],
+    allowAbsolute      : true,
+    allowRelative      : false,
+    restrictToUserHome : true,
+    maxDepth           : 10,
+    maxLength          : 260, // Windows MAX_PATH limit
+    allowedExtensions  : ['.git', '.md', '.json', '.txt', '.yml', '.yaml'],
   };
 
   /**
    * Sanitizes and validates a file system path
    */
-  public static sanitizePath(
-    inputPath: string,
-    options: PathValidationOptions = {},
-  ): PathValidationResult {
+  public static sanitizePath(inputPath: string, options: PathValidationOptions = {}): PathValidationResult {
     const opts = { ...this.DEFAULT_OPTIONS, ...options };
 
     try {
@@ -87,7 +79,8 @@ export class PathSanitizer {
       }
 
       // Check path depth
-      const pathParts = normalizedPath.split(path.sep).filter(part => part.length > 0);
+      const pathParts = normalizedPath.split(path.sep)
+        .filter(part => part.length > 0);
       if (pathParts.length > opts.maxDepth) {
         return { isValid: false, error: `Path depth exceeds maximum of ${opts.maxDepth}` };
       }
@@ -103,8 +96,8 @@ export class PathSanitizer {
       const ext = path.extname(normalizedPath);
       if (ext && opts.allowedExtensions.length > 0 && !opts.allowedExtensions.includes(ext)) {
         return {
-          isValid: false,
-          error: `File extension '${ext}' not allowed. Allowed: ${opts.allowedExtensions.join(', ')}`,
+          isValid : false,
+          error   : `File extension '${ext}' not allowed. Allowed: ${opts.allowedExtensions.join(', ')}`,
         };
       }
 
@@ -112,8 +105,8 @@ export class PathSanitizer {
 
     } catch (error) {
       return {
-        isValid: false,
-        error: `Path validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        isValid : false,
+        error   : `Path validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -124,12 +117,12 @@ export class PathSanitizer {
   private static removeDangerousPatterns(inputPath: string): string | null {
     // Patterns that should never appear in safe paths
     const dangerousPatterns = [
-      /\.\./g,           // Path traversal
-      /[<>:"|?*]/g,      // Windows reserved characters
-      /[\x00-\x1f]/g,    // Control characters
-      /\$\{.*\}/g,       // Variable substitution patterns
-      /`.*`/g,           // Command substitution
-      /\||\&\&|\|\|/g,   // Command chaining
+      /\.\./g, // Path traversal
+      /[<>:"|?*]/g, // Windows reserved characters
+      /[\x00-\x1f]/g, // Control characters
+      /\$\{.*\}/g, // Variable substitution patterns
+      /`.*`/g, // Command substitution
+      /\||\&\&|\|\|/g, // Command chaining
     ];
 
     let cleaned = inputPath.trim();
@@ -156,14 +149,7 @@ export class PathSanitizer {
    * Checks for path traversal patterns
    */
   private static containsPathTraversal(normalizedPath: string): boolean {
-    const traversalPatterns = [
-      /\.\./,
-      /\.\/\.\./,
-      /\.\\\.\./,
-      /%2e%2e/i,
-      /%2f/i,
-      /%5c/i,
-    ];
+    const traversalPatterns = [/\.\./, /\.\/\.\./, /\.\\\.\./, /%2e%2e/i, /%2f/i, /%5c/i];
 
     return traversalPatterns.some(pattern => pattern.test(normalizedPath));
   }
@@ -224,10 +210,10 @@ export class PathSanitizer {
 
     // Validate the resulting path
     return this.sanitizePath(fullPath, {
-      allowAbsolute: true,
-      allowRelative: false,
-      restrictToUserHome: !isInTempDir, // Allow temp directories outside user home
-      maxDepth: 15,
+      allowAbsolute      : true,
+      allowRelative      : false,
+      restrictToUserHome : !isInTempDir, // Allow temp directories outside user home
+      maxDepth           : 15,
     });
   }
 
@@ -236,9 +222,9 @@ export class PathSanitizer {
    */
   public static isSafeForFileOperations(filePath: string): boolean {
     const result = this.sanitizePath(filePath, {
-      allowAbsolute: true,
-      allowRelative: false,
-      restrictToUserHome: true,
+      allowAbsolute      : true,
+      allowRelative      : false,
+      restrictToUserHome : true,
     });
     return result.isValid;
   }
@@ -251,10 +237,13 @@ export class PathSanitizer {
     const userHome = os.homedir();
 
     // Ensure temp directory is within user space or system temp
-    if (tempDir.startsWith(userHome) ||
-        tempDir.startsWith('/tmp') ||
-        tempDir.startsWith('/var/tmp') ||
-        tempDir.startsWith('/var/folders')) { // macOS temp directory
+    if (
+      tempDir.startsWith(userHome) ||
+      tempDir.startsWith('/tmp') ||
+      tempDir.startsWith('/var/tmp') ||
+      tempDir.startsWith('/var/folders')
+    ) {
+      // macOS temp directory
       return tempDir;
     }
 
@@ -278,11 +267,10 @@ export class PathSanitizer {
 
     const fullPath = path.join(safeTempDir, safeSubdir);
     return this.sanitizePath(fullPath, {
-      allowAbsolute: true,
-      allowRelative: false,
-      restrictToUserHome: false, // Temp directories might be outside user home
-      maxDepth: 10,
+      allowAbsolute      : true,
+      allowRelative      : false,
+      restrictToUserHome : false, // Temp directories might be outside user home
+      maxDepth           : 10,
     });
   }
 }
-

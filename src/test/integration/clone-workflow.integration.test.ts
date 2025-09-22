@@ -14,7 +14,7 @@ suite('Integration: Clone Tutorial Workflow', () => {
   let mockRemoteRepo: { path: string; url: string };
   let _extensionContext: vscode.Extension<any>;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.SUITE_SETUP);
 
     await IntegrationTestUtils.initialize();
@@ -23,14 +23,14 @@ suite('Integration: Clone Tutorial Workflow', () => {
     mockRemoteRepo = await IntegrationTestUtils.createMockRemoteRepository();
   });
 
-  suiteTeardown(async function() {
+  suiteTeardown(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.CLEANUP);
     await IntegrationTestUtils.cleanup();
     await IntegrationTestUtils.cleanupIntegrationExecutionDirectory();
   });
 
   suite('Successful Clone Workflows', () => {
-    test('should clone tutorial repository and open automatically', async function() {
+    test('should clone tutorial repository and open automatically', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       await IntegrationTestUtils.configureExtensionSetting('gitorial', 'cloneLocation', 'subdirectory');
@@ -44,9 +44,11 @@ suite('Integration: Clone Tutorial Workflow', () => {
       try {
         await IntegrationTestUtils.executeCommand('gitorial.cloneTutorial');
 
-        const expectedClonePath = IntegrationTestUtils.getExpectedRepositoryPath(INTEGRATION_TEST_CONFIG.DIRECTORIES.TEST_REPO_NAME);
+        const expectedClonePath = IntegrationTestUtils.getExpectedRepositoryPath(
+          INTEGRATION_TEST_CONFIG.DIRECTORIES.TEST_REPO_NAME
+        );
 
-        await IntegrationTestUtils.waitForCondition(async() => {
+        await IntegrationTestUtils.waitForCondition(async () => {
           try {
             await fs.access(expectedClonePath);
             return true;
@@ -73,7 +75,7 @@ suite('Integration: Clone Tutorial Workflow', () => {
       }
     });
 
-    test('should handle clone to existing directory with confirmation', async function() {
+    test('should handle clone to existing directory with confirmation', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       console.log('Testing: Clone to existing directory (reusing previous clone)');
@@ -95,7 +97,7 @@ suite('Integration: Clone Tutorial Workflow', () => {
   });
 
   suite('Clone Error Handling', () => {
-    test('should handle repository access errors gracefully', async function() {
+    test('should handle repository access errors gracefully', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       console.log('Testing: Repository access error handling');
@@ -111,7 +113,7 @@ suite('Integration: Clone Tutorial Workflow', () => {
       }
     });
 
-    test('should handle empty or cancelled user input', async function() {
+    test('should handle empty or cancelled user input', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.QUICK_OPERATION);
 
       console.log('Testing: Empty user input handling');

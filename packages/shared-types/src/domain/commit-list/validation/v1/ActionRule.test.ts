@@ -10,5 +10,3 @@ describe('V1 ActionRule', () => {
     expect(res.isOk()).to.equal(true);
   });
 });
-
-

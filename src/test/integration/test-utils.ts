@@ -11,9 +11,9 @@ import { INTEGRATION_TEST_CONFIG } from './test-config';
  */
 
 export interface TestRepository {
-  path: string;
-  git: SimpleGit;
-  url?: string;
+  path : string;
+  git  : SimpleGit;
+  url? : string;
 }
 
 export class IntegrationTestUtils {
@@ -71,7 +71,7 @@ export class IntegrationTestUtils {
     await this.createTutorialStructure(repoPath, git);
 
     return {
-      path: repoPath,
+      path : repoPath,
       git,
     };
   }
@@ -84,24 +84,39 @@ export class IntegrationTestUtils {
     await fs.mkdir(srcDir, { recursive: true });
 
     const step1File = path.join(srcDir, 'main.ts');
-    await fs.writeFile(step1File, '// TODO: Implement basic functionality\nexport function hello() {\n  // TODO: return greeting\n}');
+    await fs.writeFile(
+      step1File,
+      '// TODO: Implement basic functionality\nexport function hello() {\n  // TODO: return greeting\n}'
+    );
 
     await git.add('.');
     await git.commit('Step 1: Initial setup with TODOs');
     const step1Hash = await git.revparse(['HEAD']);
 
-    await fs.writeFile(step1File, '// Implement basic functionality\nexport function hello() {\n  return \'Hello, World!\';\n}\n\n// TODO: Add advanced features');
+    await fs.writeFile(
+      step1File,
+      "// Implement basic functionality\nexport function hello() {\n  return 'Hello, World!';\n}\n\n// TODO: Add advanced features"
+    );
 
     const step2File = path.join(srcDir, 'utils.ts');
-    await fs.writeFile(step2File, '// TODO: Implement utility functions\nexport function capitalize(str: string): string {\n  // TODO: implement capitalization\n  return str;\n}');
+    await fs.writeFile(
+      step2File,
+      '// TODO: Implement utility functions\nexport function capitalize(str: string): string {\n  // TODO: implement capitalization\n  return str;\n}'
+    );
 
     await git.add('.');
     await git.commit('Step 2: Basic implementation with more TODOs');
     const _step2Hash = await git.revparse(['HEAD']);
 
-    await fs.writeFile(step1File, '// Complete basic functionality\nexport function hello(name?: string) {\n  return name ? `Hello, ${name}!` : \'Hello, World!\';\n}\n\n// Advanced features implemented\nexport function farewell(name?: string) {\n  return name ? `Goodbye, ${name}!` : \'Goodbye!\';\n}');
+    await fs.writeFile(
+      step1File,
+      "// Complete basic functionality\nexport function hello(name?: string) {\n  return name ? `Hello, ${name}!` : 'Hello, World!';\n}\n\n// Advanced features implemented\nexport function farewell(name?: string) {\n  return name ? `Goodbye, ${name}!` : 'Goodbye!';\n}"
+    );
 
-    await fs.writeFile(step2File, '// Utility functions implemented\nexport function capitalize(str: string): string {\n  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();\n}\n\nexport function reverse(str: string): string {\n  return str.split(\'\').reverse().join(\'\');\n}');
+    await fs.writeFile(
+      step2File,
+      "// Utility functions implemented\nexport function capitalize(str: string): string {\n  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();\n}\n\nexport function reverse(str: string): string {\n  return str.split('').reverse().join('');\n}"
+    );
 
     await git.add('.');
     await git.commit('Step 3: Complete implementation');
@@ -150,7 +165,7 @@ export class IntegrationTestUtils {
 
   static mockInputBox(returnValue: string | undefined): void {
     const originalShowInputBox = vscode.window.showInputBox;
-    vscode.window.showInputBox = async() => returnValue;
+    vscode.window.showInputBox = async () => returnValue;
 
     this.mockCleanups.push(() => {
       vscode.window.showInputBox = originalShowInputBox;
@@ -159,7 +174,7 @@ export class IntegrationTestUtils {
 
   static mockOpenDialog(returnValue: vscode.Uri[] | undefined): void {
     const originalShowOpenDialog = vscode.window.showOpenDialog;
-    vscode.window.showOpenDialog = async() => {
+    vscode.window.showOpenDialog = async () => {
       if (returnValue && returnValue[0]) {
         const dirPath = returnValue[0].fsPath;
         try {
@@ -178,7 +193,7 @@ export class IntegrationTestUtils {
 
   static mockAskConfirmation(returnValue: boolean): void {
     const originalShowWarningMessage = vscode.window.showWarningMessage;
-    vscode.window.showWarningMessage = async(_message: string, ...items: any[]) => {
+    vscode.window.showWarningMessage = async (_message: string, ...items: any[]) => {
       if (items.length >= 2 && typeof items[0] === 'object' && typeof items[1] === 'object') {
         const confirmItem = items[0];
         const cancelItem = items[1];
@@ -197,7 +212,7 @@ export class IntegrationTestUtils {
     let currentIndex = 0;
     const originalShowWarningMessage = vscode.window.showWarningMessage;
 
-    vscode.window.showWarningMessage = async(_message: string, ...items: any[]) => {
+    vscode.window.showWarningMessage = async (_message: string, ...items: any[]) => {
       const returnValue = returnValues[currentIndex] ?? returnValues[returnValues.length - 1];
 
       if (items.length >= 2 && typeof items[0] === 'object' && typeof items[1] === 'object') {
@@ -232,8 +247,7 @@ export class IntegrationTestUtils {
     try {
       await fs.access(integrationDir);
       await fs.rm(integrationDir, { recursive: true, force: true });
-    } catch {
-    }
+    } catch {}
   }
 
   static trackTutorialPath(tutorialPath: string): void {
@@ -266,15 +280,16 @@ export class IntegrationTestUtils {
 
   static async findClonedRepository(repositoryName: string): Promise<string | undefined> {
     const expectedPaths = [
-      path.join(process.cwd(), 'tutorials', repositoryName), path.join(process.cwd(), repositoryName), path.join(os.tmpdir(), repositoryName),
+      path.join(process.cwd(), 'tutorials', repositoryName),
+      path.join(process.cwd(), repositoryName),
+      path.join(os.tmpdir(), repositoryName),
     ];
 
     for (const repoPath of expectedPaths) {
       try {
         await fs.access(repoPath);
         return repoPath;
-      } catch {
-      }
+      } catch {}
     }
 
     return undefined;
@@ -311,7 +326,7 @@ export class IntegrationTestUtils {
   static async waitForCondition(
     condition: () => boolean | Promise<boolean>,
     timeout: number = INTEGRATION_TEST_CONFIG.TIMEOUTS.QUICK_OPERATION,
-    interval: number = INTEGRATION_TEST_CONFIG.POLLING.DEFAULT_INTERVAL,
+    interval: number = INTEGRATION_TEST_CONFIG.POLLING.DEFAULT_INTERVAL
   ): Promise<void> {
     const startTime = Date.now();
 
@@ -329,16 +344,12 @@ export class IntegrationTestUtils {
     const tempPath = path.join(os.tmpdir(), 'gitorial-clone-placeholder');
 
     return {
-      path: tempPath,
-      url: 'https://github.com/shawntabrizi/rust-state-machine',
+      path : tempPath,
+      url  : 'https://github.com/shawntabrizi/rust-state-machine',
     };
   }
 
-  static async configureExtensionSetting(
-    section: string,
-    key: string,
-    value: any,
-  ): Promise<void> {
+  static async configureExtensionSetting(section: string, key: string, value: any): Promise<void> {
     const config = vscode.workspace.getConfiguration(section);
 
     const hasWorkspace = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0;
@@ -347,7 +358,9 @@ export class IntegrationTestUtils {
 
     try {
       await config.update(key, value, configTarget);
-      console.log(`✅ Configured ${section}.${key} = ${value} (${configTarget === vscode.ConfigurationTarget.Global ? 'global' : 'workspace'})`);
+      console.log(
+        `✅ Configured ${section}.${key} = ${value} (${configTarget === vscode.ConfigurationTarget.Global ? 'global' : 'workspace'})`
+      );
     } catch (error) {
       console.warn(`⚠️ Failed to configure ${section}.${key}:`, error);
       if (configTarget !== vscode.ConfigurationTarget.Global) {
@@ -365,4 +378,3 @@ export class IntegrationTestUtils {
     }
   }
 }
-

@@ -7,13 +7,25 @@ describe('TutorialBuilder.extractStepsFromCommits', () => {
     const commits = [
       // Git log typically newest first, we simulate that order and expect builder to reverse
       {
-        hash: 'c3', message: 'action: third', authorName: 'a', authorEmail: 'a@a', date: '3',
+        hash        : 'c3',
+        message     : 'action: third',
+        authorName  : 'a',
+        authorEmail : 'a@a',
+        date        : '3',
       },
       {
-        hash: 'c2', message: 'readme: introduction', authorName: 'a', authorEmail: 'a@a', date: '2',
+        hash        : 'c2',
+        message     : 'readme: introduction',
+        authorName  : 'a',
+        authorEmail : 'a@a',
+        date        : '2',
       },
       {
-        hash: 'c1', message: 'section: start', authorName: 'a', authorEmail: 'a@a', date: '1',
+        hash        : 'c1',
+        message     : 'section: start',
+        authorName  : 'a',
+        authorEmail : 'a@a',
+        date        : '1',
       },
     ];
 
@@ -25,5 +37,3 @@ describe('TutorialBuilder.extractStepsFromCommits', () => {
     expect(steps[1].title).to.equal('introduction');
   });
 });
-
-

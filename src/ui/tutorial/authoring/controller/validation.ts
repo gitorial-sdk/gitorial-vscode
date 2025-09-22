@@ -1,15 +1,12 @@
 import { IClearable } from '.';
-import { UI } from '@gitorial/shared-types';
-import { Domain } from '@gitorial/shared-types';
+import { Domain, UI } from '@gitorial/shared-types';
 
 export class Controller implements IClearable {
   clearCachedData(): Promise<void> {
     return Promise.resolve();
   }
 
-  async handleMessage(
-    _message: Extract<UI.Messages.WebviewToExtensionAuthorMessage, { type: 'validateCommit' }>
-  ): Promise<void> {
+  async handleMessage(_message: Extract<UI.Messages.WebviewToExtensionAuthorMessage, { type: 'validateCommit' }>): Promise<void> {
     await this.validateCommit();
   }
 
@@ -21,7 +18,8 @@ export class Controller implements IClearable {
       'abc123HASH',
       ['README.md'],
       []
-    )._unsafeUnwrap();
+    )
+      ._unsafeUnwrap();
     Domain.Commit.V1.Validator.validateContent(exampleCommit);
   }
 }

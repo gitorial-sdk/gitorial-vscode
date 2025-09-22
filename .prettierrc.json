@@ -1,9 +1,10 @@
 {
+  "plugins": ["@yikes2000/prettier-plugin-merge-extras"],
   "semi": true,
   "singleQuote": true,
   "tabWidth": 2,
   "useTabs": false,
-  "printWidth": 120,
+  "printWidth": 130,
   "trailingComma": "es5",
   "bracketSpacing": true,
   "bracketSameLine": false,

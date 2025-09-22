@@ -25,7 +25,7 @@ export class WebViewPanel {
 
   constructor(
     vscodePanel: vscode.WebviewPanel,
-    private readonly extensionUri: vscode.Uri,
+    private readonly extensionUri: vscode.Uri
   ) {
     this.panel = vscodePanel;
 
@@ -38,11 +38,12 @@ export class WebViewPanel {
         }
       },
       null,
-      this.disposables,
+      this.disposables
     );
 
     this._showLoadingState();
-    this.updateWebviewContent().then(() => this._hideLoadingState());
+    this.updateWebviewContent()
+      .then(() => this._hideLoadingState());
   }
 
   // TODO: tmp solution - we dont want to deal with models on this level, but only with messages
@@ -51,9 +52,9 @@ export class WebViewPanel {
    */
   public updateTutorial(tutorial: UI.ViewModels.Tutorial): void {
     const message: UI.Messages.ExtensionToWebviewTutorialMessage = {
-      category: 'tutorial',
-      type: 'data-updated',
-      payload: tutorial,
+      category : 'tutorial',
+      type     : 'data-updated',
+      payload  : tutorial,
     };
     this.panel.webview.postMessage(message);
   }
@@ -120,13 +121,9 @@ export class WebViewPanel {
     const relativeViteIconPath = viteIconMatch ? viteIconMatch[1] : '/vite.svg'; // Default if not found
 
     // Create webview URIs for assets
-    const cssUri = this.panel.webview.asWebviewUri(
-      Uri.joinPath(svelteAppBuildPath, relativeCssPath),
-    );
+    const cssUri = this.panel.webview.asWebviewUri(Uri.joinPath(svelteAppBuildPath, relativeCssPath));
     const jsUri = this.panel.webview.asWebviewUri(Uri.joinPath(svelteAppBuildPath, relativeJsPath));
-    const viteIconUri = this.panel.webview.asWebviewUri(
-      Uri.joinPath(svelteAppBuildPath, relativeViteIconPath),
-    );
+    const viteIconUri = this.panel.webview.asWebviewUri(Uri.joinPath(svelteAppBuildPath, relativeViteIconPath));
 
     const nonce = getNonce();
     const csp = `default-src 'none'; style-src ${this.panel.webview.cspSource}; script-src 'nonce-${nonce}'; img-src ${this.panel.webview.cspSource} data:; font-src ${this.panel.webview.cspSource}; connect-src 'self';`;
@@ -142,11 +139,11 @@ export class WebViewPanel {
       `  <meta http-equiv="Content-Security-Policy" content="${csp}">\n` +
         `  <link rel="icon" type="image/svg+xml" href="${viteIconUri}" />\n` +
         `  <link rel="stylesheet" type="text/css" href="${cssUri}">\n` +
-        '</head>',
+        '</head>'
     );
     htmlContent = htmlContent.replace(
       '</body>',
-      `  <script defer type="module" nonce="${nonce}" src="${jsUri}"></script>\n` + '</body>',
+      `  <script defer type="module" nonce="${nonce}" src="${jsUri}"></script>\n` + '</body>'
     );
 
     return htmlContent;
@@ -171,18 +168,18 @@ export class WebViewPanel {
 
   private _showLoadingState(): void {
     const message: UI.Messages.ExtensionToWebviewSystemMessage = {
-      category: 'system',
-      type: 'loading-state',
-      payload: { isLoading: true, message: 'Loading...' },
+      category : 'system',
+      type     : 'loading-state',
+      payload  : { isLoading: true, message: 'Loading...' },
     };
     this.panel.webview.postMessage(message);
   }
 
   private _hideLoadingState(): void {
     const message: UI.Messages.ExtensionToWebviewSystemMessage = {
-      category: 'system',
-      type: 'loading-state',
-      payload: { isLoading: false, message: 'Done!' },
+      category : 'system',
+      type     : 'loading-state',
+      payload  : { isLoading: false, message: 'Done!' },
     };
     this.panel.webview.postMessage(message);
   }

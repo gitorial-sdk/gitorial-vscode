@@ -4,29 +4,29 @@ import { TutorialService } from '@domain/services/tutorial-service';
 import * as vscode from 'vscode';
 
 export type Args = {
-  repoUrl: string;
-  commitHash: string;
+  repoUrl    : string;
+  commitHash : string;
 };
 
 export type Result =
   | {
-      success: true;
-      action: TutorialStatus.AlreadyActive;
-      tutorial: Readonly<Tutorial>;
+      success  : true;
+      action   : TutorialStatus.AlreadyActive;
+      tutorial : Readonly<Tutorial>;
     }
   | {
-      success: true;
-      action: TutorialStatus.FoundInWorkspace;
-      tutorial: Readonly<Tutorial>;
+      success  : true;
+      action   : TutorialStatus.FoundInWorkspace;
+      tutorial : Readonly<Tutorial>;
     }
   | {
-      success: true;
-      action: TutorialStatus.NotFound;
-      userChoice: 'clone' | 'open-local' | 'cancel';
+      success    : true;
+      action     : TutorialStatus.NotFound;
+      userChoice : 'clone' | 'open-local' | 'cancel';
     }
   | {
-      success: false;
-      error: string;
+      success : false;
+      error   : string;
     };
 
 export enum TutorialStatus {
@@ -41,26 +41,22 @@ export enum TutorialStatus {
 export class Controller {
   constructor(
     private readonly tutorialService: TutorialService,
-    private readonly userInteraction: IUserInteraction,
+    private readonly userInteraction: IUserInteraction
   ) {}
 
   public async handleExternalTutorialRequest(options: Args): Promise<Result> {
     const { repoUrl, commitHash } = options;
-    console.log(
-      `TutorialController: Handling external request. RepoURL: ${repoUrl}, Commit: ${commitHash}`,
-    );
+    console.log(`TutorialController: Handling external request. RepoURL: ${repoUrl}, Commit: ${commitHash}`);
 
     try {
       // Scenario 1: Tutorial is already active in the service and matches the repoUrl.
       const activeTutorialInstance = this.tutorialService.tutorial;
       if (activeTutorialInstance?.repoUrl === repoUrl) {
-        console.log(
-          'TutorialController: External request for already active tutorial. Reloading and Syncing to commit.',
-        );
+        console.log('TutorialController: External request for already active tutorial. Reloading and Syncing to commit.');
         return {
-          success: true,
-          action: TutorialStatus.AlreadyActive,
-          tutorial: activeTutorialInstance,
+          success  : true,
+          action   : TutorialStatus.AlreadyActive,
+          tutorial : activeTutorialInstance,
         };
       }
 
@@ -69,14 +65,12 @@ export class Controller {
       if (workspaceFolders && workspaceFolders.length > 0) {
         const workspacePath = workspaceFolders[0].uri.fsPath;
         const maybeTutorial = await this.tutorialService.loadTutorialFromPath(workspacePath, {
-          initialStepCommitHash: commitHash,
+          initialStepCommitHash : commitHash,
         });
         if (maybeTutorial) {
           const tutorial = maybeTutorial;
           if (tutorial.repoUrl === repoUrl) {
-            console.log(
-              'TutorialController: External request for tutorial in current workspace. Activating and syncing.',
-            );
+            console.log('TutorialController: External request for tutorial in current workspace. Activating and syncing.');
             return { success: true, action: TutorialStatus.FoundInWorkspace, tutorial };
           }
         }
@@ -92,23 +86,18 @@ export class Controller {
         return { success: true, action: TutorialStatus.NotFound, userChoice: 'cancel' };
       }
     } catch (error) {
-      console.error(
-        `TutorialController: Error handling external tutorial request for ${repoUrl}:`,
-        error,
-      );
+      console.error(`TutorialController: Error handling external tutorial request for ${repoUrl}:`, error);
       this.userInteraction.showErrorMessage(
-        `Failed to process tutorial request: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to process tutorial request: ${error instanceof Error ? error.message : String(error)}`
       );
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 
-  private async _promptUserForAbsentTutorial(
-    repoUrl: string,
-  ): Promise<'clone' | 'open-local' | 'cancel'> {
+  private async _promptUserForAbsentTutorial(repoUrl: string): Promise<'clone' | 'open-local' | 'cancel'> {
     const result = await this.userInteraction.pickOption(
       ['Clone and Sync', 'Open Local and Sync', 'Cancel'],
-      `Gitorial from "${repoUrl}".\nWould you like to clone it?`,
+      `Gitorial from "${repoUrl}".\nWould you like to clone it?`
     );
 
     switch (result) {

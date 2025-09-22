@@ -48,10 +48,10 @@ import { WebviewPanelManager } from '@ui/webview/WebviewPanelManager';
  * This function is called when the extension is activated.
  */
 export async function activate(context: vscode.ExtensionContext): Promise<{
-  context: vscode.ExtensionContext;
-  tutorialController: TutorialController;
-  autoOpenState: AutoOpenState;
-  authorModeController: AuthorModeController;
+  context              : vscode.ExtensionContext;
+  tutorialController   : TutorialController;
+  autoOpenState        : AutoOpenState;
+  authorModeController : AuthorModeController;
 }> {
   console.log('📖 Gitorial extension active');
 
@@ -60,14 +60,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     return Promise.reject();
   }
 
-  const {
-    tutorialController,
-    autoOpenState,
-    systemController,
-    authorModeController,
-    userInteractionAdapter,
-    workspacePath,
-  } = application;
+  const { tutorialController, autoOpenState, systemController, authorModeController, userInteractionAdapter, workspacePath } =
+    application;
 
   const commandHandler = new CommandHandler(
     tutorialController,
@@ -153,7 +147,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     workspacePath
   );
 
-  const diffService = new DiffService(diffDisplayerAdapter, fileSystemAdapter);
+  const diffService = new DiffService(diffDisplayerAdapter, fileSystemAdapter, gitChangesFactory, workspacePath);
   const tutorialViewModelConverter = new TutorialViewModelConverter(markdownConverter);
   const tutorialDisplayService = new TutorialDisplayService(tutorialViewModelConverter, diffService);
 
@@ -179,17 +173,17 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // Create a temporary message handler that will be replaced later
   const tempMessageHandler = new WebviewMessageHandler(
     {
-      handleWebviewMessage: async () => {
+      handleWebviewMessage : async () => {
         console.warn('Tutorial message handler not ready yet');
       },
     },
     {
-      handleWebviewMessage: async () => {
+      handleWebviewMessage : async () => {
         console.warn('System message handler not ready yet');
       },
     },
     {
-      handleWebviewMessage: async () => {
+      handleWebviewMessage : async () => {
         console.warn('Author message handler not ready yet');
       },
     }
@@ -237,20 +231,16 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
 
   // Now create the message handlers after all controllers are created
   const tutorialMessageHandler: IWebviewTutorialMessageHandler = {
-    handleWebviewMessage: msg => tutorialController.handleWebviewMessage(msg),
+    handleWebviewMessage : msg => tutorialController.handleWebviewMessage(msg),
   };
   const systemMessageHandler: IWebviewSystemMessageHandler = {
-    handleWebviewMessage: msg => systemController.handleWebviewMessage(msg),
+    handleWebviewMessage : msg => systemController.handleWebviewMessage(msg),
   };
   const authorMessageHandler: IWebviewAuthorMessageHandler = {
-    handleWebviewMessage: msg => authorModeController.handleWebviewMessage(msg),
+    handleWebviewMessage : msg => authorModeController.handleWebviewMessage(msg),
   };
 
-  const webviewMessageHandler = new WebviewMessageHandler(
-    tutorialMessageHandler,
-    systemMessageHandler,
-    authorMessageHandler
-  );
+  const webviewMessageHandler = new WebviewMessageHandler(tutorialMessageHandler, systemMessageHandler, authorMessageHandler);
 
   // Update the webview panel manager with the real message handler
   webviewPanelManager.updateMessageHandler(webviewMessageHandler.handleMessage.bind(webviewMessageHandler));
@@ -271,10 +261,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
  * Checks if there's a pending auto-open state and automatically opens the tutorial.
  * This is called during extension activation to handle tutorial opening after workspace switches.
  */
-async function checkAndHandleAutoOpenState(
-  tutorialController: TutorialController,
-  autoOpenState: AutoOpenState
-): Promise<void> {
+async function checkAndHandleAutoOpenState(tutorialController: TutorialController, autoOpenState: AutoOpenState): Promise<void> {
   try {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
@@ -286,7 +273,10 @@ async function checkAndHandleAutoOpenState(
       return;
     }
 
-    const ageMs = Date.now() - new Date(pending.timestamp).getTime();
+    const ageMs =
+      Date.now() -
+      new Date(pending.timestamp)
+        .getTime();
     if (ageMs > 10_000) {
       console.log('Gitorial: Auto-open state expired, clearing it');
       autoOpenState.clear();
@@ -296,8 +286,8 @@ async function checkAndHandleAutoOpenState(
     console.log('Gitorial: Found pending auto-open state, attempting to open tutorial automatically');
 
     await tutorialController.openFromWorkspace({
-      commitHash: pending.commitHash,
-      force: true,
+      commitHash : pending.commitHash,
+      force      : true,
     });
   } catch (error) {
     console.error('Gitorial: Error during auto-open check:', error);

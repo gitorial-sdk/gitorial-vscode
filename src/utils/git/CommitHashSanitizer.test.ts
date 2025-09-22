@@ -41,10 +41,7 @@ describe('CommitHashSanitizer', () => {
       const malformedInput = `HEAD.${truncatedHash.substring(0, 3)}`;
 
       // This should throw an error because "HEAD.c74" is not a valid pattern
-      assert.throws(
-        () => CommitHashSanitizer.sanitize(malformedInput),
-        /Could not extract valid commit hash/,
-      );
+      assert.throws(() => CommitHashSanitizer.sanitize(malformedInput), /Could not extract valid commit hash/);
     });
   });
 
@@ -64,9 +61,9 @@ describe('CommitHashSanitizer', () => {
   describe('sanitizeManifestStep', () => {
     it('should sanitize step commit hash', () => {
       const step = {
-        commit: `HEAD ${validHash}`,
-        type: 'section',
-        title: 'test',
+        commit : `HEAD ${validHash}`,
+        type   : 'section',
+        title  : 'test',
       };
 
       const sanitized = CommitHashSanitizer.sanitizeManifestStep(step);

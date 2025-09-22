@@ -21,13 +21,13 @@ import { GitignoreManager } from '../../../utils/gitignore/GitignoreManager';
  */
 
 export type CloneOptions = {
-  repoUrl?: string;
-  commitHash?: string;
+  repoUrl?    : string;
+  commitHash? : string;
 };
 
 export type OpenOptions = {
-  commitHash?: string;
-  force?: boolean;
+  commitHash? : string;
+  force?      : boolean;
 };
 
 export type LifecylceResult =
@@ -46,7 +46,7 @@ export class Controller {
     private readonly tutorialService: TutorialService,
     private readonly autoOpenState: AutoOpenState,
     private readonly userInteraction: IUserInteraction,
-    private readonly gitChangesFactory: IGitChangesFactory,
+    private readonly gitChangesFactory: IGitChangesFactory
   ) {
     this.gitignoreManager = new GitignoreManager(this.fs);
   }
@@ -87,8 +87,8 @@ export class Controller {
     const gitChanges = this.gitChangesFactory.createFromPath(tutorial.localPath);
 
     await this._handleSuccessfulClone(tutorial, clonePath, cloneLocation.mode, {
-      wasInitiatedProgrammatically: !!options?.repoUrl,
-      commitHash: options?.commitHash,
+      wasInitiatedProgrammatically : !!options?.repoUrl,
+      commitHash                   : options?.commitHash,
     });
 
     return { success: true, tutorial, gitChanges };
@@ -116,10 +116,10 @@ export class Controller {
     let path = options?.path;
     if (!options?.path) {
       path = await this.userInteraction.selectPath({
-        canSelectFolders: true,
-        canSelectFiles: false,
-        openLabel: 'Select Gitorial Folder',
-        title: 'Select Gitorial Folder',
+        canSelectFolders : true,
+        canSelectFiles   : false,
+        openLabel        : 'Select Gitorial Folder',
+        title            : 'Select Gitorial Folder',
       });
     }
 
@@ -133,9 +133,9 @@ export class Controller {
     const tutorial = await this._loadTutorialFromPath(path, effectiveCommitHash);
     if (!tutorial) {
       return {
-        success: false,
-        reason: 'error',
-        error: `failed to load tutorial from path (${path})`,
+        success : false,
+        reason  : 'error',
+        error   : `failed to load tutorial from path (${path})`,
       };
     }
 
@@ -163,21 +163,20 @@ export class Controller {
       return false;
     }
 
-    const ageMs = Date.now() - new Date(pending.timestamp).getTime();
+    const ageMs =
+      Date.now() -
+      new Date(pending.timestamp)
+        .getTime();
     return ageMs < 30_000; // 30-second window
   }
 
   // === CLONE OPERATIONS ===
 
-  private async _performClone(
-    repoUrl: string,
-    targetPath: string,
-    commitHash?: string,
-  ): Promise<Tutorial | null> {
-    return await this._reportProgress(`Cloning ${repoUrl}...`, async() => {
+  private async _performClone(repoUrl: string, targetPath: string, commitHash?: string): Promise<Tutorial | null> {
+    return await this._reportProgress(`Cloning ${repoUrl}...`, async () => {
       try {
         const tutorial = await this.tutorialService.cloneAndLoadTutorial(repoUrl, targetPath, {
-          initialStepCommitHash: commitHash,
+          initialStepCommitHash : commitHash,
         });
 
         if (!tutorial) {
@@ -222,11 +221,9 @@ export class Controller {
     tutorial: Tutorial,
     clonedPath: string,
     cloneMode: 'subdirectory' | 'separate-workspace',
-    options?: { wasInitiatedProgrammatically?: boolean; commitHash?: string },
+    options?: { wasInitiatedProgrammatically?: boolean; commitHash?: string }
   ): Promise<void> {
-    this.userInteraction.showInformationMessage(
-      `Tutorial "${tutorial.title}" cloned to ${clonedPath}.`,
-    );
+    this.userInteraction.showInformationMessage(`Tutorial "${tutorial.title}" cloned to ${clonedPath}.`);
 
     if (cloneMode === 'subdirectory') {
       // No workspace switching - tutorial is already in current workspace
@@ -234,7 +231,7 @@ export class Controller {
       console.log(`LifecycleController: Tutorial successfully cloned and loaded in subdirectory mode: ${tutorial.title}`);
 
       this.userInteraction.showInformationMessage(
-        `Tutorial "${tutorial.title}" is ready! Use Gitorial navigation commands to explore the steps.`,
+        `Tutorial "${tutorial.title}" is ready! Use Gitorial navigation commands to explore the steps.`
       );
 
       // Open the tutorial README if it exists
@@ -251,8 +248,7 @@ export class Controller {
       }
     } else {
       // Original workspace switching behavior
-      const shouldOpen =
-        options?.wasInitiatedProgrammatically || (await this._confirmOpenTutorial(tutorial.title));
+      const shouldOpen = options?.wasInitiatedProgrammatically || (await this._confirmOpenTutorial(tutorial.title));
 
       if (shouldOpen) {
         await this._saveAutoOpenState(tutorial.id, options?.commitHash);
@@ -264,14 +260,11 @@ export class Controller {
 
   // === OPEN OPERATIONS ===
 
-  private async _loadTutorialFromPath(
-    tutorialPath: string,
-    commitHash?: string,
-  ): Promise<Tutorial | null> {
-    return await this._reportProgress('Loading tutorial...', async() => {
+  private async _loadTutorialFromPath(tutorialPath: string, commitHash?: string): Promise<Tutorial | null> {
+    return await this._reportProgress('Loading tutorial...', async () => {
       try {
         const tutorial = await this.tutorialService.loadTutorialFromPath(tutorialPath, {
-          initialStepCommitHash: commitHash,
+          initialStepCommitHash : commitHash,
         });
         if (!tutorial) {
           // Don't show error message here - let the caller handle error display
@@ -295,14 +288,15 @@ export class Controller {
       return null;
     }
 
-    const ageMs = Date.now() - new Date(pending.timestamp).getTime();
+    const ageMs =
+      Date.now() -
+      new Date(pending.timestamp)
+        .getTime();
     const shouldAutoOpen = ageMs < 30_000; // 30 seconds window for workspace switching
 
     if (shouldAutoOpen || options?.force) {
       this.autoOpenState.clear();
-      console.log(
-        `LifecycleController: Auto-opening tutorial ${pending.tutorialId} with commit ${pending.commitHash}`,
-      );
+      console.log(`LifecycleController: Auto-opening tutorial ${pending.tutorialId} with commit ${pending.commitHash}`);
 
       // Return the commit hash from auto-open state to use in the current operation
       return pending.commitHash || null;
@@ -329,15 +323,15 @@ export class Controller {
     } catch (error) {
       console.error('LifecycleController: Error switching workspace:', error);
       this.userInteraction.showErrorMessage(
-        `Failed to switch workspace: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to switch workspace: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
   private async _saveAutoOpenState(tutorialId: string, commitHash?: string): Promise<void> {
     await this.autoOpenState.set({
-      tutorialId: Domain.asTutorialId(tutorialId),
-      timestamp: Date.now(),
+      tutorialId : Domain.asTutorialId(tutorialId),
+      timestamp  : Date.now(),
       commitHash,
     });
   }
@@ -369,26 +363,26 @@ export class Controller {
     }
 
     return this.userInteraction.showInputBox({
-      prompt: 'Enter the Git URL of the tutorial repository to clone',
-      placeHolder: 'https://github.com/user/gitorial-tutorial.git',
-      defaultValue: DEFAULT_CLONE_REPO_URL,
+      prompt       : 'Enter the Git URL of the tutorial repository to clone',
+      placeHolder  : 'https://github.com/user/gitorial-tutorial.git',
+      defaultValue : DEFAULT_CLONE_REPO_URL,
     });
   }
 
   private async _promptForCloneDestination(): Promise<string | undefined> {
     return this.userInteraction.showOpenDialog({
-      canSelectFolders: true,
-      canSelectFiles: false,
-      openLabel: 'Choose folder to clone into',
-      title: 'Select Clone Destination',
+      canSelectFolders : true,
+      canSelectFiles   : false,
+      openLabel        : 'Choose folder to clone into',
+      title            : 'Select Clone Destination',
     });
   }
 
   private async _confirmOverwrite(itemName: string): Promise<boolean> {
     return this.userInteraction.askConfirmation({
-      message: `Folder "${itemName}" already exists in the selected location. Overwrite it?`,
-      confirmActionTitle: 'Overwrite',
-      cancelActionTitle: 'Cancel',
+      message            : `Folder "${itemName}" already exists in the selected location. Overwrite it?`,
+      confirmActionTitle : 'Overwrite',
+      cancelActionTitle  : 'Cancel',
     });
   }
 
@@ -399,8 +393,8 @@ export class Controller {
 
     return this.userInteraction.askConfirmation({
       message,
-      confirmActionTitle: 'Open Now',
-      cancelActionTitle: 'Open Later',
+      confirmActionTitle : 'Open Now',
+      cancelActionTitle  : 'Open Later',
     });
   }
 
@@ -409,7 +403,10 @@ export class Controller {
   /**
    * Determines where to clone the tutorial based on user configuration
    */
-  private async _determineCloneLocation(): Promise<{ path: string; mode: 'subdirectory' | 'separate-workspace' } | null> {
+  private async _determineCloneLocation(): Promise<{
+    path : string;
+    mode : 'subdirectory' | 'separate-workspace';
+  } | null> {
     const config = vscode.workspace.getConfiguration('gitorial');
     const cloneLocation = config.get<string>('cloneLocation', 'ask');
     const defaultDirectory = config.get<string>('defaultCloneDirectory', 'tutorials');
@@ -447,9 +444,9 @@ export class Controller {
     // Ask user each time
     if (currentWorkspace) {
       const choice = await this.userInteraction.askConfirmation({
-        message: `Clone tutorial as subdirectory in current workspace (${currentWorkspace.name}) or use separate workspace?`,
-        confirmActionTitle: 'Use Subdirectory',
-        cancelActionTitle: 'Separate Workspace',
+        message            : `Clone tutorial as subdirectory in current workspace (${currentWorkspace.name}) or use separate workspace?`,
+        confirmActionTitle : 'Use Subdirectory',
+        cancelActionTitle  : 'Separate Workspace',
       });
 
       if (choice) {
@@ -477,7 +474,8 @@ export class Controller {
   }
 
   private _extractRepoName(repoUrl: string): string {
-    return repoUrl.substring(repoUrl.lastIndexOf('/') + 1).replace(/\.git$/, '');
+    return repoUrl.substring(repoUrl.lastIndexOf('/') + 1)
+      .replace(/\.git$/, '');
   }
 
   private _buildClonePath(parentDir: string, repoName: string): string {
@@ -496,10 +494,7 @@ export class Controller {
     }
   }
 
-  private async _ensureTargetDirectoryAvailable(
-    parentDir: string,
-    subDirName: string,
-  ): Promise<boolean> {
+  private async _ensureTargetDirectoryAvailable(parentDir: string, subDirName: string): Promise<boolean> {
     const targetPath = this._buildClonePath(parentDir, subDirName);
     const exists = await this.fs.hasSubdirectory(parentDir, subDirName);
 
@@ -519,7 +514,7 @@ export class Controller {
     } catch (error) {
       console.error(`LifecycleController: Error deleting directory ${targetPath}:`, error);
       this.userInteraction.showErrorMessage(
-        `Failed to delete existing directory: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to delete existing directory: ${error instanceof Error ? error.message : String(error)}`
       );
       return false;
     }

@@ -34,7 +34,8 @@ export class DraftCommitList<TCode extends string = string> {
    * @returns A new {@link DraftCommitList} seeded with the list content
    */
   static beginFrom<T extends string>(list: CommitList<T>, rules: ReadonlyArray<TCommitListRule<T>>) {
-    const commits = list.toArray().map(c => c.data);
+    const commits = list.toArray()
+      .map(c => c.data);
     return new DraftCommitList<T>(commits, rules);
   }
 

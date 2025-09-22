@@ -1,16 +1,13 @@
 import { TutorialViewModelConverter } from '@domain/converters/TutorialViewModelConverter';
-import { DiffService } from './DiffService';
+import { DiffService } from './DiffService/';
 import { Tutorial } from '@domain/models/Tutorial';
 import { UI } from '@gitorial/shared-types';
-import { IGitChanges } from '@ui/ports/IGitChanges';
-import {
-  TutorialChangeDetector,
-  TutorialViewChangeType,
-} from '@domain/utils/TutorialChangeDetector';
+
+import { TutorialChangeDetector, TutorialViewChangeType } from '@domain/utils/TutorialChangeDetector';
 
 export type TutorialDisplayResult = {
-  viewModel: UI.ViewModels.Tutorial;
-  filesToDisplay: string[];
+  viewModel      : UI.ViewModels.Tutorial;
+  filesToDisplay : string[];
 };
 
 /**
@@ -25,28 +22,33 @@ export class TutorialDisplayService {
 
   constructor(
     private readonly viewModelConverter: TutorialViewModelConverter,
-    private readonly diffService: DiffService,
+    private readonly diffService: DiffService
   ) {
     this.changeDetector = new TutorialChangeDetector();
   }
 
-  public async prepareTutorialDisplay(
-    tutorial: Readonly<Tutorial>,
-    gitChanges: IGitChanges,
-  ): Promise<TutorialDisplayResult> {
+  public async prepareTutorialDisplay(tutorial: Readonly<Tutorial>): Promise<TutorialDisplayResult> {
     const viewModel = this.viewModelConverter.convert(tutorial);
 
-    const diffs = await this.diffService.getDiffModelsForParent(tutorial, gitChanges);
+    const result = await this.diffService.getFiles(
+      tutorial.activeStep.commitHash,
+      viewModel.isShowingSolution ? 'solution-change' : 'step-change'
+    );
+
+    if (result.isErr()) {
+      throw new Error(`Error: ${result._unsafeUnwrapErr()}`);
+    }
+    const relativeFilePaths = result.value.map(f => f.relativePath);
 
     return {
       viewModel,
-      filesToDisplay: diffs.map(d => d.relativePath),
+      filesToDisplay : relativeFilePaths,
     };
   }
 
   public async detectDisplayChanges(
     current: UI.ViewModels.Tutorial,
-    previous: UI.ViewModels.Tutorial,
+    previous: UI.ViewModels.Tutorial
   ): Promise<TutorialViewChangeType> {
     return this.changeDetector.detectChange(current, previous);
   }

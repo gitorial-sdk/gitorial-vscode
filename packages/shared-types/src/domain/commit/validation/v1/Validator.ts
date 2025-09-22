@@ -7,16 +7,17 @@ import { Errors } from './errors';
 import { ToDoComment } from '../../ToDoComment';
 
 export const Validator = {
-  parseMessage: parseMessageV1,
-  validateContent(commit: Readonly<Base>) {
+  parseMessage : parseMessageV1,
+  validateContent(commit: Base) {
     return V1.RulesByType[commit.type].validate(commit);
   },
   buildCommitFromMessage(
+    //TODO: rename to 'validate'
     message: string,
     hash: string,
     changedFiles: ReadonlyArray<string>,
     toDoComments: ReadonlyArray<ToDoComment>
-  ): Result<Base, Error<keyof typeof Errors>> {
+  ) : Result<Base, Error<keyof typeof Errors>> {
     const parsed = parseMessageV1(message);
     if (parsed.isErr()) {
       return err(parsed.error);
@@ -26,8 +27,8 @@ export const Validator = {
       type,
       title,
       hash,
-      changedFiles: [...changedFiles],
-      toDoComments: toDoComments.map(t => ({ realtiveFilePath: t.realtiveFilePath })),
+      changedFiles : [...changedFiles],
+      toDoComments : toDoComments.map(t => ({ realtiveFilePath: t.realtiveFilePath })),
     };
     const content = V1.RulesByType[type].validate(commit);
     if (content.isErr()) {

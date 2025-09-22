@@ -35,9 +35,7 @@ export class AuthoringCommandHandler {
       await this.authorModeController.clearCachedData();
 
       console.log('✅ CLEAR CORRUPTED DATA: Cleanup complete!');
-      await this.userInteraction.showInformationMessage(
-        'Corrupted data cleared successfully. Try entering Author Mode again.'
-      );
+      await this.userInteraction.showInformationMessage('Corrupted data cleared successfully. Try entering Author Mode again.');
     } catch (error) {
       console.error('🚨 CLEAR CORRUPTED DATA: Error during cleanup:', error);
       await this.userInteraction.showErrorMessage(
@@ -80,21 +78,15 @@ export class AuthoringCommandHandler {
   public register(context: vscode.ExtensionContext): void {
     console.log('🔥 REGISTERING AUTHOR MODE COMMANDS...');
 
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.enterAuthorMode', () => this.handleEnterAuthorMode())
-    );
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.enterAuthorMode', () => this.handleEnterAuthorMode()));
 
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.exitAuthorMode', () => this.handleExitAuthorMode())
-    );
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.exitAuthorMode', () => this.handleExitAuthorMode()));
 
     context.subscriptions.push(
       vscode.commands.registerCommand('gitorial.createNewTutorial', () => this.handleCreateNewTutorial())
     );
 
-    context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.publishTutorial', () => this.handlePublishTutorial())
-    );
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.publishTutorial', () => this.handlePublishTutorial()));
 
     context.subscriptions.push(
       vscode.commands.registerCommand('gitorial.clearCorruptedData', () => this.handleClearCorruptedData())

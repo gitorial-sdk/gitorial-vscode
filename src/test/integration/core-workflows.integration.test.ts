@@ -14,30 +14,30 @@ suite('Integration: Core Workflows', () => {
   let testRepo: TestRepository;
   let _extensionContext: vscode.Extension<any>;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.SUITE_SETUP);
 
     await IntegrationTestUtils.initialize();
     _extensionContext = await IntegrationTestUtils.waitForExtensionActivation();
   });
 
-  suiteTeardown(async function() {
+  suiteTeardown(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.CLEANUP);
     await IntegrationTestUtils.cleanup();
     await IntegrationTestUtils.cleanupIntegrationExecutionDirectory();
   });
 
-  setup(async function() {
+  setup(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.CLEANUP);
     testRepo = await IntegrationTestUtils.createTestRepository(`test-repo-${Date.now()}`);
   });
 
-  teardown(async function() {
+  teardown(async function () {
     this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.QUICK_OPERATION);
   });
 
   suite('Extension Command Validation', () => {
-    test('should have all required commands registered', async function() {
+    test('should have all required commands registered', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.QUICK_OPERATION);
 
       const extension = vscode.extensions.getExtension('AndrzejSulkowski.gitorial');
@@ -60,16 +60,13 @@ suite('Integration: Core Workflows', () => {
       ];
 
       for (const expectedCmd of expectedCommands) {
-        assert.ok(
-          gitorialCommands.includes(expectedCmd),
-          `Command ${expectedCmd} should be registered`,
-        );
+        assert.ok(gitorialCommands.includes(expectedCmd), `Command ${expectedCmd} should be registered`);
       }
     });
   });
 
   suite('Tutorial Error Handling', () => {
-    test('should handle invalid tutorial paths and directories gracefully', async function() {
+    test('should handle invalid tutorial paths and directories gracefully', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       const nonExistentPath = path.join(testRepo.path, 'non-existent');
@@ -90,7 +87,7 @@ suite('Integration: Core Workflows', () => {
   });
 
   suite('Error Handling Workflows', () => {
-    test('should handle invalid git repositories gracefully', async function() {
+    test('should handle invalid git repositories gracefully', async function () {
       this.timeout(INTEGRATION_TEST_CONFIG.TIMEOUTS.TEST_EXECUTION);
 
       const nonGitPath = path.join(testRepo.path, '..', 'non-git-directory');

@@ -6,10 +6,14 @@ import { Commit } from './Commit';
 
 describe('Domain DraftCommitList', () => {
   const validSequence: Commit[] = [
-    Commit.newFromObject(c('section', 'Introduction', ['README.md'])),
-    Commit.newFromObject(c('action', 'Cargo Init')),
-    Commit.newFromObject(c('action', 'rustfmt config + fmt')),
-    Commit.newFromObject(c('section', 'balances pallet', ['README.md'])),
+    Commit.newFromObject(c('section', 'Introduction', ['README.md']))
+      ._unsafeUnwrap(),
+    Commit.newFromObject(c('action', 'Cargo Init'))
+      ._unsafeUnwrap(),
+    Commit.newFromObject(c('action', 'rustfmt config + fmt'))
+      ._unsafeUnwrap(),
+    Commit.newFromObject(c('section', 'balances pallet', ['README.md']))
+      ._unsafeUnwrap(),
     Commit.newFromObject(
       c(
         'template',
@@ -17,22 +21,21 @@ describe('Domain DraftCommitList', () => {
         ['pallets/balances/src/lib.rs'],
         [{ realtiveFilePath: 'pallets/balances/src/lib.rs' }]
       )
-    ),
-    Commit.newFromObject(c('solution', 'introduce balances module', ['pallets/balances/src/lib.rs'], [])),
-    Commit.newFromObject(c('readme', 'Repo End', ['README.md'])),
+    )
+      ._unsafeUnwrap(),
+    Commit.newFromObject(c('solution', 'introduce balances module', ['pallets/balances/src/lib.rs'], []))
+      ._unsafeUnwrap(),
+    Commit.newFromObject(c('readme', 'Repo End', ['README.md']))
+      ._unsafeUnwrap(),
   ];
 
   it('append successfully', () => {
-    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)._unsafeUnwrap();
+    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)
+      ._unsafeUnwrap();
     const draft = list.toDraft();
 
     draft.appendCommit(
-      c(
-        'template',
-        'some template',
-        ['pallets/balances/src/lib.rs'],
-        [{ realtiveFilePath: 'pallets/balances/src/lib.rs' }]
-      )
+      c('template', 'some template', ['pallets/balances/src/lib.rs'], [{ realtiveFilePath: 'pallets/balances/src/lib.rs' }])
     );
     draft.appendCommit(c('solution', 'some solution', ['pallets/balances/src/lib.rs'], []));
     const result = draft.finalize();
@@ -41,7 +44,8 @@ describe('Domain DraftCommitList', () => {
   });
 
   it('append fails', () => {
-    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)._unsafeUnwrap();
+    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)
+      ._unsafeUnwrap();
     const draft = list.toDraft();
 
     draft.appendCommit(c('solution', 'orphan', ['pallets/balances/src/lib.rs'], []));
@@ -50,21 +54,24 @@ describe('Domain DraftCommitList', () => {
   });
 
   it('insert successfully', () => {
-    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)._unsafeUnwrap();
+    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)
+      ._unsafeUnwrap();
     const draft = list.toDraft();
     const result = draft.insertAt(1, c('action', 'some action', [], []));
     expect(result.isOk()).to.equal(true);
   });
 
   it('insert fails', () => {
-    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)._unsafeUnwrap();
+    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)
+      ._unsafeUnwrap();
     const draft = list.toDraft();
     const result = draft.insertAt(20, c('solution', 'some solution', [], []));
     expect(result.isErr()).to.equal(true);
   });
 
   it('remove successfully', () => {
-    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)._unsafeUnwrap();
+    const list = CommitList.new(validSequence, Domain.CommitList.V1.Rules)
+      ._unsafeUnwrap();
     const draft = list.toDraft();
     const result = draft.removeAt(1);
     expect(result.isOk()).to.equal(true);

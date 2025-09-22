@@ -5,9 +5,9 @@ Defines how to report progress of long-running operations (e.g., report({ messag
 // Defines the interface (port) for reporting progress of long-running operations to the user.
 
 export interface ProgressReport {
-  message: string;
-  increment?: number; // For percentage-based progress
-  total?: number; // For steps-based progress
+  message    : string;
+  increment? : number; // For percentage-based progress
+  total?     : number; // For steps-based progress
 }
 
 export interface IProgressReporter {

@@ -5,7 +5,6 @@ import { CONFIG_CONSTANTS as CC } from './SystemControllerConstants';
 import { IContextState } from '@domain/ports/IContextState';
 import { IConfigurationState } from '@domain/ports/IConfigurationState';
 import { IUserInteraction } from '@domain/ports/IUserInteraction';
-import { IStateStorage } from '@domain/ports/IStateStorage';
 
 /**
  * Controller responsible for managing system-level operations and communication
@@ -27,12 +26,7 @@ export class SystemController implements IWebviewSystemMessageHandler {
     webviewPanelManager: IWebviewPanelManager,
     userInteraction: IUserInteraction
   ): Promise<SystemController> {
-    const systemController = new SystemController(
-      contextStore,
-      configurationStore,
-      webviewPanelManager,
-      userInteraction
-    );
+    const systemController = new SystemController(contextStore, configurationStore, webviewPanelManager, userInteraction);
     await systemController.initializeAuthorModeState();
     systemController.registerConfigurationListener();
     return systemController;
@@ -87,18 +81,13 @@ export class SystemController implements IWebviewSystemMessageHandler {
         case 'requestConfirm':
           // Show a native confirm dialog and return result
           try {
-            const result = await this.userInteraction.showWarningMessage(
-              message.payload.message,
-              { modal: true },
-              'Yes',
-              'No'
-            );
+            const result = await this.userInteraction.showWarningMessage(message.payload.message, { modal: true }, 'Yes', 'No');
 
             const confirmed = result === 'Yes';
             await this.sendSystemMessage({
-              category: 'system',
-              type: 'confirmResult',
-              payload: { id: message.payload.id, confirmed },
+              category : 'system',
+              type     : 'confirmResult',
+              payload  : { id: message.payload.id, confirmed },
             } as any);
           } catch (e) {
             console.warn('SystemController: Failed to show confirm dialog', e);
@@ -139,9 +128,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public async showLoadingState(isLoading: boolean, message: string): Promise<void> {
     await this.sendSystemMessage({
-      category: 'system',
-      type: 'loading-state',
-      payload: { isLoading, message },
+      category : 'system',
+      type     : 'loading-state',
+      payload  : { isLoading, message },
     });
   }
 
@@ -160,9 +149,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
    */
   public async showError(message: string): Promise<void> {
     await this.sendSystemMessage({
-      category: 'system',
-      type: 'error',
-      payload: { message },
+      category : 'system',
+      type     : 'error',
+      payload  : { message },
     });
   }
 
@@ -198,9 +187,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
     await this.contextState.setContext(CC.AUTHOR_MODE_CONTEXT, isActive); //we change the context so that pallet settings change
 
     await this.sendSystemMessage({
-      category: 'system',
-      type: 'author-mode-changed',
-      payload: { isActive },
+      category : 'system',
+      type     : 'author-mode-changed',
+      payload  : { isActive },
     });
   }
 
@@ -220,9 +209,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendAuthorManifest(manifest: Domain.AuthorManifestData, isEditing: boolean): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'manifestLoaded',
-        payload: {
+        category : 'author',
+        type     : 'manifestLoaded',
+        payload  : {
           manifest,
           isEditing,
         },
@@ -244,9 +233,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async showGlobalLoading(message: string): Promise<void> {
     if (this.webviewPanelManager) {
       const systemMessage: UI.Messages.ExtensionToWebviewSystemMessage = {
-        category: 'system',
-        type: 'loading-state',
-        payload: { isLoading: true, message },
+        category : 'system',
+        type     : 'loading-state',
+        payload  : { isLoading: true, message },
       };
       await this.webviewPanelManager.sendMessage(systemMessage);
     }
@@ -265,9 +254,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   ): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'publishResult',
-        payload: {
+        category : 'author',
+        type     : 'publishResult',
+        payload  : {
           success,
           error,
           publishedCommits,
@@ -289,9 +278,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendValidationWarnings(warnings: string[]): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'validationWarnings',
-        payload: {
+        category : 'author',
+        type     : 'validationWarnings',
+        payload  : {
           warnings,
         },
       });
@@ -312,9 +301,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendEditingStarted(stepIndex: number, step: Domain.ManifestStep): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'editingStarted',
-        payload: {
+        category : 'author',
+        type     : 'editingStarted',
+        payload  : {
           stepIndex,
           step,
         },
@@ -336,9 +325,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
     try {
       // Cast to any because webview message union in some places is narrower; this is a safe runtime message
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'editingFileSaved',
-        payload: { stepIndex },
+        category : 'author',
+        type     : 'editingFileSaved',
+        payload  : { stepIndex },
       } as any);
     } catch (error) {
       await this.reportError(
@@ -357,9 +346,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendEditingSaved(stepIndex: number, updatedManifest: Domain.AuthorManifestData): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'editingSaved',
-        payload: {
+        category : 'author',
+        type     : 'editingSaved',
+        payload  : {
           stepIndex,
           updatedManifest,
         },
@@ -380,9 +369,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendEditingCancelled(stepIndex: number): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'editingCancelled',
-        payload: {
+        category : 'author',
+        type     : 'editingCancelled',
+        payload  : {
           stepIndex,
         },
       });
@@ -403,9 +392,9 @@ export class SystemController implements IWebviewSystemMessageHandler {
   public async sendEditingError(stepIndex: number, error: string): Promise<void> {
     try {
       await this.webviewPanelManager.sendMessage({
-        category: 'author',
-        type: 'editingError',
-        payload: {
+        category : 'author',
+        type     : 'editingError',
+        payload  : {
           stepIndex,
           error,
         },

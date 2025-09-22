@@ -1,17 +1,17 @@
 import { UrlValidator } from './UrlValidator';
 
 export interface CommandValidationResult {
-  isValid: boolean;
-  sanitizedCommand?: string;
-  sanitizedArgs?: string[];
-  error?: string;
+  isValid           : boolean;
+  sanitizedCommand? : string;
+  sanitizedArgs?    : string[];
+  error?            : string;
 }
 
 export interface CommandValidationOptions {
-  allowedCommands?: string[];
-  allowedFlags?: string[];
-  maxArguments?: number;
-  requireExactMatch?: boolean;
+  allowedCommands?   : string[];
+  allowedFlags?      : string[];
+  maxArguments?      : number;
+  requireExactMatch? : boolean;
 }
 
 /**
@@ -20,8 +20,8 @@ export interface CommandValidationOptions {
  */
 export class CommandValidator {
   private static readonly DEFAULT_OPTIONS: Required<CommandValidationOptions> = {
-    allowedCommands: ['git'],
-    allowedFlags: [
+    allowedCommands : ['git'],
+    allowedFlags    : [
       // Git flags commonly used in the extension
       'clone',
       'checkout',
@@ -41,8 +41,8 @@ export class CommandValidator {
       '--recursive',
       '--depth',
     ],
-    maxArguments: 10,
-    requireExactMatch: true,
+    maxArguments      : 10,
+    requireExactMatch : true,
   };
 
   // Git subcommands that are safe for this extension's use case
@@ -86,13 +86,13 @@ export class CommandValidator {
   public static validateCommand(
     command: string,
     args: string[] = [],
-    options: CommandValidationOptions = {},
+    options: CommandValidationOptions = {}
   ): CommandValidationResult {
     const opts = {
       ...this.DEFAULT_OPTIONS,
       ...options,
-      allowedCommands: options.allowedCommands || this.DEFAULT_OPTIONS.allowedCommands,
-      allowedFlags: options.allowedFlags || [...this.SAFE_GIT_FLAGS, ...this.SAFE_GIT_SUBCOMMANDS],
+      allowedCommands : options.allowedCommands || this.DEFAULT_OPTIONS.allowedCommands,
+      allowedFlags    : options.allowedFlags || [...this.SAFE_GIT_FLAGS, ...this.SAFE_GIT_SUBCOMMANDS],
     };
 
     try {
@@ -110,8 +110,8 @@ export class CommandValidator {
       // Check if command is allowed
       if (!opts.allowedCommands.includes(sanitizedCommand)) {
         return {
-          isValid: false,
-          error: `Command '${sanitizedCommand}' not allowed. Allowed commands: ${opts.allowedCommands.join(', ')}`,
+          isValid : false,
+          error   : `Command '${sanitizedCommand}' not allowed. Allowed commands: ${opts.allowedCommands.join(', ')}`,
         };
       }
 
@@ -139,15 +139,15 @@ export class CommandValidator {
       }
 
       return {
-        isValid: true,
+        isValid : true,
         sanitizedCommand,
         sanitizedArgs,
       };
 
     } catch (error) {
       return {
-        isValid: false,
-        error: `Command validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        isValid : false,
+        error   : `Command validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -157,14 +157,15 @@ export class CommandValidator {
    */
   private static sanitizeCommandName(command: string): string | null {
     // Remove any dangerous characters
-    const cleaned = command.trim().toLowerCase();
+    const cleaned = command.trim()
+      .toLowerCase();
 
     // Check for injection patterns
     const dangerousPatterns = [
-      /[;&|`$(){}[\]<>]/,  // Command injection characters
-      /\s/,                // Whitespace (commands shouldn't have spaces)
-      /\./,                // Dots (prevent path traversal)
-      /\\/,                // Backslashes
+      /[;&|`$(){}[\]<>]/, // Command injection characters
+      /\s/, // Whitespace (commands shouldn't have spaces)
+      /\./, // Dots (prevent path traversal)
+      /\\/, // Backslashes
     ];
 
     for (const pattern of dangerousPatterns) {
@@ -187,7 +188,7 @@ export class CommandValidator {
   private static sanitizeArgument(
     arg: string,
     command: string,
-    options: Required<CommandValidationOptions>,
+    options: Required<CommandValidationOptions>
   ): { isValid: boolean; sanitizedArg?: string; error?: string } {
     if (!arg || typeof arg !== 'string') {
       return { isValid: false, error: 'Argument must be a non-empty string' };
@@ -195,11 +196,11 @@ export class CommandValidator {
 
     // Check for dangerous patterns
     const dangerousPatterns = [
-      /[;&|`$(){}[\]]/,    // Command injection
-      /\$\{.*\}/,          // Variable substitution
-      /`.*`/,              // Command substitution
-      /\|\||\&\&/,         // Command chaining
-      />\s*\/|<\s*\//,     // File redirection to system paths
+      /[;&|`$(){}[\]]/, // Command injection
+      /\$\{.*\}/, // Variable substitution
+      /`.*`/, // Command substitution
+      /\|\||\&\&/, // Command chaining
+      />\s*\/|<\s*\//, // File redirection to system paths
     ];
 
     for (const pattern of dangerousPatterns) {
@@ -216,8 +217,8 @@ export class CommandValidator {
         // This is a flag
         if (!options.allowedFlags.includes(trimmed)) {
           return {
-            isValid: false,
-            error: `Git flag '${trimmed}' not allowed`,
+            isValid : false,
+            error   : `Git flag '${trimmed}' not allowed`,
           };
         }
       } else if (this.SAFE_GIT_SUBCOMMANDS.includes(trimmed)) {
@@ -282,8 +283,8 @@ export class CommandValidator {
 
     if (!this.SAFE_GIT_SUBCOMMANDS.includes(subcommand)) {
       return {
-        isValid: false,
-        error: `Git subcommand '${subcommand}' not allowed. Allowed: ${this.SAFE_GIT_SUBCOMMANDS.join(', ')}`,
+        isValid : false,
+        error   : `Git subcommand '${subcommand}' not allowed. Allowed: ${this.SAFE_GIT_SUBCOMMANDS.join(', ')}`,
       };
     }
 

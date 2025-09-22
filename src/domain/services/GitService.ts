@@ -3,12 +3,7 @@
 - Uses GitAdapter but focuses on tutorial-related logic
 */
 
-import {
-  IGitOperations,
-  DomainCommit,
-  DefaultLogFields,
-  ListLogLine,
-} from '../ports/IGitOperations';
+import { IGitOperations, DomainCommit, DefaultLogFields, ListLogLine } from '../ports/IGitOperations';
 
 // Provides domain-specific Git operations relevant to tutorials. It uses the
 // IGitOperations port to interact with an actual Git implementation and the
@@ -82,16 +77,15 @@ export class GitService {
    */
   public async getCommitHistory(): Promise<DomainCommit[]> {
     try {
-      const rawCommits: Array<DefaultLogFields & ListLogLine> =
-        await this.gitAdapter.getCommits('gitorial');
+      const rawCommits: Array<DefaultLogFields & ListLogLine> = await this.gitAdapter.getCommits('gitorial');
 
       const domainCommits: DomainCommit[] = rawCommits.map(commit => {
         return {
-          hash: commit.hash,
-          message: commit.message,
-          authorName: commit.author_name,
-          authorEmail: commit.author_email,
-          date: commit.date,
+          hash        : commit.hash,
+          message     : commit.message,
+          authorName  : commit.author_name,
+          authorEmail : commit.author_email,
+          date        : commit.date,
         };
       });
       return domainCommits;

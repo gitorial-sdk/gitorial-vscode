@@ -8,15 +8,15 @@ export type ManifestStep = {
   /**
    * This is a commit hash which is supposed to be exactly 40 characters long
    */
-  commit: string;
-  type: Type;
-  title: string;
+  commit : string;
+  type   : Type;
+  title  : string;
 };
 
 export type AuthorManifestData = {
-  authoringBranch: string;
-  publishBranch: string;
-  steps: ManifestStep[];
+  authoringBranch : string;
+  publishBranch   : string;
+  steps           : ManifestStep[];
 };
 
 export type ManifestValidationError =
@@ -30,14 +30,14 @@ export type ManifestValidationError =
   | 'CANNOT_REMOVE_LAST_STEP';
 
 export type PublishedCommitInfo = {
-  originalCommit: string;
-  newCommit: string;
-  stepTitle: string;
-  stepType: string;
+  originalCommit : string;
+  newCommit      : string;
+  stepTitle      : string;
+  stepType       : string;
 };
 
 export type PublishResult = {
-  branch: string;
-  publishedCommits: PublishedCommitInfo[];
-  totalSteps: number;
+  branch           : string;
+  publishedCommits : PublishedCommitInfo[];
+  totalSteps       : number;
 };

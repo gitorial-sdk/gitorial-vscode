@@ -23,7 +23,7 @@ export class TutorialRepositoryImpl implements ITutorialRepository {
    */
   constructor(
     private readonly stateStorage: IStateStorage,
-    private readonly gitAdapterFactory: GitAdapterFactory,
+    private readonly gitAdapterFactory: GitAdapterFactory
   ) {}
   /**
    * Find a tutorial by its local path
@@ -41,10 +41,7 @@ export class TutorialRepositoryImpl implements ITutorialRepository {
       await gitAdapter.ensureGitorialBranch();
       const tutorial = await TutorialBuilder.buildFromLocalPath(localPath, gitService);
       if (tutorial) {
-        await this.stateStorage.update(
-          `${this.TUTORIAL_PATH_MAP_KEY_PREFIX}${tutorial.id}`,
-          localPath,
-        );
+        await this.stateStorage.update(`${this.TUTORIAL_PATH_MAP_KEY_PREFIX}${tutorial.id}`, localPath);
       }
       return tutorial;
     } catch (error) {
@@ -61,9 +58,7 @@ export class TutorialRepositoryImpl implements ITutorialRepository {
   public async findById(id: string): Promise<Tutorial | null> {
     const localPath = this.stateStorage.get<string>(`${this.TUTORIAL_PATH_MAP_KEY_PREFIX}${id}`);
     if (localPath) {
-      console.log(
-        `TutorialRepositoryImpl: Found path '${localPath}' for tutorial ID '${id}'. Attempting to load...`,
-      );
+      console.log(`TutorialRepositoryImpl: Found path '${localPath}' for tutorial ID '${id}'. Attempting to load...`);
       return await this.findByPath(localPath);
     } else {
       console.warn(`TutorialRepositoryImpl: No local path found mapped to tutorial ID '${id}'.`);

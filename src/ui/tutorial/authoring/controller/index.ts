@@ -15,7 +15,6 @@ import { ManifestBackupService } from '@domain/services/authoring/manifest/backu
 import { IStateStorage } from '@domain/ports/IStateStorage';
 import { IManifestBuilderService } from '@ui/ports/IManifestBuilderService';
 import { ManifestBuilderService } from '@domain/services/authoring/manifest/builder';
-import { IGitChanges } from '@ui/ports/IGitChanges';
 import { DiffService } from '@domain/services/DiffService';
 import { IGitChangesFactory } from '@ui/ports/IGitChangesFactory';
 

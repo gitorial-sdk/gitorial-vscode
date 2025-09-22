@@ -11,41 +11,41 @@ suite('Tutorial Navigation', () => {
     // Create test steps with different types
     steps = [
       new Step({
-        id: 'test-step-1',
-        title: 'Step 1 - Section',
-        commitHash: 'hash1',
-        type: 'section',
-        index: 0,
+        id         : 'test-step-1',
+        title      : 'Step 1 - Section',
+        commitHash : 'hash1',
+        type       : 'section',
+        index      : 0,
       }),
       new Step({
-        id: 'test-step-2',
-        title: 'Step 2 - Template',
-        commitHash: 'hash2',
-        type: 'template',
-        index: 1,
+        id         : 'test-step-2',
+        title      : 'Step 2 - Template',
+        commitHash : 'hash2',
+        type       : 'template',
+        index      : 1,
       }),
       new Step({
-        id: 'test-step-3',
-        title: 'Step 3 - Solution',
-        commitHash: 'hash3',
-        type: 'solution',
-        index: 2,
+        id         : 'test-step-3',
+        title      : 'Step 3 - Solution',
+        commitHash : 'hash3',
+        type       : 'solution',
+        index      : 2,
       }),
       new Step({
-        id: 'test-step-4',
-        title: 'Step 4 - Action',
-        commitHash: 'hash4',
-        type: 'action',
-        index: 3,
+        id         : 'test-step-4',
+        title      : 'Step 4 - Action',
+        commitHash : 'hash4',
+        type       : 'action',
+        index      : 3,
       }),
     ];
 
     const tutorialData = {
-      id: 'test-tutorial' as Domain.TutorialId,
-      title: 'Test Tutorial',
+      id              : 'test-tutorial' as Domain.TutorialId,
+      title           : 'Test Tutorial',
       steps,
-      activeStepIndex: 0,
-      localPath: '/test/path',
+      activeStepIndex : 0,
+      localPath       : '/test/path',
     };
 
     tutorial = new Tutorial(tutorialData);

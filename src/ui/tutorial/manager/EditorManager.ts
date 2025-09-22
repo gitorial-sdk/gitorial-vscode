@@ -25,9 +25,7 @@ export class EditorManager {
     await this.openAndFocusTabs(uris);
   }
 
-  public async focusEditorGroup(
-    column: vscode.ViewColumn.One | vscode.ViewColumn.Two,
-  ): Promise<void> {
+  public async focusEditorGroup(column: vscode.ViewColumn.One | vscode.ViewColumn.Two): Promise<void> {
     if (this.getTabsInGroup(column).length > 0) {
       if (column === vscode.ViewColumn.One) {
         await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
@@ -54,11 +52,7 @@ export class EditorManager {
       .filter((path): path is string => path !== null);
   }
 
-  public async updateSidePanelFiles(
-    step: Step,
-    changedFilePaths: string[],
-    tutorialPath: string,
-  ): Promise<void> {
+  public async updateSidePanelFiles(step: Step, changedFilePaths: string[], tutorialPath: string): Promise<void> {
     console.log('EditorManager: Updating side panel files for step:', step.title);
 
     const targetUris = changedFilePaths
@@ -90,24 +84,21 @@ export class EditorManager {
       }
     }
 
-    const urisToActuallyOpen = targetUris.filter(uri =>
-      !currentTabsInGroupTwo.find(tab =>
-        (tab.input as any)?.uri?.toString() === uri.toString()));
+    const urisToActuallyOpen = targetUris.filter(
+      uri => !currentTabsInGroupTwo.find(tab => (tab.input as any)?.uri?.toString() === uri.toString())
+    );
 
     if (urisToActuallyOpen.length > 0) {
       for (let i = 0; i < urisToActuallyOpen.length; i++) {
         try {
           const shouldPreserveFocus = i < urisToActuallyOpen.length - 1;
           await vscode.window.showTextDocument(urisToActuallyOpen[i], {
-            viewColumn: vscode.ViewColumn.Two,
-            preview: false,
-            preserveFocus: shouldPreserveFocus,
+            viewColumn    : vscode.ViewColumn.Two,
+            preview       : false,
+            preserveFocus : shouldPreserveFocus,
           });
         } catch (error) {
-          console.error(
-            `EditorManager: Error opening file ${urisToActuallyOpen[i].fsPath} in group two:`,
-            error,
-          );
+          console.error(`EditorManager: Error opening file ${urisToActuallyOpen[i].fsPath} in group two:`, error);
         }
       }
     }
@@ -136,9 +127,9 @@ export class EditorManager {
       try {
         const preserveFocus = i < uris.length - 1;
         await vscode.window.showTextDocument(uris[i], {
-          preview: false,
+          preview    : false,
           preserveFocus,
-          viewColumn: vscode.ViewColumn.Two,
+          viewColumn : vscode.ViewColumn.Two,
         });
       } catch (error) {
         console.error(`EditorManager: Error opening document ${uris[i].fsPath}:`, error);

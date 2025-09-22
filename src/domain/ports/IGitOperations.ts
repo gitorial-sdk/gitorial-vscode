@@ -12,15 +12,15 @@
  */
 export interface DomainCommit {
   /** The commit hash (full or abbreviated). */
-  hash: string;
+  hash : string;
   /** The commit message summary. */
-  message: string;
+  message : string;
   /** Author's display name. */
-  authorName: string;
+  authorName : string;
   /** Author's email address. */
-  authorEmail: string;
+  authorEmail : string;
   /** Commit timestamp in ISO 8601 or similar string format. */
-  date: string;
+  date : string;
   // Additional fields (parents, body, etc.) may be added as needed.
 }
 
@@ -29,13 +29,13 @@ export interface DomainCommit {
  * This includes summary information about each commit.
  */
 export interface DefaultLogFields {
-  hash: string;
-  date: string;
-  message: string;
-  refs: string;
-  body: string;
-  author_name: string;
-  author_email: string;
+  hash         : string;
+  date         : string;
+  message      : string;
+  refs         : string;
+  body         : string;
+  author_name  : string;
+  author_email : string;
 }
 
 /**
@@ -45,7 +45,7 @@ export interface ListLogLine {
   /**
    * Detailed diff information when using `--stat` or similar log options.
    */
-  diff?: DiffResult;
+  diff? : DiffResult;
 }
 
 /**
@@ -54,8 +54,8 @@ export interface ListLogLine {
 export interface RemoteWithRefs extends RemoteWithoutRefs {
   /** URLs for fetching and pushing to this remote. */
   refs: {
-    fetch: string;
-    push: string;
+    fetch : string;
+    push  : string;
   };
 }
 
@@ -64,7 +64,7 @@ export interface RemoteWithRefs extends RemoteWithoutRefs {
  */
 export interface RemoteWithoutRefs {
   /** Name of the remote (e.g., "origin"). */
-  name: string;
+  name : string;
 }
 
 /**
@@ -72,15 +72,15 @@ export interface RemoteWithoutRefs {
  */
 export interface DiffResultTextFile {
   /** File path relative to the repository root. */
-  file: string;
+  file : string;
   /** Number of hunks/changes. */
-  changes: number;
+  changes : number;
   /** Lines inserted. */
-  insertions: number;
+  insertions : number;
   /** Lines deleted. */
-  deletions: number;
+  deletions : number;
   /** Always false for text files. */
-  binary: false;
+  binary : false;
 }
 
 /**
@@ -88,13 +88,13 @@ export interface DiffResultTextFile {
  */
 export interface DiffResultBinaryFile {
   /** File path relative to the repository root. */
-  file: string;
+  file : string;
   /** Size before change (bytes). */
-  before: number;
+  before : number;
   /** Size after change (bytes). */
-  after: number;
+  after : number;
   /** Always true for binary files. */
-  binary: true;
+  binary : true;
 }
 
 /**
@@ -134,15 +134,15 @@ export declare enum DiffNameStatus {
  */
 export interface BranchSummaryBranch {
   /** True if this is the currently checked-out branch. */
-  current: boolean;
+  current : boolean;
   /** Branch name (e.g., "main"). */
-  name: string;
+  name : string;
   /** Latest commit hash on this branch. */
-  commit: string;
+  commit : string;
   /** Human-readable label (e.g., "HEAD -> main"). */
-  label: string;
+  label : string;
   /** True if this branch has an associated worktree. */
-  linkedWorkTree: boolean;
+  linkedWorkTree : boolean;
 }
 
 /**
@@ -150,13 +150,13 @@ export interface BranchSummaryBranch {
  */
 export interface BranchSummary {
   /** Whether HEAD is detached. */
-  detached: boolean;
+  detached : boolean;
   /** Name of the current branch. */
-  current: string;
+  current : string;
   /** List of all branch names. */
-  all: string[];
+  all : string[];
   /** Detailed map of branch metadata. */
-  branches: Record<string, BranchSummaryBranch>;
+  branches : Record<string, BranchSummaryBranch>;
 }
 
 /**
@@ -164,13 +164,13 @@ export interface BranchSummary {
  */
 export interface DiffResult {
   /** Total number of files changed. */
-  changed: number;
+  changed : number;
   /** Detailed file diff entries. */
-  files: Array<DiffResultTextFile | DiffResultBinaryFile | DiffResultNameStatusFile>;
+  files : Array<DiffResultTextFile | DiffResultBinaryFile | DiffResultNameStatusFile>;
   /** Total lines inserted across all files. */
-  insertions: number;
+  insertions : number;
   /** Total lines deleted across all files. */
-  deletions: number;
+  deletions : number;
 }
 
 /**
@@ -258,8 +258,8 @@ export interface IGitOperations {
    * @returns An object containing remotes and branch summary.
    */
   getRepoInfo(): Promise<{
-    remotes: RemoteWithRefs[];
-    branches: BranchSummary;
+    remotes  : RemoteWithRefs[];
+    branches : BranchSummary;
   }>;
 
   /**
@@ -307,7 +307,7 @@ export interface IGitOperations {
     stepIndex: number,
     newCommitContent: { commit: string; message: string },
     totalSteps: number
-  ): Promise<string>;
+  ) : Promise<string>;
 
   /**
    * Rebuild the gitorial branch from a manifest when publishing.
@@ -355,10 +355,10 @@ export interface IGitOperations {
    * @returns Commit information including hash, message, author, and date
    */
   getCommitInfo(commitHash: string): Promise<{
-    hash: string;
-    message: string;
-    author: string;
-    date: Date;
+    hash    : string;
+    message : string;
+    author  : string;
+    date    : Date;
   } | null>;
 
   /**
@@ -398,9 +398,9 @@ export interface IGitOperations {
    * @returns Object containing staged, unstaged, and untracked files
    */
   getWorkingDirectoryStatus(): Promise<{
-    staged: string[];
-    unstaged: string[];
-    untracked: string[];
+    staged    : string[];
+    unstaged  : string[];
+    untracked : string[];
   }>;
 
   /**

@@ -25,19 +25,19 @@ export class ManifestBuilderService implements IManifestBuilderService {
 
       const steps: Domain.ManifestStep[] = [];
       for (const c of commits) {
-        /// <<<<<<
-        const msg = c.message.trim();
-        const changedFiles: string[] = (await this.diffService.getDiffModelsForCommit(c.hash, this.gitChanges)).map(
-          m => m.relativePath
-        );
+        const diffModelsResult = await this.diffService.getFiles(c.hash, 'manifest');
+        if (diffModelsResult.isErr()) {
+          return err({ type: 'unknown', msg: String(diffModelsResult.error) });
+        }
 
-        const toDoComments: Domain.Commit.ToDoComment[] = (
-          await this.diffService.filterNoiseFiles(c.hash, this.gitChanges)
-        ).map(m => {
-          return { realtiveFilePath: m.relativeFilePath };
+        const { changedFiles, learningMarkerFiles } = diffModelsResult.value;
+
+        const diffModelFilePaths = changedFiles.map(m => m.relativePath);
+        const toDoComments: Domain.Commit.ToDoComment[] = learningMarkerFiles.map(m => {
+          return { realtiveFilePath: m.relativePath };
         });
 
-        const result = Domain.Commit.V1.Validator.buildCommitFromMessage(msg, c.hash, changedFiles, toDoComments);
+        const result = Domain.Commit.V1.Validator.buildCommitFromMessage(c.message, c.hash, diffModelFilePaths, toDoComments);
 
         if (result.isErr()) {
           return err({ type: 'validation_rule', msg: result._unsafeUnwrapErr() });
@@ -47,9 +47,10 @@ export class ManifestBuilderService implements IManifestBuilderService {
       }
 
       const manifest = {
-        authoringBranch: info.branches.current || 'main',
-        publishBranch: 'gitorial',
-        steps: steps.slice().reverse(),
+        authoringBranch : info.branches.current || 'main',
+        publishBranch   : 'gitorial',
+        steps           : steps.slice()
+          .reverse(),
       };
 
       return ok(manifest);

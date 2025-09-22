@@ -10,7 +10,7 @@ export class WebviewPanelManager implements IWebviewPanelManager {
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    messageHandler: (message: any) => void,
+    messageHandler: (message: any) => void
   ) {
     this.messageHandler = messageHandler;
   }
@@ -61,18 +61,14 @@ export class WebviewPanelManager implements IWebviewPanelManager {
     console.log('WebviewPanelManager: Creating new panel');
     this._disposeDisposables();
 
-    const vscodePanel = vscode.window.createWebviewPanel(
-      'tutorialPanel',
-      'Gitorial Tutorial',
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        localResourceRoots: [
-          vscode.Uri.joinPath(this.extensionUri, 'out'), vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist'),
-        ],
-        retainContextWhenHidden: true,
-      },
-    );
+    const vscodePanel = vscode.window.createWebviewPanel('tutorialPanel', 'Gitorial Tutorial', vscode.ViewColumn.One, {
+      enableScripts      : true,
+      localResourceRoots : [
+        vscode.Uri.joinPath(this.extensionUri, 'out'),
+        vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist'),
+      ],
+      retainContextWhenHidden : true,
+    });
 
     vscodePanel.onDidDispose(
       () => {
@@ -84,7 +80,7 @@ export class WebviewPanelManager implements IWebviewPanelManager {
         this._disposeDisposables();
       },
       null,
-      this.disposables,
+      this.disposables
     );
 
     this.currentPanel = new WebViewPanel(vscodePanel, this.extensionUri);

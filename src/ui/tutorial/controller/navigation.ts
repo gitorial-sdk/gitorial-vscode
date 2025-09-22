@@ -45,22 +45,20 @@ import { UI } from '@gitorial/shared-types';
  * The main controller coordinates rendering based on returned results.
  */
 
-type NavigationResult =
-  | { success: true; tutorial: Readonly<Tutorial> }
-  | { success: false; error: string };
+type NavigationResult = { success: true; tutorial: Readonly<Tutorial> } | { success: false; error: string };
 
 type DirectNavigationOptions =
   | {
-      commitHash: string;
+      commitHash : string;
     }
   | {
-      stepIndex: number;
+      stepIndex : number;
     };
 
 export class Controller {
   constructor(
     private readonly tutorialService: TutorialService,
-    private readonly userInteraction: IUserInteraction,
+    private readonly userInteraction: IUserInteraction
   ) {}
 
   // === STEP NAVIGATION ===
@@ -89,9 +87,7 @@ export class Controller {
 
   // === WEBVIEW MESSAGE HANDLING ===
 
-  public async handleNavigationMessage(
-    message: UI.Messages.WebviewToExtensionTutorialMessage,
-  ): Promise<boolean> {
+  public async handleNavigationMessage(message: UI.Messages.WebviewToExtensionTutorialMessage): Promise<boolean> {
     switch (message.type) {
       case 'next-step':
         await this.navigateToNextStep();
@@ -118,9 +114,7 @@ export class Controller {
     return result;
   }
 
-  private async _executeDirectNavigation(
-    options: DirectNavigationOptions,
-  ): Promise<NavigationResult> {
+  private async _executeDirectNavigation(options: DirectNavigationOptions): Promise<NavigationResult> {
     try {
       if ('stepIndex' in options) {
         await this.tutorialService.forceStepIndex(options.stepIndex);
@@ -171,20 +165,14 @@ export class Controller {
     return { success: true, tutorial };
   }
 
-  private async _handleNavigationResult(
-    result: NavigationResult,
-    direction: 'next' | 'prev',
-  ): Promise<void> {
+  private async _handleNavigationResult(result: NavigationResult, direction: 'next' | 'prev'): Promise<void> {
     if ('error' in result) {
       console.error(`TutorialNavigationController: ${result.error}`);
       return;
     }
 
     if (!('tutorial' in result)) {
-      const message =
-        direction === 'next'
-          ? 'You are already on the last step.'
-          : 'You are already on the first step.';
+      const message = direction === 'next' ? 'You are already on the last step.' : 'You are already on the first step.';
       this.userInteraction.showInformationMessage(message);
       return;
     }

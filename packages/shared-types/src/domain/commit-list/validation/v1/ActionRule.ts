@@ -6,7 +6,7 @@ import { Rule } from '../types';
  * To make it explicit that there is no validation rules, we return an empty array.
  */
 export const ActionRule: Rule<never> = {
-  errorCodes: [] as const,
+  errorCodes : [] as const,
   validate(_commits) {
     return ok(void 0);
   },

@@ -22,7 +22,7 @@ export class Step {
 
   public toEnrichedStep(markdown: Markdown): EnrichedStep {
     return new EnrichedStep({
-      markdown: markdown,
+      markdown : markdown,
       ...(this as unknown as Domain.StepData),
     });
   }

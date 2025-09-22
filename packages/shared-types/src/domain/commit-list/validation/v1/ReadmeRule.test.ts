@@ -6,17 +6,13 @@ import { c } from '@gitorial/test-utils';
 
 describe('V1 ReadmeLastRule', () => {
   it('passes when readme is last', () => {
-    const seq: TCommit[] = [
-      c('section', 'Intro', ['README.md']), c('action', 'Init'), c('readme', 'End', ['README.md']),
-    ];
+    const seq: TCommit[] = [c('section', 'Intro', ['README.md']), c('action', 'Init'), c('readme', 'End', ['README.md'])];
     const res = ReadmeLastRule.validate(seq);
     expect(res.isOk()).to.equal(true);
   });
 
   it('fails when any readme is not last', () => {
-    const seq: TCommit[] = [
-      c('section', 'Intro', ['README.md']), c('readme', 'Mid', ['README.md']), c('action', 'After'),
-    ];
+    const seq: TCommit[] = [c('section', 'Intro', ['README.md']), c('readme', 'Mid', ['README.md']), c('action', 'After')];
     const res = ReadmeLastRule.validate(seq);
     expect(res.isErr()).to.equal(true);
     const err = res._unsafeUnwrapErr();
@@ -24,9 +20,7 @@ describe('V1 ReadmeLastRule', () => {
   });
 
   it('fails when readme is missing', () => {
-    const seq: TCommit[] = [
-      c('section', 'Intro', ['README.md']), c('action', 'Next'),
-    ];
+    const seq: TCommit[] = [c('section', 'Intro', ['README.md']), c('action', 'Next')];
     const res = ReadmeLastRule.validate(seq);
     expect(res.isErr()).to.equal(true);
     const err = res._unsafeUnwrapErr();
@@ -35,7 +29,9 @@ describe('V1 ReadmeLastRule', () => {
 
   it('fails when multiple readme commits exist', () => {
     const seq: TCommit[] = [
-      c('section', 'Intro', ['README.md']), c('readme', 'Mid', ['README.md']), c('readme', 'End', ['README.md']),
+      c('section', 'Intro', ['README.md']),
+      c('readme', 'Mid', ['README.md']),
+      c('readme', 'End', ['README.md']),
     ];
     const res = ReadmeLastRule.validate(seq);
     expect(res.isErr()).to.equal(true);
@@ -43,5 +39,3 @@ describe('V1 ReadmeLastRule', () => {
     expect(err.code).to.equal(Errors.ReadmeMustBeOne);
   });
 });
-
-

@@ -21,10 +21,7 @@ export class ContentManager {
       const markdown = await this._loadMarkdown(tutorial);
       tutorial.enrichStep(step.index, markdown);
     } catch (error) {
-      console.error(
-        `ContentManager: Error during enrichStep for step ${step.title}:`,
-        error,
-      );
+      console.error(`ContentManager: Error during enrichStep for step ${step.title}:`, error);
     }
   }
 
@@ -47,9 +44,7 @@ export class ContentManager {
    * Loads markdown content for the tutorial
    */
   private async _loadMarkdown(tutorial: Tutorial) {
-    const markdown = await this.stepContentRepository.getStepMarkdownContent(
-      tutorial.localPath,
-    );
+    const markdown = await this.stepContentRepository.getStepMarkdownContent(tutorial.localPath);
     if (!markdown) {
       throw new Error('Error occurred while processing markdown');
     }

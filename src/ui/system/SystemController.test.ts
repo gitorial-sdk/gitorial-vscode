@@ -9,39 +9,39 @@ describe('SystemController', () => {
   let mockContextStore: any;
   let mockConfigurationStore: any;
   let mockUserInteraction: any;
-  let mockAuthorManifestBackupStore: any;
 
   beforeEach(async () => {
     mockContextStore = {
-      setContext: sinon.stub().resolves(),
+      setContext : sinon.stub()
+        .resolves(),
     };
 
     mockConfigurationStore = {
-      get: sinon.stub().returns(false),
-      update: sinon.stub().resolves(),
-      onDidChange: sinon.stub(),
+      get : sinon.stub()
+        .returns(false),
+      update : sinon.stub()
+        .resolves(),
+      onDidChange : sinon.stub(),
     };
 
     mockUserInteraction = {
-      showErrorMessage: sinon.stub().resolves(),
-      showWarningMessage: sinon.stub().resolves(),
-      showInformationMessage: sinon.stub().resolves(),
-    };
-
-    mockAuthorManifestBackupStore = {
-      get: sinon.stub().returns(null),
-      update: sinon.stub().resolves(),
-      clear: sinon.stub().resolves(),
-      has: sinon.stub().returns(false),
+      showErrorMessage : sinon.stub()
+        .resolves(),
+      showWarningMessage : sinon.stub()
+        .resolves(),
+      showInformationMessage : sinon.stub()
+        .resolves(),
     };
 
     // Create mock webview panel manager
     mockWebviewPanelManager = {
-      sendMessage: sinon.stub().resolves(),
-      updateMessageHandler: sinon.stub(),
-      isVisible: sinon.stub().returns(false),
-      show: sinon.stub(),
-      dispose: sinon.stub(),
+      sendMessage : sinon.stub()
+        .resolves(),
+      updateMessageHandler : sinon.stub(),
+      isVisible            : sinon.stub()
+        .returns(false),
+      show    : sinon.stub(),
+      dispose : sinon.stub(),
     };
 
     // Create system controller instance
@@ -66,10 +66,10 @@ describe('SystemController', () => {
   describe('handleWebviewMessage', () => {
     it('should handle error messages from webview', async () => {
       const errorMessage: UI.Messages.WebviewToExtensionSystemMessage = {
-        category: 'system',
-        type: 'error',
-        payload: {
-          message: 'Test error message',
+        category : 'system',
+        type     : 'error',
+        payload  : {
+          message : 'Test error message',
         },
       };
 
@@ -81,9 +81,9 @@ describe('SystemController', () => {
 
     it('should handle unknown message types gracefully', async () => {
       const unknownMessage = {
-        category: 'system' as const,
-        type: 'error' as any,
-        payload: { message: 'Test error' },
+        category : 'system' as const,
+        type     : 'error' as any,
+        payload  : { message: 'Test error' },
       };
 
       // Should not throw an error
@@ -94,9 +94,9 @@ describe('SystemController', () => {
   describe('sendSystemMessage', () => {
     it('should send message through webview panel manager', async () => {
       const message: UI.Messages.ExtensionToWebviewSystemMessage = {
-        category: 'system',
-        type: 'loading-state',
-        payload: { isLoading: true, message: 'Loading...' },
+        category : 'system',
+        type     : 'loading-state',
+        payload  : { isLoading: true, message: 'Loading...' },
       };
 
       mockWebviewPanelManager.sendMessage.resolves();
@@ -108,9 +108,9 @@ describe('SystemController', () => {
 
     it('should handle errors when sending message fails', async () => {
       const message: UI.Messages.ExtensionToWebviewSystemMessage = {
-        category: 'system',
-        type: 'error',
-        payload: { message: 'Test error' },
+        category : 'system',
+        type     : 'error',
+        payload  : { message: 'Test error' },
       };
 
       const error = new Error('Send failed');
@@ -119,8 +119,7 @@ describe('SystemController', () => {
       await systemController.sendSystemMessage(message);
 
       // Verify that userInteraction.showErrorMessage was called (reportError calls it with showToUser=true)
-      expect(mockUserInteraction.showErrorMessage.calledWith('Sending system message to webview: Send failed')).to.be
-        .true;
+      expect(mockUserInteraction.showErrorMessage.calledWith('Sending system message to webview: Send failed')).to.be.true;
     });
   });
 
@@ -131,8 +130,7 @@ describe('SystemController', () => {
       await systemController.showLoadingState(true, 'Loading...');
 
       expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
-      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall
-        .args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
       expect(sentMessage.type).to.equal('loading-state');
       if (sentMessage.type === 'loading-state') {
         expect(sentMessage.payload.isLoading).to.be.true;
@@ -148,8 +146,7 @@ describe('SystemController', () => {
       await systemController.hideLoadingState();
 
       expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
-      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall
-        .args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
       expect(sentMessage.type).to.equal('loading-state');
       if (sentMessage.type === 'loading-state') {
         expect(sentMessage.payload.isLoading).to.be.false;
@@ -165,8 +162,7 @@ describe('SystemController', () => {
       await systemController.hideLoadingState();
 
       expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
-      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall
-        .args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
       expect(sentMessage.type).to.equal('loading-state');
       if (sentMessage.type === 'loading-state') {
         expect(sentMessage.payload.isLoading).to.be.false;
@@ -182,8 +178,7 @@ describe('SystemController', () => {
       await systemController.showError('Test error');
 
       expect(mockWebviewPanelManager.sendMessage.calledOnce).to.be.true;
-      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall
-        .args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
+      const sentMessage = mockWebviewPanelManager.sendMessage.firstCall.args[0] as UI.Messages.ExtensionToWebviewSystemMessage;
       expect(sentMessage.type).to.equal('error');
       if (sentMessage.type === 'error') {
         expect(sentMessage.payload.message).to.equal('Test error');
@@ -253,9 +248,9 @@ describe('SystemController', () => {
   describe('sendAuthorManifest', () => {
     it('should send author manifest data to webview', async () => {
       const manifest: Domain.AuthorManifestData = {
-        authoringBranch: 'main',
-        publishBranch: 'main',
-        steps: [],
+        authoringBranch : 'main',
+        publishBranch   : 'main',
+        steps           : [],
       };
 
       await systemController.sendAuthorManifest(manifest, true);
@@ -273,10 +268,10 @@ describe('SystemController', () => {
     it('should send publish result to webview', async () => {
       const publishedCommits = [
         {
-          originalCommit: 'abc123',
-          newCommit: 'def456',
-          stepTitle: 'Test Step',
-          stepType: 'instruction',
+          originalCommit : 'abc123',
+          newCommit      : 'def456',
+          stepTitle      : 'Test Step',
+          stepType       : 'instruction',
         },
       ];
 

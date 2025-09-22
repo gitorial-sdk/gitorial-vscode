@@ -131,11 +131,13 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
     sandbox.restore();
   });
 
-  test('checkoutAndClean logic should handle successful checkout and clean', async() => {
+  test('checkoutAndClean logic should handle successful checkout and clean', async () => {
     // Create a mock git object
     const mockGit = {
-      checkout: sandbox.stub().resolves(),
-      raw: sandbox.stub().resolves(''),
+      checkout : sandbox.stub()
+        .resolves(),
+      raw : sandbox.stub()
+        .resolves(''),
     };
 
     // Create a mock GitAdapter-like object with the checkoutAndClean logic
@@ -163,32 +165,27 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
 
     // Verify checkout was called with correct commit hash
     assert.ok(mockGit.checkout.calledOnce, 'checkout should be called once');
-    assert.ok(
-      mockGit.checkout.calledWith(commitHash),
-      'checkout should be called with the correct commit hash',
-    );
+    assert.ok(mockGit.checkout.calledWith(commitHash), 'checkout should be called with the correct commit hash');
 
     // Verify clean was called
     assert.ok(mockGit.raw.calledOnce, 'git clean should be called to remove untracked files');
-    assert.ok(
-      mockGit.raw.calledWith(['clean', '-f', '-d']),
-      'git clean should be called with correct arguments',
-    );
+    assert.ok(mockGit.raw.calledWith(['clean', '-f', '-d']), 'git clean should be called with correct arguments');
   });
 
-  test('checkoutAndClean logic should handle local changes error', async() => {
+  test('checkoutAndClean logic should handle local changes error', async () => {
     // Create a mock git object
-    const localChangesError = new Error(
-      'Your local changes to the following files would be overwritten by checkout',
-    );
+    const localChangesError = new Error('Your local changes to the following files would be overwritten by checkout');
     const mockGit = {
-      checkout: sandbox.stub(),
-      raw: sandbox.stub().resolves(''),
+      checkout : sandbox.stub(),
+      raw      : sandbox.stub()
+        .resolves(''),
     };
 
     // Setup checkout to fail first time, succeed second time
-    mockGit.checkout.onFirstCall().rejects(localChangesError);
-    mockGit.checkout.onSecondCall().resolves();
+    mockGit.checkout.onFirstCall()
+      .rejects(localChangesError);
+    mockGit.checkout.onSecondCall()
+      .resolves();
 
     // Create a mock GitAdapter-like object with the checkoutAndClean logic
     const mockAdapter = {
@@ -215,24 +212,20 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
 
     // Verify checkout was called twice - first normal, then forced
     assert.ok(mockGit.checkout.calledTwice, 'checkout should be called twice');
-    assert.ok(
-      mockGit.checkout.firstCall.calledWith(commitHash),
-      'first checkout should be called with commit hash',
-    );
-    assert.ok(
-      mockGit.checkout.secondCall.calledWith(['-f', commitHash]),
-      'second checkout should be forced with -f flag',
-    );
+    assert.ok(mockGit.checkout.firstCall.calledWith(commitHash), 'first checkout should be called with commit hash');
+    assert.ok(mockGit.checkout.secondCall.calledWith(['-f', commitHash]), 'second checkout should be forced with -f flag');
 
     // Verify clean was still called
     assert.ok(mockGit.raw.calledOnce, 'git clean should be called even after forced checkout');
   });
 
-  test('checkoutAndClean logic should propagate non-local-changes errors', async() => {
+  test('checkoutAndClean logic should propagate non-local-changes errors', async () => {
     const unexpectedError = new Error('Some other git error');
     const mockGit = {
-      checkout: sandbox.stub().rejects(unexpectedError),
-      raw: sandbox.stub().resolves(''),
+      checkout : sandbox.stub()
+        .rejects(unexpectedError),
+      raw : sandbox.stub()
+        .resolves(''),
     };
 
     // Create a mock GitAdapter-like object with the checkoutAndClean logic
@@ -260,25 +253,15 @@ suite('GitAdapter checkoutAndClean Logic Tests', () => {
       await mockAdapter.checkoutAndClean(commitHash);
       assert.fail('Expected method to throw an error');
     } catch (error) {
-      assert.strictEqual(
-        error,
-        unexpectedError,
-        'Should propagate the original error when it\'s not about local changes',
-      );
+      assert.strictEqual(error, unexpectedError, "Should propagate the original error when it's not about local changes");
     }
 
     // Verify checkout was called only once
     assert.ok(mockGit.checkout.calledOnce, 'checkout should be called once');
-    assert.ok(
-      mockGit.checkout.calledWith(commitHash),
-      'checkout should be called with the correct commit hash',
-    );
+    assert.ok(mockGit.checkout.calledWith(commitHash), 'checkout should be called with the correct commit hash');
 
     // Verify clean was not called due to error
-    assert.ok(
-      mockGit.raw.notCalled,
-      'git clean should not be called when checkout fails with unexpected error',
-    );
+    assert.ok(mockGit.raw.notCalled, 'git clean should not be called when checkout fails with unexpected error');
   });
 });
 
@@ -294,52 +277,54 @@ suite('DiffViewService Show Solution Tests', () => {
     sandbox.restore();
   });
 
-  test('showStepSolution should compare user\'s current working directory against solution', async() => {
+  test("showStepSolution should compare user's current working directory against solution", async () => {
     // Mock file system
     const mockFs = {
-      join: sandbox.stub().callsFake((path1: string, path2: string) => `${path1}/${path2}`),
-      pathExists: sandbox.stub().resolves(true),
-      readFile: sandbox.stub().resolves('// User\'s current code with TODO: implement this'),
+      join : sandbox.stub()
+        .callsFake((path1: string, path2: string) => `${path1}/${path2}`),
+      pathExists : sandbox.stub()
+        .resolves(true),
+      readFile : sandbox.stub()
+        .resolves("// User's current code with TODO: implement this"),
     };
 
     // Mock diff displayer
     const mockDiffDisplayer = {
-      displayDiff: sandbox.stub().resolves(),
+      displayDiff : sandbox.stub()
+        .resolves(),
     };
 
     // Mock tutorial
     const mockTutorial = {
-      activeStepIndex: 0,
-      activeStep: { commitHash: 'current123', title: 'Step 1' },
-      steps: [
-        { commitHash: 'current123', title: 'Step 1' }, { commitHash: 'next456', title: 'Step 2' },
+      activeStepIndex : 0,
+      activeStep      : { commitHash: 'current123', title: 'Step 1' },
+      steps           : [
+        { commitHash: 'current123', title: 'Step 1' },
+        { commitHash: 'next456', title: 'Step 2' },
       ],
-      localPath: '/tutorial/path',
+      localPath : '/tutorial/path',
     };
 
     // Mock git adapter
     const mockGitAdapter = {
-      getCommitDiff: sandbox.stub().resolves([
-        {
-          relativeFilePath: 'src/example.ts',
-          absoluteFilePath: '/tutorial/path/src/example.ts',
-          commitHash: 'next456',
-          originalContent: '// Original code with TODO: implement this',
-          modifiedContent: '// Solution code - implemented!',
-          isNew: false,
-          isDeleted: false,
-          isModified: true,
-        },
-      ]),
+      getCommitDiff : sandbox.stub()
+        .resolves([
+          {
+            relativeFilePath : 'src/example.ts',
+            absoluteFilePath : '/tutorial/path/src/example.ts',
+            commitHash       : 'next456',
+            originalContent  : '// Original code with TODO: implement this',
+            modifiedContent  : '// Solution code - implemented!',
+            isNew            : false,
+            isDeleted        : false,
+            isModified       : true,
+          },
+        ]),
     };
 
     // Create a more realistic DiffViewService mock that actually calls the file system
     const diffViewService = {
-      async showStepSolution(
-        tutorial: any,
-        gitAdapter: any,
-        preferredFocusFile?: string,
-      ): Promise<void> {
+      async showStepSolution(tutorial: any, gitAdapter: any, preferredFocusFile?: string): Promise<void> {
         const currentStepIdx = tutorial.activeStepIndex;
         const nextStep = tutorial.steps[currentStepIdx + 1];
 
@@ -365,22 +350,22 @@ suite('DiffViewService Show Solution Tests', () => {
           const absoluteFilePath = mockFs.join(tutorial.localPath, payload.relativeFilePath);
 
           // Create content providers that actually call the mocked file system
-          const leftContentProvider = async() => {
+          const leftContentProvider = async () => {
             if (await mockFs.pathExists(absoluteFilePath)) {
               return await mockFs.readFile(absoluteFilePath);
             }
             return '';
           };
 
-          const rightContentProvider = async() => payload.modifiedContent || '';
+          const rightContentProvider = async () => payload.modifiedContent || '';
 
           filesToDisplay.push({
             leftContentProvider,
             rightContentProvider,
-            relativePath: payload.relativeFilePath,
-            leftCommitId: 'working-dir',
-            rightCommitId: nextStep.commitHash,
-            titleCommitId: nextStep.commitHash.slice(0, 7),
+            relativePath  : payload.relativeFilePath,
+            leftCommitId  : 'working-dir',
+            rightCommitId : nextStep.commitHash,
+            titleCommitId : nextStep.commitHash.slice(0, 7),
           });
         }
 
@@ -399,98 +384,80 @@ suite('DiffViewService Show Solution Tests', () => {
 
     // Verify that getCommitDiff was called with the next step's commit hash
     assert.ok(mockGitAdapter.getCommitDiff.calledOnce, 'getCommitDiff should be called once');
-    assert.ok(
-      mockGitAdapter.getCommitDiff.calledWith('next456'),
-      'getCommitDiff should be called with next step commit hash',
-    );
+    assert.ok(mockGitAdapter.getCommitDiff.calledWith('next456'), 'getCommitDiff should be called with next step commit hash');
 
     // Verify that file system was used to read current working directory
-    assert.ok(
-      mockFs.pathExists.calledOnce,
-      'pathExists should be called to check if file exists in working directory',
-    );
-    assert.ok(
-      mockFs.readFile.calledOnce,
-      'readFile should be called to read current working directory content',
-    );
+    assert.ok(mockFs.pathExists.calledOnce, 'pathExists should be called to check if file exists in working directory');
+    assert.ok(mockFs.readFile.calledOnce, 'readFile should be called to read current working directory content');
 
     // Verify that diff displayer was called
-    assert.ok(
-      mockDiffDisplayer.displayDiff.calledOnce,
-      'displayDiff should be called to show the comparison',
-    );
+    assert.ok(mockDiffDisplayer.displayDiff.calledOnce, 'displayDiff should be called to show the comparison');
 
     // Verify the diff file structure
     const diffFiles = mockDiffDisplayer.displayDiff.firstCall.args[0];
     assert.strictEqual(diffFiles.length, 1, 'Should have one diff file');
-    assert.strictEqual(
-      diffFiles[0].leftCommitId,
-      'working-dir',
-      'Left side should be identified as working directory',
-    );
-    assert.strictEqual(
-      diffFiles[0].rightCommitId,
-      'next456',
-      'Right side should be the solution commit',
-    );
+    assert.strictEqual(diffFiles[0].leftCommitId, 'working-dir', 'Left side should be identified as working directory');
+    assert.strictEqual(diffFiles[0].rightCommitId, 'next456', 'Right side should be the solution commit');
   });
 
-  test('showStepSolution should preserve focus on preferred file when specified', async() => {
+  test('showStepSolution should preserve focus on preferred file when specified', async () => {
     // Mock file system
     const mockFs = {
-      join: sandbox.stub().callsFake((path1: string, path2: string) => `${path1}/${path2}`),
-      pathExists: sandbox.stub().resolves(true),
-      readFile: sandbox.stub().resolves('// User\'s current code with TODO: implement this'),
+      join : sandbox.stub()
+        .callsFake((path1: string, path2: string) => `${path1}/${path2}`),
+      pathExists : sandbox.stub()
+        .resolves(true),
+      readFile : sandbox.stub()
+        .resolves("// User's current code with TODO: implement this"),
     };
 
     // Mock diff displayer
     const mockDiffDisplayer = {
-      displayDiff: sandbox.stub().resolves(),
+      displayDiff : sandbox.stub()
+        .resolves(),
     };
 
     // Mock tutorial
     const mockTutorial = {
-      activeStepIndex: 0,
-      activeStep: { commitHash: 'current123', title: 'Step 1' },
-      steps: [
-        { commitHash: 'current123', title: 'Step 1' }, { commitHash: 'next456', title: 'Step 2' },
+      activeStepIndex : 0,
+      activeStep      : { commitHash: 'current123', title: 'Step 1' },
+      steps           : [
+        { commitHash: 'current123', title: 'Step 1' },
+        { commitHash: 'next456', title: 'Step 2' },
       ],
-      localPath: '/tutorial/path',
+      localPath : '/tutorial/path',
     };
 
     // Mock git adapter with multiple files
     const mockGitAdapter = {
-      getCommitDiff: sandbox.stub().resolves([
-        {
-          relativeFilePath: 'src/main.rs',
-          absoluteFilePath: '/tutorial/path/src/main.rs',
-          commitHash: 'next456',
-          originalContent: '// Main file with TODO: implement this',
-          modifiedContent: '// Main file - implemented!',
-          isNew: false,
-          isDeleted: false,
-          isModified: true,
-        },
-        {
-          relativeFilePath: 'src/balances.rs',
-          absoluteFilePath: '/tutorial/path/src/balances.rs',
-          commitHash: 'next456',
-          originalContent: '// Balances file with TODO: implement this',
-          modifiedContent: '// Balances file - implemented!',
-          isNew: false,
-          isDeleted: false,
-          isModified: true,
-        },
-      ]),
+      getCommitDiff : sandbox.stub()
+        .resolves([
+          {
+            relativeFilePath : 'src/main.rs',
+            absoluteFilePath : '/tutorial/path/src/main.rs',
+            commitHash       : 'next456',
+            originalContent  : '// Main file with TODO: implement this',
+            modifiedContent  : '// Main file - implemented!',
+            isNew            : false,
+            isDeleted        : false,
+            isModified       : true,
+          },
+          {
+            relativeFilePath : 'src/balances.rs',
+            absoluteFilePath : '/tutorial/path/src/balances.rs',
+            commitHash       : 'next456',
+            originalContent  : '// Balances file with TODO: implement this',
+            modifiedContent  : '// Balances file - implemented!',
+            isNew            : false,
+            isDeleted        : false,
+            isModified       : true,
+          },
+        ]),
     };
 
     // Create a DiffViewService mock that handles preferred focus
     const diffViewService = {
-      async showStepSolution(
-        tutorial: any,
-        gitAdapter: any,
-        preferredFocusFile?: string,
-      ): Promise<void> {
+      async showStepSolution(tutorial: any, gitAdapter: any, preferredFocusFile?: string): Promise<void> {
         const currentStepIdx = tutorial.activeStepIndex;
         const nextStep = tutorial.steps[currentStepIdx + 1];
 
@@ -516,17 +483,17 @@ suite('DiffViewService Show Solution Tests', () => {
           const absoluteFilePath = mockFs.join(tutorial.localPath, payload.relativeFilePath);
 
           filesToDisplay.push({
-            leftContentProvider: async() => {
+            leftContentProvider : async () => {
               if (await mockFs.pathExists(absoluteFilePath)) {
                 return await mockFs.readFile(absoluteFilePath);
               }
               return '';
             },
-            rightContentProvider: async() => payload.modifiedContent || '',
-            relativePath: payload.relativeFilePath,
-            leftCommitId: 'working-dir',
-            rightCommitId: nextStep.commitHash,
-            titleCommitId: nextStep.commitHash.slice(0, 7),
+            rightContentProvider : async () => payload.modifiedContent || '',
+            relativePath         : payload.relativeFilePath,
+            leftCommitId         : 'working-dir',
+            rightCommitId        : nextStep.commitHash,
+            titleCommitId        : nextStep.commitHash.slice(0, 7),
           });
         }
 
@@ -542,11 +509,7 @@ suite('DiffViewService Show Solution Tests', () => {
     assert.ok(mockDiffDisplayer.displayDiff.calledOnce, 'displayDiff should be called once');
 
     const [diffFiles, passedPreferredFile] = mockDiffDisplayer.displayDiff.firstCall.args;
-    assert.strictEqual(
-      passedPreferredFile,
-      preferredFile,
-      'displayDiff should be called with the preferred focus file',
-    );
+    assert.strictEqual(passedPreferredFile, preferredFile, 'displayDiff should be called with the preferred focus file');
     assert.strictEqual(diffFiles.length, 2, 'Should have two diff files');
 
     // Verify that both files are included
@@ -568,29 +531,30 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     sandbox.restore();
   });
 
-  test('ensureGitorialBranch should skip checkout when already on gitorial branch', async() => {
+  test('ensureGitorialBranch should skip checkout when already on gitorial branch', async () => {
     // Mock git object
     const mockGit = {
-      branch: sandbox.stub().resolves({
-        current: 'gitorial',
-        all: ['gitorial', 'main', 'remotes/origin/gitorial'],
-        branches: {
-          gitorial: {
-            current: true,
-            name: 'gitorial',
-            commit: 'abc123',
-            label: 'gitorial',
-            linkedWorkTree: false,
+      branch : sandbox.stub()
+        .resolves({
+          current  : 'gitorial',
+          all      : ['gitorial', 'main', 'remotes/origin/gitorial'],
+          branches : {
+            gitorial : {
+              current        : true,
+              name           : 'gitorial',
+              commit         : 'abc123',
+              label          : 'gitorial',
+              linkedWorkTree : false,
+            },
+            main : {
+              current        : false,
+              name           : 'main',
+              commit         : 'def456',
+              label          : 'main',
+              linkedWorkTree : false,
+            },
           },
-          main: {
-            current: false,
-            name: 'main',
-            commit: 'def456',
-            label: 'main',
-            linkedWorkTree: false,
-          },
-        },
-      }),
+        }),
       checkout: sandbox.stub(),
     };
 
@@ -617,7 +581,7 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
         const isOnGitorialBranch = this._isCurrentlyOnGitorialBranch(branches);
 
         if (isOnGitorialBranch) {
-          console.log('GitAdapter: Already on \'gitorial\' branch. No checkout needed.');
+          console.log("GitAdapter: Already on 'gitorial' branch. No checkout needed.");
           return;
         }
 
@@ -633,35 +597,33 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     assert.ok(mockGit.branch.calledOnce, 'branch() should be called to check current branch');
 
     // Verify checkout was NOT called since we're already on gitorial
-    assert.ok(
-      mockGit.checkout.notCalled,
-      'checkout should not be called when already on gitorial branch',
-    );
+    assert.ok(mockGit.checkout.notCalled, 'checkout should not be called when already on gitorial branch');
   });
 
-  test('ensureGitorialBranch should detect gitorial branch even in detached HEAD state', async() => {
+  test('ensureGitorialBranch should detect gitorial branch even in detached HEAD state', async () => {
     // Mock git object - simulating detached HEAD but on gitorial branch
     const mockGit = {
-      branch: sandbox.stub().resolves({
-        current: 'abc123def', // commit hash instead of branch name (detached HEAD)
-        all: ['gitorial', 'main', 'remotes/origin/gitorial'],
-        branches: {
-          gitorial: {
-            current: true,
-            name: 'gitorial',
-            commit: 'abc123def',
-            label: 'gitorial',
-            linkedWorkTree: false,
+      branch : sandbox.stub()
+        .resolves({
+          current  : 'abc123def', // commit hash instead of branch name (detached HEAD)
+          all      : ['gitorial', 'main', 'remotes/origin/gitorial'],
+          branches : {
+            gitorial : {
+              current        : true,
+              name           : 'gitorial',
+              commit         : 'abc123def',
+              label          : 'gitorial',
+              linkedWorkTree : false,
+            },
+            main : {
+              current        : false,
+              name           : 'main',
+              commit         : 'def456',
+              label          : 'main',
+              linkedWorkTree : false,
+            },
           },
-          main: {
-            current: false,
-            name: 'main',
-            commit: 'def456',
-            label: 'main',
-            linkedWorkTree: false,
-          },
-        },
-      }),
+        }),
       checkout: sandbox.stub(),
     };
 
@@ -687,7 +649,7 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
         const isOnGitorialBranch = this._isCurrentlyOnGitorialBranch(branches);
 
         if (isOnGitorialBranch) {
-          console.log('GitAdapter: Already on \'gitorial\' branch. No checkout needed.');
+          console.log("GitAdapter: Already on 'gitorial' branch. No checkout needed.");
           return;
         }
 
@@ -704,34 +666,36 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     // Verify checkout was NOT called since we detected we're on gitorial
     assert.ok(
       mockGit.checkout.notCalled,
-      'checkout should not be called when already on gitorial branch (even in detached HEAD)',
+      'checkout should not be called when already on gitorial branch (even in detached HEAD)'
     );
   });
 
-  test('ensureGitorialBranch should force checkout when local gitorial branch exists but not current', async() => {
+  test('ensureGitorialBranch should force checkout when local gitorial branch exists but not current', async () => {
     // Mock git object
     const mockGit = {
-      branch: sandbox.stub().resolves({
-        current: 'main',
-        all: ['gitorial', 'main', 'remotes/origin/gitorial'],
-        branches: {
-          gitorial: {
-            current: false,
-            name: 'gitorial',
-            commit: 'abc123',
-            label: 'gitorial',
-            linkedWorkTree: false,
+      branch : sandbox.stub()
+        .resolves({
+          current  : 'main',
+          all      : ['gitorial', 'main', 'remotes/origin/gitorial'],
+          branches : {
+            gitorial : {
+              current        : false,
+              name           : 'gitorial',
+              commit         : 'abc123',
+              label          : 'gitorial',
+              linkedWorkTree : false,
+            },
+            main : {
+              current        : true,
+              name           : 'main',
+              commit         : 'def456',
+              label          : 'main',
+              linkedWorkTree : false,
+            },
           },
-          main: {
-            current: true,
-            name: 'main',
-            commit: 'def456',
-            label: 'main',
-            linkedWorkTree: false,
-          },
-        },
-      }),
-      checkout: sandbox.stub().resolves(),
+        }),
+      checkout: sandbox.stub()
+        .resolves(),
     };
 
     // Create mock GitAdapter-like object
@@ -754,17 +718,15 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
         const isOnGitorialBranch = this._isCurrentlyOnGitorialBranch(branches);
 
         if (isOnGitorialBranch) {
-          console.log('GitAdapter: Already on \'gitorial\' branch. No checkout needed.');
+          console.log("GitAdapter: Already on 'gitorial' branch. No checkout needed.");
           return;
         }
 
         // 2. Check if local 'gitorial' branch exists (but not current), try to force checkout
         if (branches.all.includes('gitorial')) {
-          console.log(
-            'GitAdapter: Local \'gitorial\' branch found. Attempting force checkout (dropping local changes)...',
-          );
+          console.log("GitAdapter: Local 'gitorial' branch found. Attempting force checkout (dropping local changes)...");
           await mockGit.checkout(['-f', 'gitorial']);
-          console.log('GitAdapter: Successfully force checked out local \'gitorial\' branch.');
+          console.log("GitAdapter: Successfully force checked out local 'gitorial' branch.");
           return;
         }
       },
@@ -780,7 +742,7 @@ suite('GitAdapter ensureGitorialBranch Tests', () => {
     assert.ok(mockGit.checkout.calledOnce, 'checkout should be called once');
     assert.ok(
       mockGit.checkout.calledWith(['-f', 'gitorial']),
-      'checkout should be called with force flag and gitorial branch name',
+      'checkout should be called with force flag and gitorial branch name'
     );
   });
 });

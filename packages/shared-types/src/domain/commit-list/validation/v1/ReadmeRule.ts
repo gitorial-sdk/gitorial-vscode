@@ -3,7 +3,7 @@ import { Errors } from './errors';
 import { Rule } from '../types';
 
 export const ReadmeLastRule: Rule<typeof Errors.ReadmeMustBeLast | typeof Errors.ReadmeMustBeOne> = {
-  errorCodes: [Errors.ReadmeMustBeLast, Errors.ReadmeMustBeOne] as const,
+  errorCodes : [Errors.ReadmeMustBeLast, Errors.ReadmeMustBeOne] as const,
   validate(commits) {
     const readmeIndices: number[] = [];
     for (let i = 0; i < commits.length; i++) {
@@ -13,7 +13,7 @@ export const ReadmeLastRule: Rule<typeof Errors.ReadmeMustBeLast | typeof Errors
     }
 
     if (readmeIndices.length !== 1) {
-      const idx = readmeIndices.length === 0 ? Math.max(0, commits.length - 1) : readmeIndices[1] ?? readmeIndices[0];
+      const idx = readmeIndices.length === 0 ? Math.max(0, commits.length - 1) : (readmeIndices[1] ?? readmeIndices[0]);
       return err({ index: idx, code: Errors.ReadmeMustBeOne, message: 'exactly one readme commit is required' });
     }
 

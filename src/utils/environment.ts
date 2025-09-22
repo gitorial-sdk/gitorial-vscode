@@ -13,9 +13,5 @@
  * @returns True if running in development mode, false otherwise
  */
 export const isDevelopmentMode = (): boolean => {
-  return (
-    process.env.NODE_ENV === 'development' ||
-    process.env.VSCODE_DEBUG_MODE === 'true' ||
-    process.env.GITORIAL_DEBUG === 'true'
-  );
+  return process.env.NODE_ENV === 'development' || process.env.VSCODE_DEBUG_MODE === 'true' || process.env.GITORIAL_DEBUG === 'true'
 };

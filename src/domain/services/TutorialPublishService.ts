@@ -10,16 +10,16 @@ export type TutorialPublishError =
   | 'COMMIT_NOT_FOUND';
 
 export type PublishedCommitInfo = {
-  originalCommit: string;
-  newCommit: string;
-  stepTitle: string;
-  stepType: string;
+  originalCommit : string;
+  newCommit      : string;
+  stepTitle      : string;
+  stepType       : string;
 };
 
 export type PublishResult = {
-  branch: string;
-  publishedCommits: PublishedCommitInfo[];
-  totalSteps: number;
+  branch           : string;
+  publishedCommits : PublishedCommitInfo[];
+  totalSteps       : number;
 };
 
 /**
@@ -36,7 +36,7 @@ export class TutorialPublishService {
    */
   public async publishTutorial(
     manifest: Domain.AuthorManifestData,
-    forceOverwrite = false,
+    forceOverwrite = false
   ): Promise<Result<PublishResult, TutorialPublishError>> {
     // Validate manifest before publishing
     const validationResult = this.validateManifestForPublish(manifest);
@@ -81,10 +81,10 @@ export class TutorialPublishService {
         await this.gitOperations.cherryPick(step.commit, formattedMessage);
 
         publishedCommits.push({
-          originalCommit: step.commit,
-          newCommit: step.commit, // This would be updated with actual new commit hash in real implementation
-          stepTitle: step.title,
-          stepType: step.type,
+          originalCommit : step.commit,
+          newCommit      : step.commit, // This would be updated with actual new commit hash in real implementation
+          stepTitle      : step.title,
+          stepType       : step.type,
         });
       }
 
@@ -92,9 +92,9 @@ export class TutorialPublishService {
       await this.gitOperations.checkoutBranch(originalBranch);
 
       return ok({
-        branch: manifest.publishBranch,
+        branch     : manifest.publishBranch,
         publishedCommits,
-        totalSteps: manifest.steps.length,
+        totalSteps : manifest.steps.length,
       });
     } catch (error) {
       console.error('TutorialPublishService: Git operation failed:', error);
@@ -107,9 +107,7 @@ export class TutorialPublishService {
    * @param manifest - The author manifest to publish
    * @returns Result with publish information or error
    */
-  public async publishTutorialForced(
-    manifest: Domain.AuthorManifestData,
-  ): Promise<Result<PublishResult, TutorialPublishError>> {
+  public async publishTutorialForced(manifest: Domain.AuthorManifestData): Promise<Result<PublishResult, TutorialPublishError>> {
     return this.publishTutorial(manifest, true);
   }
 
@@ -145,13 +143,13 @@ export class TutorialPublishService {
    * @returns Result indicating if confirmation is needed
    */
   public async checkBranchOverwriteStatus(
-    branchName: string,
+    branchName: string
   ): Promise<Result<{ exists: boolean; needsConfirmation: boolean }, TutorialPublishError>> {
     try {
       const exists = await this.gitOperations.branchExists(branchName);
       return ok({
         exists,
-        needsConfirmation: exists,
+        needsConfirmation : exists,
       });
     } catch (error) {
       console.error('TutorialPublishService: Failed to check branch status:', error);
@@ -164,13 +162,16 @@ export class TutorialPublishService {
    * @param manifest - The manifest to preview
    * @returns Result with preview information or error
    */
-  public async previewPublish(
-    manifest: Domain.AuthorManifestData,
-  ): Promise<Result<{
-    steps: Array<{ title: string; type: string; commit: string; message: string }>;
-    targetBranch: string;
-    sourceBranch: string;
-  }, TutorialPublishError>> {
+  public async previewPublish(manifest: Domain.AuthorManifestData): Promise<
+    Result<
+      {
+        steps        : Array<{ title: string; type: string; commit: string; message: string }>;
+        targetBranch : string;
+        sourceBranch : string;
+      },
+      TutorialPublishError
+    >
+  > {
     const validationResult = this.validateManifestForPublish(manifest);
     if (validationResult.isErr()) {
       return err(validationResult.error);
@@ -178,16 +179,16 @@ export class TutorialPublishService {
 
     try {
       const steps = manifest.steps.map(step => ({
-        title: step.title,
-        type: step.type,
-        commit: step.commit,
-        message: this.formatCommitMessage(step),
+        title   : step.title,
+        type    : step.type,
+        commit  : step.commit,
+        message : this.formatCommitMessage(step),
       }));
 
       return ok({
         steps,
-        targetBranch: manifest.publishBranch,
-        sourceBranch: manifest.authoringBranch,
+        targetBranch : manifest.publishBranch,
+        sourceBranch : manifest.authoringBranch,
       });
     } catch (error) {
       console.error('TutorialPublishService: Error creating preview:', error);
