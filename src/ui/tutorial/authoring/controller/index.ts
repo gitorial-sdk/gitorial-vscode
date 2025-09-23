@@ -10,13 +10,13 @@ import * as Manifest from './manifest';
 import * as StepEditing from './step-editing';
 import { IFileSystem } from '@domain/ports/IFileSystem';
 import { TutorialController } from '@ui/tutorial/controller';
-import { IManifestBackupService } from '@ui/ports/IManifestBackupService';
 import { ManifestBackupService } from '@domain/services/authoring/manifest/backup';
 import { IStateStorage } from '@domain/ports/IStateStorage';
-import { IManifestBuilderService } from '@ui/ports/IManifestBuilderService';
 import { ManifestBuilderService } from '@domain/services/authoring/manifest/builder';
 import { DiffService } from '@domain/services/DiffService';
 import { IGitChangesFactory } from '@ui/ports/IGitChangesFactory';
+import { IManifestRepository } from '@domain/ports/IManifestRepository';
+import { IManifestBuilder } from '@domain/ports/IManifestBuilder';
 
 export interface IClearable {
   clearCachedData(): Promise<void>;
@@ -46,12 +46,8 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
     const gitChanges = gitChangesFactory.createFromPath(workspacePath);
 
     // Create the primary manifest backup service
-    const manifestBackupService: IManifestBackupService = new ManifestBackupService(backupStorage, fs);
-    const manifestBuilderService: IManifestBuilderService = new ManifestBuilderService(
-      gitOperationsFactory,
-      gitChanges,
-      diffService
-    );
+    const manifestBackupService: IManifestRepository = new ManifestBackupService(backupStorage, fs);
+    const manifestBuilderService: IManifestBuilder = new ManifestBuilderService(gitOperationsFactory, gitChanges, diffService);
 
     this.manifestController = new Manifest.Controller(
       systemController,

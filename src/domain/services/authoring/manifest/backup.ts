@@ -1,6 +1,6 @@
 import { Domain } from '@gitorial/shared-types';
 import { IStateStorage } from '@domain/ports/IStateStorage';
-import { IManifestBackupService, ManifestBackupServiceError } from '@ui/ports/IManifestBackupService';
+import { IManifestRepository, ManifestRepositoryError } from '@domain/ports/IManifestRepository';
 import { IFileSystem } from '@domain/ports/IFileSystem';
 import { isDevelopmentMode } from 'src/utils/environment';
 import { CommitHashSanitizer } from 'src/utils/git/CommitHashSanitizer';
@@ -19,7 +19,7 @@ export const DEFAULT: Domain.AuthorManifestData = {
  * Primary manifest storage service using VS Code's persistent storage.
  * In development mode, also writes debug files to disk for inspection.
  */
-export class ManifestBackupService implements IManifestBackupService {
+export class ManifestBackupService implements IManifestRepository {
   /**
    * Creates a new manifest backup service.
    * @param storage - State storage for persisting manifest data
@@ -30,7 +30,7 @@ export class ManifestBackupService implements IManifestBackupService {
     private readonly fs?: IFileSystem
   ) {}
 
-  public async save(repoPath: string, manifest: Domain.AuthorManifestData): Promise<Result<void, ManifestBackupServiceError>> {
+  public async save(repoPath: string, manifest: Domain.AuthorManifestData): Promise<Result<void, ManifestRepositoryError>> {
     const key = this.getBackupKey(repoPath);
 
     for (const step of manifest.steps) {
@@ -53,7 +53,7 @@ export class ManifestBackupService implements IManifestBackupService {
     return ok();
   }
 
-  public async get(repoPath: string): Promise<Result<Domain.AuthorManifestData, ManifestBackupServiceError>> {
+  public async get(repoPath: string): Promise<Result<Domain.AuthorManifestData, ManifestRepositoryError>> {
     const key = this.getBackupKey(repoPath);
     let backup = this.storage.get(key, null) as Domain.AuthorManifestData | null;
 

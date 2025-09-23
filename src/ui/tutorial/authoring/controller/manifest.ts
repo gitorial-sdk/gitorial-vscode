@@ -3,16 +3,16 @@ import { SystemController } from '@ui/system/SystemController';
 import { err, ok, Result } from 'neverthrow';
 import { CommitHashSanitizer } from 'src/utils/git/CommitHashSanitizer';
 import { IClearable } from '.';
-import { IManifestBackupService } from '@ui/ports/IManifestBackupService';
 import { DEFAULT } from '@domain/services/authoring/manifest/backup';
-import { IManifestBuilderService } from '@ui/ports/IManifestBuilderService';
+import { IManifestRepository } from '@domain/ports/IManifestRepository';
+import { IManifestBuilder } from '@domain/ports/IManifestBuilder';
 
 export class Controller implements IClearable {
   constructor(
     private readonly systemController: SystemController,
     private readonly workspacePath: string,
-    private readonly backupService: IManifestBackupService,
-    private readonly builderService: IManifestBuilderService
+    private readonly backupService: IManifestRepository,
+    private readonly builderService: IManifestBuilder
   ) {}
   currentManifest: Domain.AuthorManifestData | null = null;
 

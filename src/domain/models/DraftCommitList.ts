@@ -33,9 +33,15 @@ export class DraftCommitList<TCode extends string = string> {
    * @param rules - Rules to validate with during {@link finalize}
    * @returns A new {@link DraftCommitList} seeded with the list content
    */
-  static beginFrom<T extends string>(list: CommitList<T>, rules: ReadonlyArray<TCommitListRule<T>>) {
-    const commits = list.toArray()
-      .map(c => c.data);
+  static beginFrom<T extends string>(
+    source: CommitList<T> | ReadonlyArray<TCommit>,
+    rules: ReadonlyArray<TCommitListRule<T>>
+  ): DraftCommitList<T> {
+    const commits: ReadonlyArray<TCommit> = isCommitList<T>(source)
+      ? source
+          .toArray()
+          .map((c: Commit) => c.data)
+      : source;
     return new DraftCommitList<T>(commits, rules);
   }
 
@@ -127,4 +133,8 @@ export class DraftCommitList<TCode extends string = string> {
     this.working = [...this.working.slice(0, index), ...this.working.slice(index + 1)];
     return ok(void 0);
   }
+}
+
+function isCommitList<T extends string>(value: unknown): value is CommitList<T> {
+  return value instanceof CommitList;
 }

@@ -1,18 +1,18 @@
 import { IGitOperationsFactory } from '@domain/ports/IGitOperationsFactory';
+import { IManifestBuilder, ManifestBuilderError } from '@domain/ports/IManifestBuilder';
 import { DiffService } from '@domain/services/DiffService';
 import { Domain } from '@gitorial/shared-types';
 import { IGitChanges } from '@ui/ports/IGitChanges';
-import { IManifestBuilderService, ManifestBuilderServiceError } from '@ui/ports/IManifestBuilderService';
 import { err, ok, Result } from 'neverthrow';
 
-export class ManifestBuilderService implements IManifestBuilderService {
+export class ManifestBuilderService implements IManifestBuilder {
   constructor(
     private readonly gitFactory: IGitOperationsFactory, //TODO refactor to "No factory"
     private readonly gitChanges: IGitChanges,
     private readonly diffService: DiffService
   ) {}
 
-  public async create(workspacePath: string): Promise<Result<Domain.AuthorManifestData, ManifestBuilderServiceError>> {
+  public async create(workspacePath: string): Promise<Result<Domain.AuthorManifestData, ManifestBuilderError>> {
     try {
       const git = this.gitFactory.fromPath(workspacePath);
       const info = await git.getRepoInfo();
