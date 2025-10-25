@@ -1,11 +1,12 @@
 import { err, ok, Result } from 'neverthrow';
-import * as Manifest from './manifest';
+import * as Manifest from './storage';
 import { Domain, UI } from '@gitorial/shared-types';
 import { SystemController } from '@ui/system/SystemController';
 import { CommitHashSanitizer } from 'src/utils/git/CommitHashSanitizer';
 import * as vscode from 'vscode';
 import { IGitOperationsFactory } from '@domain/ports/IGitOperationsFactory';
 import { IClearable } from '.';
+import { TutorialAuthoringService } from '@domain/services/authoring/TutorialAuthoringService';
 
 export class Controller implements IClearable {
   private currentlyEditingStep: number | null = null;
@@ -16,7 +17,8 @@ export class Controller implements IClearable {
     private readonly systemController: SystemController,
     private readonly manifestController: Manifest.Controller,
     private readonly gitFactory: IGitOperationsFactory,
-    private readonly currentWorkspace: string
+    private readonly currentWorkspace: string,
+    private readonly authoringService: TutorialAuthoringService
   ) {
     this.gitFactory = gitFactory;
   }

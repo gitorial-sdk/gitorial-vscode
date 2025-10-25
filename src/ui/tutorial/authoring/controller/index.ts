@@ -6,17 +6,11 @@ import { Result } from 'neverthrow';
 
 import * as Publishing from './publishing';
 import * as Validation from './validation';
-import * as Manifest from './manifest';
+import * as Storage from './storage';
 import * as StepEditing from './step-editing';
-import { IFileSystem } from '@domain/ports/IFileSystem';
 import { TutorialController } from '@ui/tutorial/controller';
-import { ManifestBackupService } from '@domain/services/authoring/manifest/backup';
-import { IStateStorage } from '@domain/ports/IStateStorage';
-import { ManifestBuilderService } from '@domain/services/authoring/manifest/builder';
-import { DiffService } from '@domain/services/DiffService';
-import { IGitChangesFactory } from '@ui/ports/IGitChangesFactory';
-import { IManifestRepository } from '@domain/ports/IManifestRepository';
-import { IManifestBuilder } from '@domain/ports/IManifestBuilder';
+
+import { TutorialAuthoringService } from '@domain/services/authoring/TutorialAuthoringService';
 
 export interface IClearable {
   clearCachedData(): Promise<void>;
@@ -27,7 +21,7 @@ export interface IWebviewAuthorMessageHandler {
 }
 
 export class AuthorModeController implements IWebviewAuthorMessageHandler {
-  private manifestController: Manifest.Controller;
+  private storageController: Storage.Controller;
   private stepEditingController: StepEditing.Controller;
   private publishingController: Publishing.Controller;
   private validationController: Validation.Controller;
@@ -35,39 +29,28 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
   constructor(
     private systemController: SystemController,
     gitOperationsFactory: IGitOperationsFactory,
-    gitChangesFactory: IGitChangesFactory,
     activeTutorialStateRepository: IActiveTutorialStateRepository,
     workspacePath: string,
-    fs: IFileSystem,
     private readonly tutorialController: TutorialController,
-    backupStorage: IStateStorage,
-    diffService: DiffService
+    private authoringService: TutorialAuthoringService
   ) {
-    const gitChanges = gitChangesFactory.createFromPath(workspacePath);
+    this.storageController = new Storage.Controller(systemController, workspacePath, authoringService);
 
-    // Create the primary manifest backup service
-    const manifestBackupService: IManifestRepository = new ManifestBackupService(backupStorage, fs);
-    const manifestBuilderService: IManifestBuilder = new ManifestBuilderService(gitOperationsFactory, gitChanges, diffService);
-
-    this.manifestController = new Manifest.Controller(
-      systemController,
-      workspacePath,
-      manifestBackupService,
-      manifestBuilderService
-    );
     this.stepEditingController = new StepEditing.Controller(
       systemController,
-      this.manifestController,
+      this.storageController,
       gitOperationsFactory,
       workspacePath
     );
+
     this.publishingController = new Publishing.Controller(
-      this.manifestController,
+      this.storageController,
       gitOperationsFactory,
       workspacePath,
       activeTutorialStateRepository,
       systemController
     );
+
     this.validationController = new Validation.Controller();
   }
 
@@ -78,8 +61,8 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
       switch (message.type) {
         case 'loadManifest':
         case 'saveManifest':
-          let result = await this.manifestController.handleMessage(message);
-          this._handleResult(result);
+          let result = await this.storageController.handleMessage(message);
+          //this._handleResult(result);
           break;
         case 'addStep':
         case 'removeStep':
@@ -88,17 +71,17 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
         case 'startEditingStep':
         case 'saveStepChanges':
         case 'cancelStepEditing':
-          result = await this.stepEditingController.handleMessage(message);
-          this._handleResult(result);
+          //result = await this.stepEditingController.handleMessage(message);
+          //this._handleResult(result);
           break;
 
         case 'publishTutorial':
         case 'previewTutorial':
-          result = await this.publishingController.handleMessage(message);
-          this._handleResult(result);
+          //result = await this.publishingController.handleMessage(message);
+          //this._handleResult(result);
           break;
         case 'validateCommit':
-          await this.validationController.handleMessage(message);
+          //await this.validationController.handleMessage(message);
           break;
         case 'exitAuthorMode':
           await this.handleExitAuthorMode();
@@ -116,7 +99,7 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
     console.log('🧹 AuthorModeController: Clearing cached data...');
 
     await Promise.all([
-      this.manifestController.clearCachedData(),
+      this.storageController.clearCachedData(),
       this.stepEditingController.clearCachedData(),
       this.publishingController.clearCachedData(),
       this.validationController.clearCachedData(),
@@ -142,7 +125,7 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
       await this.systemController.hideLoadingState();
       await this.tutorialController.editorController.closeAllFileTabs();
       await this.systemController.setAuthorMode(true);
-      this.manifestController.load();
+      this.storageController.load();
       await this.systemController.userInteraction.showInformationMessage(
         'Author Mode activated! This is a basic implementation.'
       );
