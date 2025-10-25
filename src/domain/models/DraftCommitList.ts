@@ -133,6 +133,15 @@ export class DraftCommitList<TCode extends string = string> {
     this.working = [...this.working.slice(0, index), ...this.working.slice(index + 1)];
     return ok(void 0);
   }
+
+  /**
+   * Get the number of commits in the working list.
+   *
+   * @returns The number of commits in the working list
+   */
+  size(): number {
+    return this.working.length;
+  }
 }
 
 function isCommitList<T extends string>(value: unknown): value is CommitList<T> {

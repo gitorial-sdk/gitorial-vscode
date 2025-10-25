@@ -16,13 +16,6 @@ export const TemplateRule: Rule<
           message : 'template must be immediately followed by solution',
         });
       }
-      if (type === 'solution' && commits[i - 1]?.type !== 'template' && commits[i - 1]?.type !== 'action') {
-        return err({
-          index   : i,
-          code    : Errors.SolutionMustFollowTemplateOrAction,
-          message : 'solution must immediately follow template or action',
-        });
-      }
     }
     return ok(void 0);
   },

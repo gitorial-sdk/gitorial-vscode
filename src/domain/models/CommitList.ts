@@ -51,4 +51,12 @@ export class CommitList<TCode extends string = string> {
     }
     return ok(void 0);
   }
+  /**
+   * Get the number of commits in the working list.
+   *
+   * @returns The number of commits in the working list
+   */
+  size(): number {
+    return this._list.length;
+  }
 }
