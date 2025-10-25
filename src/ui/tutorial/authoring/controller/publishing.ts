@@ -1,4 +1,4 @@
-import * as Manifest from './manifest';
+import * as Storage from './storage';
 import { IGitOperationsFactory } from '@domain/ports/IGitOperationsFactory';
 import { IActiveTutorialStateRepository } from 'src/domain/repositories/IActiveTutorialStateRepository';
 import { SystemController } from '@ui/system/SystemController';
@@ -8,7 +8,7 @@ import { IClearable } from '.';
 
 export class Controller implements IClearable {
   constructor(
-    private readonly manifestController: Manifest.Controller,
+    private readonly storageController: Storage.Controller,
     private readonly gitFactory: IGitOperationsFactory,
     private readonly workspacePath: string,
     private readonly activeTutorialStateRepository: IActiveTutorialStateRepository,
@@ -38,7 +38,8 @@ export class Controller implements IClearable {
   private async handlePublishTutorial(): Promise<void> {
     console.log('AuthorModeController: Publish tutorial');
 
-    const manifest = await this.manifestController.getOrLoadManifest();
+    /*
+    const manifest = await this.storageController.getOrLoadManifest();
     try {
       const git = this.gitFactory.fromPath(this.workspacePath);
 
@@ -63,6 +64,7 @@ export class Controller implements IClearable {
     } catch (e: any) {
       await this.systemController.sendPublishResult(false, e?.message ?? String(e));
     }
+      */
   }
   private async handlePreviewTutorial(): Promise<void> {
     console.log('AuthorModeController: Preview tutorial (basic implementation)');

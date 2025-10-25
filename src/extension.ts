@@ -24,7 +24,7 @@ import { TutorialService } from '@domain/services/tutorial-service';
 import { TutorialViewModelConverter } from '@domain/converters/TutorialViewModelConverter';
 import { TutorialChangeDetector } from '@domain/utils/TutorialChangeDetector';
 import { TutorialDisplayService } from '@domain/services/TutorialDisplayService';
-
+import {Domain} from '@gitorial/shared-types'
 // UI
 import { TutorialSolutionWorkflow } from '@ui/tutorial/TutorialSolutionWorkflow';
 import { TutorialUriHandler } from '@ui/deep-link/UriHandler';
@@ -40,6 +40,8 @@ import {
   WebviewMessageHandler,
 } from '@ui/webview/WebviewMessageHandler';
 import { WebviewPanelManager } from '@ui/webview/WebviewPanelManager';
+import { TutorialAuthoringService } from '@domain/services/authoring/TutorialAuthoringService';
+import { AuthoringDraftRepository } from '@domain/repositories/AuthoringDraftRepository';
 
 /**
 
@@ -214,16 +216,17 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     webviewPanelManager
   );
 
+  const draftStorage = createMementoAdapter(context, true);
+  const authoringDraftRepository = new AuthoringDraftRepository(draftStorage)
+  const authoringService = new TutorialAuthoringService(gitOperationsFactory, diffService, { v1: Domain.CommitList.V1.Rules }, authoringDraftRepository)
+
   const authorModeController = new AuthorModeController(
     systemController,
     gitOperationsFactory,
-    gitChangesFactory,
     activeTutorialStateRepository,
     workspacePath,
-    fileSystemAdapter,
     tutorialController,
-    authorManifestBackupState,
-    diffService
+    authoringService
   );
 
   // Set the tutorial controller reference in system controller

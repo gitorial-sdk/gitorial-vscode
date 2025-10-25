@@ -1,5 +1,5 @@
 import { err, ok, Result } from 'neverthrow';
-import * as Manifest from './storage';
+import * as Storage from './storage';
 import { Domain, UI } from '@gitorial/shared-types';
 import { SystemController } from '@ui/system/SystemController';
 import { CommitHashSanitizer } from 'src/utils/git/CommitHashSanitizer';
@@ -15,7 +15,7 @@ export class Controller implements IClearable {
 
   constructor(
     private readonly systemController: SystemController,
-    private readonly manifestController: Manifest.Controller,
+    private readonly storageController: Storage.Controller,
     private readonly gitFactory: IGitOperationsFactory,
     private readonly currentWorkspace: string,
     private readonly authoringService: TutorialAuthoringService
@@ -76,18 +76,22 @@ export class Controller implements IClearable {
     return ok(void 0);
   }
 
-  private async add(step: Domain.ManifestStep, index?: number): Promise<void> {
+  private async add(_step: Domain.ManifestStep, _index?: number): Promise<void> {
     console.log('AuthorModeController: Add step');
-    const manifest = await this.manifestController.getOrLoadManifest();
+    /*
+    this.storageController.load()
+    const manifest = await this.storageController.getOrLoadManifest();
     const steps = [...manifest.steps];
     const insertAt = typeof index === 'number' && index >= 0 && index <= steps.length ? index : steps.length;
     steps.splice(insertAt, 0, step);
     this.manifestController.currentManifest = { ...manifest, steps };
     await this.manifestController.save(manifest);
+    */
   }
 
-  private async remove(index: number): Promise<void> {
+  private async remove(_index: number): Promise<void> {
     console.log('AuthorModeController: Remove step');
+    /*
     const manifest = await this.manifestController.getOrLoadManifest();
     if (index < 0 || index >= manifest.steps.length) {
       return;
@@ -96,10 +100,12 @@ export class Controller implements IClearable {
     const steps = manifest.steps.filter((_, i) => i !== index);
     this.manifestController.currentManifest = { ...manifest, steps };
     await this.manifestController.save(manifest);
+    */
   }
 
-  private async update(index: number, step: Domain.ManifestStep): Promise<void> {
+  private async update(_index: number, _step: Domain.ManifestStep): Promise<void> {
     console.log('AuthorModeController: Update step');
+    /*
     const manifest = await this.manifestController.getOrLoadManifest();
     if (index < 0 || index >= manifest.steps.length) {
       return;
@@ -109,10 +115,12 @@ export class Controller implements IClearable {
     steps[index] = step;
     this.manifestController.currentManifest = { ...manifest, steps };
     await this.manifestController.save(manifest);
+    */
   }
 
-  private async reorder(fromIndex: number, toIndex: number): Promise<void> {
+  private async reorder(_fromIndex: number, _toIndex: number): Promise<void> {
     console.log('AuthorModeController: Reorder step');
+    /*
     const manifest = await this.manifestController.getOrLoadManifest();
     if (
       fromIndex === toIndex ||
@@ -129,11 +137,13 @@ export class Controller implements IClearable {
     steps.splice(toIndex, 0, moved);
     this.manifestController.currentManifest = { ...manifest, steps };
     await this.manifestController.save(manifest);
+    */
   }
 
   private async edit(stepIndex: number): Promise<void> {
     console.log('🔍 AuthorModeController: Start editing step', stepIndex);
 
+    /*
     try {
       // Validation checks
       if (this.currentlyEditingStep !== null) {
@@ -274,6 +284,7 @@ export class Controller implements IClearable {
       });
       await this.systemController.sendEditingError(stepIndex, error instanceof Error ? error.message : String(error));
     }
+      */
   }
 
   private async ensureCleanWorkspace(): Promise<void> {
@@ -292,6 +303,7 @@ export class Controller implements IClearable {
   private async save(stepIndex: number): Promise<void> {
     console.log('AuthorModeController: Save step changes', stepIndex);
 
+    /*
     try {
       // Validation checks
       if (this.currentlyEditingStep !== stepIndex) {
@@ -358,6 +370,7 @@ export class Controller implements IClearable {
       console.error('AuthorModeController: Error saving step changes:', error);
       await this.systemController.sendEditingError(stepIndex, error instanceof Error ? error.message : String(error));
     }
+      */
   }
 
   private async cancel(stepIndex: number): Promise<void> {

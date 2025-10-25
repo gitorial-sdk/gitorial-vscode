@@ -40,7 +40,8 @@ export class AuthorModeController implements IWebviewAuthorMessageHandler {
       systemController,
       this.storageController,
       gitOperationsFactory,
-      workspacePath
+      workspacePath,
+      authoringService
     );
 
     this.publishingController = new Publishing.Controller(
