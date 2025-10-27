@@ -173,6 +173,13 @@ export interface DiffResult {
   deletions : number;
 }
 
+export interface WorkingDirectoryStatus {
+  staged    : string[];
+  untracked : string[];
+  deleted   : string[];
+  modified  : string[];
+}
+
 /**
  * Most tasks accept custom options as an array of strings as well as the
  * options object. Unless the task is explicitly documented as such, the
@@ -397,11 +404,7 @@ export interface IGitOperations {
    * Get the status of the working directory
    * @returns Object containing staged, unstaged, and untracked files
    */
-  getWorkingDirectoryStatus(): Promise<{
-    staged    : string[];
-    unstaged  : string[];
-    untracked : string[];
-  }>;
+  getWorkingDirectoryStatus(): Promise<WorkingDirectoryStatus>;
 
   /**
    * Reset the working directory to match the last commit

@@ -9,7 +9,7 @@ A VS Code extension that enables interactive, step-by-step, [Gitorial-based](htt
 ## Funding & Support
 
 <p align="center">
-  <img src="./images/Polkadot_Logo_Pink-Black.png" alt="Polkadot Logo" height="60">
+  <img src="./assets/Polkadot_Logo_Pink-Black.png" alt="Polkadot Logo" height="60">
 </p>
 
 This project is proudly **funded by Polkadot OpenGov**. We're grateful for the community's support in making interactive learning more accessible for developers in the Polkadot ecosystem and beyond.

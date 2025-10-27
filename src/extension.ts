@@ -24,7 +24,7 @@ import { TutorialService } from '@domain/services/tutorial-service';
 import { TutorialViewModelConverter } from '@domain/converters/TutorialViewModelConverter';
 import { TutorialChangeDetector } from '@domain/utils/TutorialChangeDetector';
 import { TutorialDisplayService } from '@domain/services/TutorialDisplayService';
-import {Domain} from '@gitorial/shared-types'
+import { Domain } from '@gitorial/shared-types';
 // UI
 import { TutorialSolutionWorkflow } from '@ui/tutorial/TutorialSolutionWorkflow';
 import { TutorialUriHandler } from '@ui/deep-link/UriHandler';
@@ -42,6 +42,9 @@ import {
 import { WebviewPanelManager } from '@ui/webview/WebviewPanelManager';
 import { TutorialAuthoringService } from '@domain/services/authoring/TutorialAuthoringService';
 import { AuthoringDraftRepository } from '@domain/repositories/AuthoringDraftRepository';
+import { ChangesTreeDataProvider } from '@ui/tutorial/tree-view/changes-tree-provider';
+import { StepsTreeDataProvider } from '@ui/tutorial/tree-view/steps-tree-provider';
+import { DiffCommandHandler } from '@ui/tutorial/tree-view/diff-command-handler';
 
 /**
 
@@ -62,8 +65,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     return Promise.reject();
   }
 
-  const { tutorialController, autoOpenState, systemController, authorModeController, userInteractionAdapter, workspacePath } =
-    application;
+  const {
+    tutorialController,
+    autoOpenState,
+    systemController,
+    authorModeController,
+    userInteractionAdapter,
+    workspacePath,
+    changesTreeDataProvider,
+    stepsTreeDataProvider,
+  } = application;
 
   const commandHandler = new CommandHandler(
     tutorialController,
@@ -79,6 +90,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
 
   console.log('📖 Registering URI handler...');
   uriHandler.register(context);
+
+  console.log('📖 Registering tree view providers...');
+  const changesTreeView = vscode.window.createTreeView('gitorial-changes', {
+    treeDataProvider : changesTreeDataProvider,
+    showCollapseAll  : false,
+  });
+
+  const stepsTreeView = vscode.window.createTreeView('gitorial-steps', {
+    treeDataProvider : stepsTreeDataProvider,
+    showCollapseAll  : true,
+  });
+
+  context.subscriptions.push(changesTreeView, stepsTreeView);
+
+  console.log('📖 Registering diff command handler...');
+  const { workspaceGitOperations } = application;
+  DiffCommandHandler.register(context, workspaceGitOperations);
 
   await checkAndHandleAutoOpenState(tutorialController, autoOpenState);
 
@@ -116,7 +144,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   const autoOpenState = new AutoOpenState(globalState);
   const contextState = new ContextState(context);
   const configurationState = new ConfigurationState(context);
-  const authorManifestBackupState = new AuthorManifestState(globalState);
+  const _authorManifestBackupState = new AuthorManifestState(globalState);
 
   // --- Factories ---
   //? TODO: Why do we need factories? Why dont we just create instances of them and pass around?
@@ -217,8 +245,13 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   );
 
   const draftStorage = createMementoAdapter(context, true);
-  const authoringDraftRepository = new AuthoringDraftRepository(draftStorage)
-  const authoringService = new TutorialAuthoringService(gitOperationsFactory, diffService, { v1: Domain.CommitList.V1.Rules }, authoringDraftRepository)
+  const authoringDraftRepository = new AuthoringDraftRepository(draftStorage);
+  const authoringService = new TutorialAuthoringService(
+    gitOperationsFactory,
+    diffService,
+    { v1: Domain.CommitList.V1.Rules },
+    authoringDraftRepository
+  );
 
   const authorModeController = new AuthorModeController(
     systemController,
@@ -248,6 +281,11 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // Update the webview panel manager with the real message handler
   webviewPanelManager.updateMessageHandler(webviewMessageHandler.handleMessage.bind(webviewMessageHandler));
 
+  // --- Tree Data Providers ---
+  const workspaceGitOperations = gitOperationsFactory.fromPath(workspacePath);
+  const changesTreeDataProvider = new ChangesTreeDataProvider(workspaceGitOperations, workspacePath);
+  const stepsTreeDataProvider = new StepsTreeDataProvider(gitOperationsFactory, workspacePath);
+
   return {
     tutorialController,
     autoOpenState,
@@ -257,6 +295,9 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     userInteractionAdapter,
     authorModeController,
     workspacePath,
+    changesTreeDataProvider,
+    stepsTreeDataProvider,
+    workspaceGitOperations,
   } as const;
 }
 

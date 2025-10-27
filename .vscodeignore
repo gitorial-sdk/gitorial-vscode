@@ -8,7 +8,7 @@
 !README.md
 !CHANGELOG.md
 !LICENSE
-!images/**
+!assets/**
 
 # Explicitly exclude problematic directories
 .vscode/**

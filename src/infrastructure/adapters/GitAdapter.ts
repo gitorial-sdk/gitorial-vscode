@@ -6,7 +6,7 @@
 import simpleGit, { SimpleGit, BranchSummary, RemoteWithRefs, CheckRepoActions, TaskOptions } from 'simple-git';
 import * as path from 'path'; //TODO: Remove this import and use IFileSystem instead
 import * as fs from 'fs';
-import { IGitOperations, DefaultLogFields, ListLogLine } from '../../domain/ports/IGitOperations';
+import { IGitOperations, DefaultLogFields, ListLogLine, WorkingDirectoryStatus } from '../../domain/ports/IGitOperations';
 import { CommitHashSanitizer } from '../../utils/git/CommitHashSanitizer';
 import { IGitChanges, DiffFilePayload } from 'src/ui/ports/IGitChanges';
 
@@ -861,16 +861,13 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   /**
    * Get the status of the working directory
    */
-  public async getWorkingDirectoryStatus(): Promise<{
-    staged    : string[];
-    unstaged  : string[];
-    untracked : string[];
-  }> {
+  public async getWorkingDirectoryStatus(): Promise<WorkingDirectoryStatus> {
     const status = await this.git.status();
     return {
       staged    : status.staged,
-      unstaged  : status.modified.concat(status.deleted),
       untracked : status.not_added,
+      deleted   : status.deleted,
+      modified  : status.modified,
     };
   }
 

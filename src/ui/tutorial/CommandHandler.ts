@@ -87,6 +87,16 @@ export class CommandHandler {
   }
 
   /**
+   * Adds one step on top of the currently selected step
+   */
+  public async handleAddStep(): Promise<void> {}
+
+  /**
+   * Removes the checked out step
+   */
+  public async handleRemoveStep(): Promise<void> {}
+
+  /**
    * Registers all Gitorial commands with VS Code.
    * This method should be called during extension activation.
    * @param context The extension context to push disposables to.
@@ -115,6 +125,10 @@ export class CommandHandler {
     context.subscriptions.push(
       vscode.commands.registerCommand('gitorial.resetClonePreferences', () => this.handleResetClonePreferences())
     );
+
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.addStep', () => this.handleAddStep()));
+
+    context.subscriptions.push(vscode.commands.registerCommand('gitorial.removeStep', () => this.handleRemoveStep()));
 
     this.authoringCommandHandler.register(context);
 

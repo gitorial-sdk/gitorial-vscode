@@ -5,7 +5,7 @@
   "version": "0.2.2",
   "private": true,
   "publisher": "AndrzejSulkowski",
-  "icon": "images/gitorial-icon.png",
+  "icon": "assets/gitorial-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/gitorial-sdk/gitorial-vscode.git"
@@ -74,6 +74,31 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitorial-view",
+          "title": "Gitorial",
+          "icon": "assets/icons/tree-view.svg"
+        }
+      ]
+    },
+    "views": {
+      "gitorial-view": [
+        {
+          "id": "gitorial-changes",
+          "name": "Changes",
+          "icon": "assets/icons/tree-view.svg",
+          "contextualTitle": "Gitorial Changes"
+        },
+        {
+          "id": "gitorial-steps",
+          "name": "Steps",
+          "icon": "assets/icons/tree-view.svg",
+          "contextualTitle": "Gitorial Steps"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "gitorial.cloneTutorial",
@@ -97,11 +122,27 @@
       },
       {
         "command": "gitorial.createNewTutorial",
-        "title": "Gitorial: Create New Tutorial"
+        "title": "Gitorial: Create New Tutorial",
+        "icon": "$(new-folder)"
       },
       {
         "command": "gitorial.publishTutorial",
-        "title": "Gitorial: Publish Tutorial"
+        "title": "Gitorial: Publish Tutorial",
+        "icon": "$(repo-push)"
+      },
+      {
+        "command": "gitorial.addStep",
+        "title": "Gitorial: Add Step",
+        "icon": "$(add)"
+      },
+      {
+        "command": "gitorial.removeStep",
+        "title": "Gitorial: Remove Step",
+        "icon": "$(remove)"
+      },
+      {
+        "command": "gitorial.openFileDiff",
+        "title": "Gitorial: Open File Diff"
       }
     ],
     "menus": {
@@ -121,6 +162,18 @@
         {
           "command": "gitorial.publishTutorial",
           "when": "gitorial.authorModeEnabled"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "gitorial.addStep",
+          "when": "view == gitorial-steps",
+          "group": "navigation"
+        },
+        {
+          "command": "gitorial.removeStep",
+          "when": "view == gitorial-steps",
+          "group": "navigation"
         }
       ]
     },

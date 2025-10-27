@@ -2,9 +2,7 @@ import { ok, err } from 'neverthrow';
 import { Errors } from './errors';
 import { Rule } from '../types';
 
-export const SolutionRule: Rule<
-  typeof Errors.SolutionMustFollowTemplateOrAction
-> = {
+export const SolutionRule: Rule<typeof Errors.SolutionMustFollowTemplateOrAction> = {
   errorCodes : [Errors.SolutionMustFollowTemplateOrAction] as const,
   validate(commits) {
     for (let i = 0; i < commits.length; i++) {
