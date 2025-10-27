@@ -143,6 +143,16 @@
       {
         "command": "gitorial.openFileDiff",
         "title": "Gitorial: Open File Diff"
+      },
+      {
+        "command": "gitorial.changeStepType",
+        "title": "Gitorial: Change Step Type",
+        "icon": "$(symbol-enum)"
+      },
+      {
+        "command": "gitorial.editStepMessage",
+        "title": "Gitorial: Edit Step Message",
+        "icon": "$(edit)"
       }
     ],
     "menus": {
@@ -174,6 +184,13 @@
           "command": "gitorial.removeStep",
           "when": "view == gitorial-steps",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gitorial.changeStepType",
+          "when": "view == gitorial-changes && viewItem == stepTypeSelector",
+          "group": "inline"
         }
       ]
     },

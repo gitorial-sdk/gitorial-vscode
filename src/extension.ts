@@ -45,6 +45,7 @@ import { AuthoringDraftRepository } from '@domain/repositories/AuthoringDraftRep
 import { ChangesTreeDataProvider } from '@ui/tutorial/tree-view/changes-tree-provider';
 import { StepsTreeDataProvider } from '@ui/tutorial/tree-view/steps-tree-provider';
 import { DiffCommandHandler } from '@ui/tutorial/tree-view/diff-command-handler';
+import { StepTypeSelector } from '@ui/tutorial/tree-view/step-type-selector';
 
 /**
 
@@ -283,8 +284,14 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
 
   // --- Tree Data Providers ---
   const workspaceGitOperations = gitOperationsFactory.fromPath(workspacePath);
-  const changesTreeDataProvider = new ChangesTreeDataProvider(workspaceGitOperations, workspacePath);
+  const stepTypeSelector = StepTypeSelector.register(context, workspaceGitOperations, workspacePath);
+  const changesTreeDataProvider = new ChangesTreeDataProvider(workspaceGitOperations, workspacePath, stepTypeSelector);
   const stepsTreeDataProvider = new StepsTreeDataProvider(gitOperationsFactory, workspacePath);
+
+  // Wire up the step type selector to refresh the tree view when changes occur
+  stepTypeSelector.setOnChangeCallback(() => {
+    changesTreeDataProvider.refresh();
+  });
 
   return {
     tutorialController,

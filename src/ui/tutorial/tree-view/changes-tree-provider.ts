@@ -1,5 +1,6 @@
 import { IGitOperations } from '@domain/ports/IGitOperations';
 import * as vscode from 'vscode';
+import { StepTypeSelector } from './step-type-selector';
 
 /**
  * Tree item representing a change in the Changes view
@@ -32,7 +33,8 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
 
   constructor(
     private readonly gitOperations: IGitOperations,
-    private readonly workspacePath: string
+    private readonly workspacePath: string,
+    private readonly stepTypeSelector?: StepTypeSelector
   ) {}
 
   /**
@@ -58,8 +60,8 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
     }
 
     if (!element) {
-      // Return root level groups: "Changes" and "Staged Changes"
-      return this.getRootGroups();
+      // Return root level: step type selector + groups
+      return this.getRootItems();
     } else if (element.contextValue === 'changesGroup') {
       // Return unstaged changes
       return this.getUnstagedChanges();
@@ -69,6 +71,76 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
     }
 
     return [];
+  }
+
+  /**
+   * Get root level items: step type selector + step message input + groups
+   */
+  private async getRootItems(): Promise<ChangeTreeItem[]> {
+    const items: ChangeTreeItem[] = [];
+
+    // Add step type selector if available
+    if (this.stepTypeSelector) {
+      const stepTypeLabel = this.stepTypeSelector.getCurrentStepTypeLabel();
+      const stepTypeItem = new ChangeTreeItem(
+        `Current Type: ${stepTypeLabel}`,
+        vscode.TreeItemCollapsibleState.None,
+        '',
+        '',
+        new vscode.ThemeIcon('tag'), // Tag icon to indicate type/category
+        {
+          command: 'gitorial.changeStepType',
+          title: 'Change Step Type',
+          arguments: []
+        },
+        'stepTypeSelector'
+      );
+      // Add a more obvious call-to-action
+      stepTypeItem.description = '(click to change)';
+      // Rich tooltip with instructions
+      const tooltip = new vscode.MarkdownString();
+      tooltip.appendMarkdown('**Change Step Type**\n\n');
+      tooltip.appendMarkdown('Click to select a different step type for your next commit.\n\n');
+      tooltip.appendMarkdown('Available types:\n');
+      tooltip.appendMarkdown('- 📖 Section\n');
+      tooltip.appendMarkdown('- 📝 Template\n');
+      tooltip.appendMarkdown('- ✅ Solution\n');
+      tooltip.appendMarkdown('- ⚡ Action\n');
+      tooltip.appendMarkdown('- 📄 Readme');
+      tooltip.isTrusted = true;
+      stepTypeItem.tooltip = tooltip;
+      items.push(stepTypeItem);
+
+      // Add step message input field
+      const stepMessage = this.stepTypeSelector.getCurrentStepMessage();
+      const stepMessageItem = new ChangeTreeItem(
+        `Message: ${stepMessage}`,
+        vscode.TreeItemCollapsibleState.None,
+        '',
+        '',
+        new vscode.ThemeIcon('edit'), // Edit icon to indicate it's editable
+        {
+          command: 'gitorial.editStepMessage',
+          title: 'Edit Step Message',
+          arguments: []
+        },
+        'stepMessageInput'
+      );
+      stepMessageItem.description = '(click to edit)';
+      const messageTooltip = new vscode.MarkdownString();
+      messageTooltip.appendMarkdown('**Edit Step Message**\n\n');
+      messageTooltip.appendMarkdown('Click to edit the commit message for your next step.\n\n');
+      messageTooltip.appendMarkdown(`Current message: ${stepMessage}`);
+      messageTooltip.isTrusted = true;
+      stepMessageItem.tooltip = messageTooltip;
+      items.push(stepMessageItem);
+    }
+
+    // Add the groups
+    const groups = await this.getRootGroups();
+    items.push(...groups);
+
+    return items;
   }
 
   /**
