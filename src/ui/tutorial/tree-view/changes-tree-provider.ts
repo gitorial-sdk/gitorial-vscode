@@ -78,7 +78,13 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
     try {
       const status = await this.gitOperations.getWorkingDirectoryStatus();
 
-      const unstagedCount = status.modified.length + status.deleted.length + status.untracked.length;
+      // Count only files that aren't staged (to avoid counting duplicates)
+      const stagedFiles = new Set(status.staged);
+      const unstagedOnlyCount =
+        status.modified.filter(f => !stagedFiles.has(f)).length +
+        status.deleted.filter(f => !stagedFiles.has(f)).length +
+        status.untracked.length; // Untracked files are never staged
+
       const stagedCount = status.staged.length;
 
       const groups: ChangeTreeItem[] = [];
@@ -98,7 +104,7 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
       );
 
       // "Changes" group (second)
-      const changesLabel = unstagedCount > 0 ? `Changes (${unstagedCount})` : 'Changes';
+      const changesLabel = unstagedOnlyCount > 0 ? `Changes (${unstagedOnlyCount})` : 'Changes';
       groups.push(
         new ChangeTreeItem(
           changesLabel,
@@ -120,6 +126,7 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
 
   /**
    * Get unstaged changes (modified, deleted, untracked)
+   * Excludes files that are already staged to avoid duplicates
    */
   private async getUnstagedChanges(): Promise<ChangeTreeItem[]> {
     try {
@@ -128,10 +135,17 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
 
       const items: ChangeTreeItem[] = [];
 
-      // Process unstaged files only
+      // Create a set of staged files for quick lookup
+      const stagedFiles = new Set(status.staged);
+
+      // Process unstaged files only, excluding those that are already staged
       const unstagedFiles = [
-        ...status.modified.map((f: string) => ({ filePath: f, statusLabel: 'M' as const })),
-        ...status.deleted.map((f: string) => ({ filePath: f, statusLabel: 'D' as const })),
+        ...status.modified
+          .filter((f: string) => !stagedFiles.has(f))
+          .map((f: string) => ({ filePath: f, statusLabel: 'M' as const })),
+        ...status.deleted
+          .filter((f: string) => !stagedFiles.has(f))
+          .map((f: string) => ({ filePath: f, statusLabel: 'D' as const })),
         ...status.untracked.map((f: string) => ({ filePath: f, statusLabel: 'U' as const }))
       ];
 
