@@ -105,6 +105,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
 
   context.subscriptions.push(changesTreeView, stepsTreeView);
 
+  console.log('📖 Registering changes tree view commands...');
+  ChangesTreeDataProvider.registerCommands(context, changesTreeDataProvider);
+
   console.log('📖 Registering diff command handler...');
   const { workspaceGitOperations } = application;
   DiffCommandHandler.register(context, workspaceGitOperations);

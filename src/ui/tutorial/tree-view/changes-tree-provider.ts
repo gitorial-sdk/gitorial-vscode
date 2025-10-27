@@ -324,18 +324,128 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
     // For deleted files, show file path with " (Deleted)" suffix
     const displayLabel = statusLabel === 'D' ? `${filePath} (Deleted)` : filePath;
 
+    // Set context value for menu contributions
+    const contextValue = isStaged ? 'stagedFile' : 'unstagedFile';
+
     const item = new ChangeTreeItem(
       displayLabel,
       vscode.TreeItemCollapsibleState.None,
       filePath,
       currentCommitHash,
       new vscode.ThemeIcon(baseIconId, iconColor),
-      command
+      command,
+      contextValue
     );
 
     // Add description showing status
     item.description = statusLabel;
 
     return item;
+  }
+
+  /**
+   * Stage a file
+   */
+  async stageFile(item: ChangeTreeItem): Promise<void> {
+    try {
+      await this.gitOperations.stageFiles([item.filePath]);
+      this.refresh();
+      vscode.window.showInformationMessage(`Staged ${item.filePath}`);
+    } catch (error) {
+      console.error('Failed to stage file:', error);
+      vscode.window.showErrorMessage(`Failed to stage ${item.filePath}: ${error}`);
+    }
+  }
+
+  /**
+   * Unstage a file
+   */
+  async unstageFile(item: ChangeTreeItem): Promise<void> {
+    try {
+      await this.gitOperations.reset(['HEAD', '--', item.filePath]);
+      this.refresh();
+      vscode.window.showInformationMessage(`Unstaged ${item.filePath}`);
+    } catch (error) {
+      console.error('Failed to unstage file:', error);
+      vscode.window.showErrorMessage(`Failed to unstage ${item.filePath}: ${error}`);
+    }
+  }
+
+  /**
+   * Discard changes in a file
+   */
+  async discardChanges(item: ChangeTreeItem): Promise<void> {
+    try {
+      const pathParts = item.filePath.split('/');
+      const fileName = pathParts.pop() || item.filePath;
+      const confirm = await vscode.window.showWarningMessage(
+        `Are you sure you want to discard changes in ${fileName}?`,
+        { modal: true },
+        'Discard Changes'
+      );
+
+      if (confirm === 'Discard Changes') {
+        await this.gitOperations.reset(['--', item.filePath]);
+        this.refresh();
+        vscode.window.showInformationMessage(`Discarded changes in ${fileName}`);
+      }
+    } catch (error) {
+      console.error('Failed to discard changes:', error);
+      vscode.window.showErrorMessage(`Failed to discard changes: ${error}`);
+    }
+  }
+
+  /**
+   * Stage all changes
+   */
+  async stageAll(): Promise<void> {
+    try {
+      await this.gitOperations.stageAllChanges();
+      this.refresh();
+      vscode.window.showInformationMessage('Staged all changes');
+    } catch (error) {
+      console.error('Failed to stage all:', error);
+      vscode.window.showErrorMessage(`Failed to stage all changes: ${error}`);
+    }
+  }
+
+  /**
+   * Unstage all changes
+   */
+  async unstageAll(): Promise<void> {
+    try {
+      await this.gitOperations.reset(['HEAD']);
+      this.refresh();
+      vscode.window.showInformationMessage('Unstaged all changes');
+    } catch (error) {
+      console.error('Failed to unstage all:', error);
+      vscode.window.showErrorMessage(`Failed to unstage all changes: ${error}`);
+    }
+  }
+
+  /**
+   * Register commands for this tree view
+   */
+  static registerCommands(
+    context: vscode.ExtensionContext,
+    provider: ChangesTreeDataProvider
+  ): void {
+    context.subscriptions.push(
+      vscode.commands.registerCommand('gitorial.stageFile', (item: ChangeTreeItem) =>
+        provider.stageFile(item)
+      ),
+      vscode.commands.registerCommand('gitorial.unstageFile', (item: ChangeTreeItem) =>
+        provider.unstageFile(item)
+      ),
+      vscode.commands.registerCommand('gitorial.discardChanges', (item: ChangeTreeItem) =>
+        provider.discardChanges(item)
+      ),
+      vscode.commands.registerCommand('gitorial.stageAll', () =>
+        provider.stageAll()
+      ),
+      vscode.commands.registerCommand('gitorial.unstageAll', () =>
+        provider.unstageAll()
+      )
+    );
   }
 }

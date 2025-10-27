@@ -413,6 +413,12 @@ export interface IGitOperations {
   resetWorkingDirectory(hard?: boolean): Promise<void>;
 
   /**
+   * Reset with raw git options (for advanced operations like unstaging)
+   * @param options Git reset options (e.g., ['HEAD', '--', 'file.txt'])
+   */
+  reset(options: string[]): Promise<void>;
+
+  /**
    * Push a branch to the remote repository
    * @param branchName The name of the branch to push
    * @param force Whether to force push (optional)

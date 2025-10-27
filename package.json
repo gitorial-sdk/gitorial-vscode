@@ -153,6 +153,31 @@
         "command": "gitorial.editStepMessage",
         "title": "Gitorial: Edit Step Message",
         "icon": "$(edit)"
+      },
+      {
+        "command": "gitorial.stageFile",
+        "title": "Gitorial: Stage File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "gitorial.unstageFile",
+        "title": "Gitorial: Unstage File",
+        "icon": "$(remove)"
+      },
+      {
+        "command": "gitorial.discardChanges",
+        "title": "Gitorial: Discard Changes",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "gitorial.stageAll",
+        "title": "Gitorial: Stage All Changes",
+        "icon": "$(add)"
+      },
+      {
+        "command": "gitorial.unstageAll",
+        "title": "Gitorial: Unstage All Changes",
+        "icon": "$(remove)"
       }
     ],
     "menus": {
@@ -184,6 +209,16 @@
           "command": "gitorial.removeStep",
           "when": "view == gitorial-steps",
           "group": "navigation"
+        },
+        {
+          "command": "gitorial.stageAll",
+          "when": "view == gitorial-changes",
+          "group": "navigation"
+        },
+        {
+          "command": "gitorial.unstageAll",
+          "when": "view == gitorial-changes",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -191,6 +226,21 @@
           "command": "gitorial.changeStepType",
           "when": "view == gitorial-changes && viewItem == stepTypeSelector",
           "group": "inline"
+        },
+        {
+          "command": "gitorial.stageFile",
+          "when": "view == gitorial-changes && viewItem == unstagedFile",
+          "group": "inline"
+        },
+        {
+          "command": "gitorial.unstageFile",
+          "when": "view == gitorial-changes && viewItem == stagedFile",
+          "group": "inline"
+        },
+        {
+          "command": "gitorial.discardChanges",
+          "when": "view == gitorial-changes && viewItem == unstagedFile",
+          "group": "1_modification"
         }
       ]
     },
