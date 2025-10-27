@@ -100,8 +100,8 @@ export class DiffCommandHandler {
 
     // Show the document in the editor
     await vscode.window.showTextDocument(doc, {
-      preview: true,
-      preserveFocus: false
+      preview       : true,
+      preserveFocus : false,
     });
   }
 

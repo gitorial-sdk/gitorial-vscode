@@ -89,9 +89,9 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
         '',
         new vscode.ThemeIcon('tag'), // Tag icon to indicate type/category
         {
-          command: 'gitorial.changeStepType',
-          title: 'Change Step Type',
-          arguments: []
+          command   : 'gitorial.changeStepType',
+          title     : 'Change Step Type',
+          arguments : [],
         },
         'stepTypeSelector'
       );
@@ -120,9 +120,9 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
         '',
         new vscode.ThemeIcon('edit'), // Edit icon to indicate it's editable
         {
-          command: 'gitorial.editStepMessage',
-          title: 'Edit Step Message',
-          arguments: []
+          command   : 'gitorial.editStepMessage',
+          title     : 'Edit Step Message',
+          arguments : [],
         },
         'stepMessageInput'
       );
@@ -164,29 +164,13 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
       // "Staged Changes" group (first)
       const stagedLabel = stagedCount > 0 ? `Staged Changes (${stagedCount})` : 'Staged Changes';
       groups.push(
-        new ChangeTreeItem(
-          stagedLabel,
-          vscode.TreeItemCollapsibleState.Expanded,
-          '',
-          '',
-          undefined,
-          undefined,
-          'stagedGroup'
-        )
+        new ChangeTreeItem(stagedLabel, vscode.TreeItemCollapsibleState.Expanded, '', '', undefined, undefined, 'stagedGroup')
       );
 
       // "Changes" group (second)
       const changesLabel = unstagedOnlyCount > 0 ? `Changes (${unstagedOnlyCount})` : 'Changes';
       groups.push(
-        new ChangeTreeItem(
-          changesLabel,
-          vscode.TreeItemCollapsibleState.Expanded,
-          '',
-          '',
-          undefined,
-          undefined,
-          'changesGroup'
-        )
+        new ChangeTreeItem(changesLabel, vscode.TreeItemCollapsibleState.Expanded, '', '', undefined, undefined, 'changesGroup')
       );
 
       return groups;
@@ -211,26 +195,18 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
       const stagedFiles = new Set(status.staged);
 
       // Process unstaged files only, excluding those that are already staged
-      const unstagedFiles = [
-        ...status.modified
+      const unstagedFiles = [...status.modified
           .filter((f: string) => !stagedFiles.has(f))
           .map((f: string) => ({ filePath: f, statusLabel: 'M' as const })),
         ...status.deleted
           .filter((f: string) => !stagedFiles.has(f))
           .map((f: string) => ({ filePath: f, statusLabel: 'D' as const })),
-        ...status.untracked.map((f: string) => ({ filePath: f, statusLabel: 'U' as const }))
+        ...status.untracked.map((f: string) => ({ filePath: f, statusLabel: 'U' as const })),
       ];
 
       if (unstagedFiles.length === 0) {
         return [
-          new ChangeTreeItem(
-            'No changes',
-            vscode.TreeItemCollapsibleState.None,
-            '',
-            '',
-            new vscode.ThemeIcon('info'),
-            undefined
-          )
+          new ChangeTreeItem('No changes', vscode.TreeItemCollapsibleState.None, '', '', new vscode.ThemeIcon('info'), undefined),
         ];
       }
 
@@ -264,7 +240,7 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
             '',
             new vscode.ThemeIcon('info'),
             undefined
-          )
+          ),
         ];
       }
 
@@ -292,8 +268,9 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
     isStaged: boolean
   ): ChangeTreeItem {
     const fileTextIdentifiers = ['md', 'txt'];
-    const fileExtension = filePath.split('.')
-      .pop() || '';
+    const fileExtension =
+      filePath.split('.')
+        .pop() || '';
     const baseIconId = fileTextIdentifiers.includes(fileExtension) ? 'file-text' : 'file-code';
 
     // Choose icon color based on file status
@@ -424,28 +401,74 @@ export class ChangesTreeDataProvider implements vscode.TreeDataProvider<ChangeTr
   }
 
   /**
+   * Commit staged changes with step type prefix
+   */
+  async commit(): Promise<void> {
+    try {
+      // Check if there are staged changes
+      const status = await this.gitOperations.getWorkingDirectoryStatus();
+      if (status.staged.length === 0) {
+        vscode.window.showWarningMessage('No staged changes to commit');
+        return;
+      }
+
+      // Get the commit message from step type selector
+      if (!this.stepTypeSelector) {
+        vscode.window.showErrorMessage('Step type selector not configured');
+        return;
+      }
+
+      const currentMessage = this.stepTypeSelector.getCurrentStepMessage();
+      const userMessage = await vscode.window.showInputBox({
+        prompt        : 'Enter commit message',
+        placeHolder   : 'e.g., Add user authentication',
+        value         : currentMessage || '',
+        validateInput : value => {
+          if (!value || value.trim().length === 0) {
+            return 'Commit message cannot be empty';
+          }
+          if (value.length > 100) {
+            return 'Commit message is too long (max 100 characters)';
+          }
+          return null;
+        },
+      });
+
+      if (userMessage === undefined) {
+        return; // User cancelled
+      }
+
+      // Format the full commit message with step type
+      const fullMessage = this.stepTypeSelector.getFullCommitMessage(userMessage);
+
+      // Create the commit
+      await this.gitOperations.createCommit(fullMessage);
+
+      // Update the step type selector's current message
+      this.stepTypeSelector.setCurrentStepMessage(userMessage);
+
+      // Refresh the tree
+      this.refresh();
+
+      // Show success message
+      vscode.window.showInformationMessage(`Committed: ${fullMessage}`);
+    } catch (error) {
+      console.error('Failed to commit:', error);
+      vscode.window.showErrorMessage(`Failed to commit: ${error}`);
+    }
+  }
+
+  /**
    * Register commands for this tree view
    */
-  static registerCommands(
-    context: vscode.ExtensionContext,
-    provider: ChangesTreeDataProvider
-  ): void {
+  static registerCommands(context: vscode.ExtensionContext, provider: ChangesTreeDataProvider): void {
     context.subscriptions.push(
-      vscode.commands.registerCommand('gitorial.stageFile', (item: ChangeTreeItem) =>
-        provider.stageFile(item)
-      ),
-      vscode.commands.registerCommand('gitorial.unstageFile', (item: ChangeTreeItem) =>
-        provider.unstageFile(item)
-      ),
-      vscode.commands.registerCommand('gitorial.discardChanges', (item: ChangeTreeItem) =>
-        provider.discardChanges(item)
-      ),
-      vscode.commands.registerCommand('gitorial.stageAll', () =>
-        provider.stageAll()
-      ),
-      vscode.commands.registerCommand('gitorial.unstageAll', () =>
-        provider.unstageAll()
-      )
+      vscode.commands.registerCommand('gitorial.stageFile', (item: ChangeTreeItem) => provider.stageFile(item)),
+      vscode.commands.registerCommand('gitorial.unstageFile', (item: ChangeTreeItem) => provider.unstageFile(item)),
+      vscode.commands.registerCommand('gitorial.discardChanges', (item: ChangeTreeItem) => provider.discardChanges(item)),
+      vscode.commands.registerCommand('gitorial.stageAll', () => provider.stageAll()),
+      vscode.commands.registerCommand('gitorial.unstageAll', () => provider.unstageAll()),
+      vscode.commands.registerCommand('gitorial.commit', () => provider.commit())
     );
   }
 }

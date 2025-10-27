@@ -42,7 +42,7 @@ import {
 import { WebviewPanelManager } from '@ui/webview/WebviewPanelManager';
 import { TutorialAuthoringService } from '@domain/services/authoring/TutorialAuthoringService';
 import { AuthoringDraftRepository } from '@domain/repositories/AuthoringDraftRepository';
-import { ChangesTreeDataProvider } from '@ui/tutorial/tree-view/changes-tree-provider';
+import { ChangesWebviewProvider } from '@ui/tutorial/tree-view/changes-webview-provider';
 import { StepsTreeDataProvider } from '@ui/tutorial/tree-view/steps-tree-provider';
 import { DiffCommandHandler } from '@ui/tutorial/tree-view/diff-command-handler';
 import { StepTypeSelector } from '@ui/tutorial/tree-view/step-type-selector';
@@ -73,7 +73,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     authorModeController,
     userInteractionAdapter,
     workspacePath,
-    changesTreeDataProvider,
+    changesWebviewProvider,
     stepsTreeDataProvider,
   } = application;
 
@@ -92,21 +92,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
   console.log('📖 Registering URI handler...');
   uriHandler.register(context);
 
-  console.log('📖 Registering tree view providers...');
-  const changesTreeView = vscode.window.createTreeView('gitorial-changes', {
-    treeDataProvider : changesTreeDataProvider,
-    showCollapseAll  : false,
-  });
+  console.log('📖 Registering webview and tree view providers...');
 
+  // Register the webview provider for Changes
+  context.subscriptions.push(vscode.window.registerWebviewViewProvider('gitorial-changes-webview', changesWebviewProvider));
+
+  // Register the tree view for Steps
   const stepsTreeView = vscode.window.createTreeView('gitorial-steps', {
     treeDataProvider : stepsTreeDataProvider,
     showCollapseAll  : true,
   });
 
-  context.subscriptions.push(changesTreeView, stepsTreeView);
-
-  console.log('📖 Registering changes tree view commands...');
-  ChangesTreeDataProvider.registerCommands(context, changesTreeDataProvider);
+  context.subscriptions.push(stepsTreeView);
 
   console.log('📖 Registering diff command handler...');
   const { workspaceGitOperations } = application;
@@ -285,16 +282,16 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // Update the webview panel manager with the real message handler
   webviewPanelManager.updateMessageHandler(webviewMessageHandler.handleMessage.bind(webviewMessageHandler));
 
-  // --- Tree Data Providers ---
+  // --- Webview and Tree Data Providers ---
   const workspaceGitOperations = gitOperationsFactory.fromPath(workspacePath);
   const stepTypeSelector = StepTypeSelector.register(context, workspaceGitOperations, workspacePath);
-  const changesTreeDataProvider = new ChangesTreeDataProvider(workspaceGitOperations, workspacePath, stepTypeSelector);
+  const changesWebviewProvider = new ChangesWebviewProvider(
+    workspaceGitOperations,
+    stepTypeSelector,
+    workspacePath,
+    context.extensionUri
+  );
   const stepsTreeDataProvider = new StepsTreeDataProvider(gitOperationsFactory, workspacePath);
-
-  // Wire up the step type selector to refresh the tree view when changes occur
-  stepTypeSelector.setOnChangeCallback(() => {
-    changesTreeDataProvider.refresh();
-  });
 
   return {
     tutorialController,
@@ -305,7 +302,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     userInteractionAdapter,
     authorModeController,
     workspacePath,
-    changesTreeDataProvider,
+    changesWebviewProvider,
     stepsTreeDataProvider,
     workspaceGitOperations,
   } as const;

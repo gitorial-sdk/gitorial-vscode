@@ -86,9 +86,9 @@
     "views": {
       "gitorial-view": [
         {
-          "id": "gitorial-changes",
+          "type": "webview",
+          "id": "gitorial-changes-webview",
           "name": "Changes",
-          "icon": "assets/icons/tree-view.svg",
           "contextualTitle": "Gitorial Changes"
         },
         {
@@ -178,6 +178,11 @@
         "command": "gitorial.unstageAll",
         "title": "Gitorial: Unstage All Changes",
         "icon": "$(remove)"
+      },
+      {
+        "command": "gitorial.commit",
+        "title": "Gitorial: Commit Changes",
+        "icon": "$(check)"
       }
     ],
     "menus": {
@@ -211,14 +216,19 @@
           "group": "navigation"
         },
         {
+          "command": "gitorial.commit",
+          "when": "view == gitorial-changes",
+          "group": "navigation@1"
+        },
+        {
           "command": "gitorial.stageAll",
           "when": "view == gitorial-changes",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "gitorial.unstageAll",
           "when": "view == gitorial-changes",
-          "group": "navigation"
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
