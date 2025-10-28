@@ -118,7 +118,8 @@
       bind:value={commitMessage}
       placeholder="Enter step message..."
       rows="3"
-    />
+    >
+    </textarea>
   </div>
 
   <!-- Commit Button -->
@@ -131,7 +132,7 @@
 
   <!-- Staged Changes -->
   <div class="file-section">
-    <div class="section-header" onclick={() => stagedCollapsed = !stagedCollapsed}>
+    <div class="section-header" onclick={() => stagedCollapsed = !stagedCollapsed} >
       <div class="section-title">
         <span class="collapse-icon">{stagedCollapsed ? '▶' : '▼'}</span>
         <span>Staged Changes</span>
