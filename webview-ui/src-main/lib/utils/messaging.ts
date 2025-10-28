@@ -1,5 +1,5 @@
 import type { UI } from '@gitorial/shared-types';
-import { vscode } from '../vscode';
+import { vscode } from '@shared/utils/vscode';
 import { v4 as uuidv4 } from 'uuid';
 import { resolveConfirmPromise } from '../stores/systemStore.svelte';
 

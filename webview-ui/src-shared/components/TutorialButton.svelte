@@ -7,12 +7,12 @@
   const { label, disabled, onClick }: Props = $props();
 </script>
 
-<button onclick={onClick} {disabled}>
+<button class="tutorial-btn" onclick={onClick} {disabled}>
   {label}
 </button>
 
 <style>
-  button {
+  .tutorial-btn {
     margin: 0 8px;
     padding: 4px 12px;
     background: var(--vscode-button-background);
@@ -21,7 +21,7 @@
     border-radius: 2px;
     cursor: pointer;
   }
-  button:disabled {
+  .tutorial-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

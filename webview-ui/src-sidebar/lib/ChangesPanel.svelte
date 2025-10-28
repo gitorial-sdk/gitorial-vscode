@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { vscode } from '../../src/lib/vscode';
+  import { vscode } from '@shared/utils/vscode';
   import { Domain } from '@gitorial/shared-types';
   import TreeItem from './TreeItem.svelte';
   import Tab from './Tab.svelte';

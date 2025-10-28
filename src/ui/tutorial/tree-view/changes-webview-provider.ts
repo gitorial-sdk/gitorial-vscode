@@ -113,8 +113,7 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
       });
 
       // Unstaged changes (not staged)
-      const unstagedChanges = [
-        ...status.modified
+      const unstagedChanges = [...status.modified
           .filter(f => !status.staged.includes(f))
           .map(f => ({ path: f, status: 'M' })),
         ...status.untracked
@@ -226,7 +225,9 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
    * Open a file in the editor
    */
   private async openFile(filePath: string): Promise<void> {
-    await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(path.join(this.workspacePath, filePath)), { preview: false });
+    await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(path.join(this.workspacePath, filePath)), {
+      preview : false,
+    });
   }
 
   /**

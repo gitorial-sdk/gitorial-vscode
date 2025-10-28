@@ -6,6 +6,13 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [svelte()],
   base: './', // Use relative paths for VS Code webview compatibility
+  resolve: {
+    alias: {
+      '@shared': resolve(__dirname, './src-shared'),
+      '@main': resolve(__dirname, './src-main'),
+      '@sidebar': resolve(__dirname, './src-sidebar'),
+    }
+  },
   build: {
     rollupOptions: {
       input: {
