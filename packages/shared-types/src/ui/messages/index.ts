@@ -1,6 +1,7 @@
 export * from './TutorialMessages';
 export * from './SystemMessages';
 export * from './AuthorMessages';
+export * from './SidebarMessages';
 
 import type { ExtensionToWebviewTutorialMessage, WebviewToExtensionTutorialMessage } from './TutorialMessages';
 import type { ExtensionToWebviewSystemMessageAll, WebviewToExtensionSystemMessageAll } from './SystemMessages';

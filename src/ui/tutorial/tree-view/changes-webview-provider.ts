@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { IGitOperations } from '@domain/ports/IGitOperations';
 import { StepTypeSelector } from './step-type-selector';
+import { UI } from '@gitorial/shared-types';
 
 /**
  * WebviewView provider for the Changes view
@@ -124,15 +125,17 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
       ];
 
       // Send update to webview
-      await this.view.webview.postMessage({
-        command : 'update',
-        data    : {
+      const data: UI.Messages.ExtensionToSidebarMessage = {
+        type     : 'data-update',
+        category : 'sidebar',
+        payload  : {
           staged             : stagedWithStatus,
           changes            : unstagedChanges,
           currentStepType    : currentStepType,
           currentStepMessage : currentMessage,
         },
-      });
+      };
+      await this.view.webview.postMessage(data);
     } catch (error) {
       console.error('Failed to refresh webview:', error);
     }
@@ -236,13 +239,13 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
   private getHtmlContent(webview: vscode.Webview): string {
     const svelteAppBuildPath = vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist');
     const svelteAppDiskPath = svelteAppBuildPath.fsPath;
-    const indexHtmlPath = path.join(svelteAppDiskPath, 'changes.html');
+    const indexHtmlPath = path.join(svelteAppDiskPath, 'sidebar.html');
 
     let htmlContent: string;
     try {
       htmlContent = fs.readFileSync(indexHtmlPath, 'utf8');
     } catch (e) {
-      console.error(`Error reading changes.html from ${indexHtmlPath}: ${e}`);
+      console.error(`Error reading sidebar.html from ${indexHtmlPath}: ${e}`);
       return `<!DOCTYPE html><html><body>Error loading webview content. Details: ${e}</body></html>`;
     }
 
@@ -256,8 +259,8 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
     const relativeJsPath = jsMatch ? jsMatch[1] : null;
 
     if (!relativeCssPath || !relativeJsPath) {
-      console.error('Could not extract CSS or JS paths from changes.html');
-      return '<!DOCTYPE html><html><body>Error parsing changes.html</body></html>';
+      console.error('Could not extract CSS or JS paths from sidebar.html');
+      return '<!DOCTYPE html><html><body>Error parsing sidebar.html</body></html>';
     }
 
     // Create webview URIs

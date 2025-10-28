@@ -1,52 +1,26 @@
 <script lang="ts">
   import { vscode } from '@shared/utils/vscode';
   import { Domain } from '@gitorial/shared-types';
+  import type { UI } from '@gitorial/shared-types';
   import TreeItem from './TreeItem.svelte';
   import Tab from './Tab.svelte';
   import Button from './Button.svelte';
+  import { sidebarStore } from './stores/sidebarStore.svelte';
 
-  // State
-  let stepType = $state<Domain.Commit.Type>('solution');
-  let stepMessage = $state('');
-  let stagedFiles = $state<Array<{ path: string; status: string }>>([]);
-  let unstagedFiles = $state<Array<{ path: string; status: string }>>([]);
-  let stagedCollapsed = $state(false);
-  let changesCollapsed = $state(false);
 
   // Available step types
   const stepTypes: readonly Domain.Commit.Type[] = Domain.Commit.Types;
 
   // Listen for messages from extension
-  window.addEventListener('message', (event) => {
+  window.addEventListener('message', (event: MessageEvent<UI.Messages.ExtensionToSidebarMessage>) => {
     const message = event.data;
     console.log('ChangesPanel received message:', message);
-
-    switch (message.command) {
-      case 'update':
-        stagedFiles = message.data.staged || [];
-        unstagedFiles = message.data.changes || [];
-        stepType = message.data.currentStepType || 'solution';
-        stepMessage = message.data.currentStepMessage || '';
-        console.log('Updated state:', { stagedFiles, unstagedFiles, stepType, stepMessage });
-        break;
-    }
+    sidebarStore.handleMessage(message);
   });
 
   // Handlers
   function handleValidate() {
-    if (!stepMessage.trim()) {
-      vscode.postMessage({
-        command: 'showError',
-        message: 'Commit message cannot be empty'
-      });
-      return;
-    }
-
-    vscode.postMessage({
-      command: 'validateStep',
-      stepType,
-      message: stepMessage.trim()
-    });
+    sidebarStore.validate();
   }
 
   function stageFile(file: string) {
@@ -92,7 +66,7 @@
   <!-- Step Type Selection -->
   <div class="section">
     <label for="stepType">Step Type</label>
-    <select id="stepType" bind:value={stepType}>
+    <select id="stepType" bind:value={sidebarStore.stepType}>
       {#each stepTypes as type}
         <option value={type}>{type}</option>
       {/each}
@@ -104,7 +78,7 @@
     <label for="stepMessage">Step Message</label>
     <textarea
       id="stepMessage"
-      bind:value={stepMessage}
+      bind:value={sidebarStore.stepMessage}
       placeholder="Enter step message..."
       rows="3"
     ></textarea>
@@ -116,7 +90,7 @@
       label="Validate"
       icon="validate"
       onClick={handleValidate}
-      disabled={!stepMessage.trim() || stagedFiles.length === 0}
+      disabled={!sidebarStore.stepMessage.trim() || sidebarStore.stagedFiles.length === 0}
     />
   </div>
 
@@ -124,15 +98,15 @@
   <div class="file-section">
     <Tab
       title="Staged Changes"
-      count={stagedFiles.length}
-      isCollapsed={stagedCollapsed}
-      onToggle={() => stagedCollapsed = !stagedCollapsed}
+      count={sidebarStore.stagedFiles.length}
+      isCollapsed={sidebarStore.stagedCollapsed}
+      onToggle={() => sidebarStore.stagedCollapsed = !sidebarStore.stagedCollapsed}
       actions={[{icon: 'remove', label: 'Unstage All Changes', onClick: unstageAll}]}
     />
 
-    {#if !stagedCollapsed}
+    {#if !sidebarStore.stagedCollapsed}
       <ul class="file-list">
-        {#each stagedFiles as file}
+        {#each sidebarStore.stagedFiles as file}
           <TreeItem
             fileName={getFileName(file.path)}
             filePath={file.path}
@@ -150,15 +124,15 @@
   <div class="file-section">
     <Tab
       title="Changes"
-      count={unstagedFiles.length}
-      isCollapsed={changesCollapsed}
-      onToggle={() => changesCollapsed = !changesCollapsed}
+      count={sidebarStore.unstagedFiles.length}
+      isCollapsed={sidebarStore.changesCollapsed}
+      onToggle={() => sidebarStore.changesCollapsed = !sidebarStore.changesCollapsed}
       actions={[{icon: 'add', label: 'Stage All Changes', onClick: stageAll}]}
     />
 
-    {#if !changesCollapsed}
+    {#if !sidebarStore.changesCollapsed}
       <ul class="file-list">
-        {#each unstagedFiles as file}
+        {#each sidebarStore.unstagedFiles as file}
           <TreeItem
             fileName={getFileName(file.path)}
             filePath={file.path}
