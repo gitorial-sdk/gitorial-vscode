@@ -2,28 +2,49 @@
   "name": "@gitorial/shared-types",
   "version": "1.0.0",
   "description": "Shared type definitions for Gitorial packages",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
   "files": [
     "dist/**/*"
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./ui/messages": {
-      "types": "./dist/ui/messages/index.d.ts",
-      "default": "./dist/ui/messages/index.js"
+      "import": {
+        "types": "./dist/esm/ui/messages/index.d.ts",
+        "default": "./dist/esm/ui/messages/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/ui/messages/index.d.ts",
+        "default": "./dist/cjs/ui/messages/index.js"
+      }
     },
     "./ui/viewmodels": {
-      "types": "./dist/ui/viewmodels/index.d.ts",
-      "default": "./dist/ui/viewmodels/index.js"
+      "import": {
+        "types": "./dist/esm/ui/viewmodels/index.d.ts",
+        "default": "./dist/esm/ui/viewmodels/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/ui/viewmodels/index.d.ts",
+        "default": "./dist/cjs/ui/viewmodels/index.js"
+      }
     }
   },
   "scripts": {
-    "build": "tsc",
-    "build:watch": "tsc --watch",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:watch": "tsc -p tsconfig.esm.json --watch",
     "clean": "rm -rf dist"
   },
   "keywords": [

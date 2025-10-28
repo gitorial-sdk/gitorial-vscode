@@ -1,8 +1,9 @@
 <script lang="ts">
   import { vscode } from '../../src/lib/vscode';
+  import { Domain } from '@gitorial/shared-types';
 
   // State
-  let stepType = $state('solution');
+  let stepType = $state<Domain.Commit.Type>('solution');
   let commitMessage = $state('');
   let stagedFiles = $state<Array<{ path: string; status: string }>>([]);
   let unstagedFiles = $state<Array<{ path: string; status: string }>>([]);
@@ -10,7 +11,7 @@
   let changesCollapsed = $state(false);
 
   // Available step types
-  const stepTypes = ['section', 'template', 'solution', 'action', 'readme'];
+  const stepTypes: readonly Domain.Commit.Type[] = Domain.Commit.Types;
 
   // Listen for messages from extension
   window.addEventListener('message', (event) => {
