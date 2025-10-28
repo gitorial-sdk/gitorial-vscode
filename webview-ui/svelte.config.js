@@ -15,6 +15,10 @@ export default {
       if (warning.code === 'a11y_no_static_element_interactions') return false;
       // Disable aria-label warnings for buttons with icons
       if (warning.code === 'a11y_consider_explicit_label') return false;
+      // Disable warnings about non-interactive elements with event listeners
+      if (warning.code === 'a11y_no_noninteractive_element_interactions') return false;
+      // Disable warnings about non-interactive elements with interactive roles
+      if (warning.code === 'a11y_no_noninteractive_element_to_interactive_role') return false;
 
       return true;
     }

@@ -75,6 +75,9 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
           case 'refresh':
             await this.refresh();
             break;
+          case 'openFile':
+            await this.openFile(message.filePath);
+            break;
         }
       } catch (error) {
         console.error('Error handling webview message:', error);
@@ -96,24 +99,37 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
       const currentStepType = this.stepTypeSelector.getCurrentStepType();
       const currentMessage = this.stepTypeSelector.getCurrentStepMessage();
 
-			// Format data for Svelte component
-			const changes = [
-				...status.modified
-					.filter(f => !status.staged.includes(f))
-					.map(f => ({ path: f, status: 'modified' })),
-				...status.untracked
-					.map(f => ({ path: f, status: 'untracked' })),
-				...status.deleted
-					.filter(f => !status.staged.includes(f))
-					.map(f => ({ path: f, status: 'deleted' }))
-			];
+      // Determine the original status for each staged file
+      // A staged file can be: modified (M), deleted (D), or new/untracked (U/A)
+      const stagedWithStatus = status.staged.map(file => {
+        if (status.deleted.includes(file)) {
+          return { path: file, status: 'D' };
+        } else if (status.modified.includes(file)) {
+          return { path: file, status: 'M' };
+        } else {
+          // If it's staged but not in modified/deleted, it's a new file (Added)
+          return { path: file, status: 'U' };
+        }
+      });
+
+      // Unstaged changes (not staged)
+      const unstagedChanges = [
+        ...status.modified
+          .filter(f => !status.staged.includes(f))
+          .map(f => ({ path: f, status: 'M' })),
+        ...status.untracked
+          .map(f => ({ path: f, status: 'U' })),
+        ...status.deleted
+          .filter(f => !status.staged.includes(f))
+          .map(f => ({ path: f, status: 'D' })),
+      ];
 
       // Send update to webview
       await this.view.webview.postMessage({
         command : 'update',
         data    : {
-          staged             : status.staged.map(f => ({ path: f, status: 'staged' })),
-          changes            : changes,
+          staged             : stagedWithStatus,
+          changes            : unstagedChanges,
           currentStepType    : currentStepType,
           currentStepMessage : currentMessage,
         },
@@ -207,6 +223,13 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * Open a file in the editor
+   */
+  private async openFile(filePath: string): Promise<void> {
+    await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(path.join(this.workspacePath, filePath)), { preview: false });
+  }
+
+  /**
    * Generate HTML content for the webview using the built Svelte app
    */
   private getHtmlContent(webview: vscode.Webview): string {
@@ -241,7 +264,7 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
     const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(svelteAppBuildPath, relativeJsPath));
 
     const nonce = this.getNonce();
-    const csp = `default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data:; font-src ${webview.cspSource};`;
+    const csp = `default-src 'none'; style-src ${webview.cspSource} https://microsoft.github.io 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data:; font-src ${webview.cspSource} https://microsoft.github.io;`;
 
     // Remove original tags
     htmlContent = htmlContent.replace(/<script.*?src=".*?"[^>]*><\/script>/g, '');

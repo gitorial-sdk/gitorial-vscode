@@ -1,10 +1,13 @@
 <script lang="ts">
   import { vscode } from '../../src/lib/vscode';
   import { Domain } from '@gitorial/shared-types';
+  import TreeItem from './TreeItem.svelte';
+  import Tab from './Tab.svelte';
+  import Button from './Button.svelte';
 
   // State
   let stepType = $state<Domain.Commit.Type>('solution');
-  let commitMessage = $state('');
+  let stepMessage = $state('');
   let stagedFiles = $state<Array<{ path: string; status: string }>>([]);
   let unstagedFiles = $state<Array<{ path: string; status: string }>>([]);
   let stagedCollapsed = $state(false);
@@ -16,7 +19,6 @@
   // Listen for messages from extension
   window.addEventListener('message', (event) => {
     const message = event.data;
-
     console.log('ChangesPanel received message:', message);
 
     switch (message.command) {
@@ -24,15 +26,15 @@
         stagedFiles = message.data.staged || [];
         unstagedFiles = message.data.changes || [];
         stepType = message.data.currentStepType || 'solution';
-        commitMessage = message.data.currentStepMessage || '';
-        console.log('Updated state:', { stagedFiles, unstagedFiles, stepType, commitMessage });
+        stepMessage = message.data.currentStepMessage || '';
+        console.log('Updated state:', { stagedFiles, unstagedFiles, stepType, stepMessage });
         break;
     }
   });
 
   // Handlers
-  function handleCommit() {
-    if (!commitMessage.trim()) {
+  function handleValidate() {
+    if (!stepMessage.trim()) {
       vscode.postMessage({
         command: 'showError',
         message: 'Commit message cannot be empty'
@@ -41,9 +43,9 @@
     }
 
     vscode.postMessage({
-      command: 'commit',
+      command: 'validateStep',
       stepType,
-      message: commitMessage.trim()
+      message: stepMessage.trim()
     });
   }
 
@@ -71,26 +73,12 @@
     vscode.postMessage({ command: 'unstageAll' });
   }
 
-  function getFileIcon(path: string): string {
-    const ext = path.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'ts': case 'tsx': return 'symbol-method';
-      case 'js': case 'jsx': return 'symbol-method';
-      case 'json': return 'symbol-namespace';
-      case 'md': return 'markdown';
-      case 'css': case 'scss': return 'symbol-color';
-      case 'html': return 'symbol-misc';
-      default: return 'file';
-    }
+  function openFile(file: string) {
+    vscode.postMessage({command: 'openFile', filePath: file});
   }
 
-  function getStatusLabel(status: string): string {
-    switch (status) {
-      case 'modified': return 'M';
-      case 'untracked': return 'U';
-      case 'deleted': return 'D';
-      default: return status.charAt(0).toUpperCase();
-    }
+  function getFileName(filePath: string): string {
+    return filePath.split('/').pop() || filePath;
   }
 
   // Notify extension that webview is ready
@@ -111,121 +99,76 @@
     </select>
   </div>
 
-  <!-- Commit Message -->
+  <!-- Step Message -->
   <div class="section">
-    <label for="commitMessage">Commit Message</label>
+    <label for="stepMessage">Step Message</label>
     <textarea
-      id="commitMessage"
-      bind:value={commitMessage}
+      id="stepMessage"
+      bind:value={stepMessage}
       placeholder="Enter step message..."
       rows="3"
-    >
-    </textarea>
+    ></textarea>
   </div>
 
   <!-- Commit Button -->
   <div class="section">
-    <button class="commit-btn" onclick={handleCommit}>
-      <span class="codicon codicon-check"></span>
-      Commit
-    </button>
+    <Button
+      label="Validate"
+      icon="validate"
+      onClick={handleValidate}
+      disabled={!stepMessage.trim() || stagedFiles.length === 0}
+    />
   </div>
 
   <!-- Staged Changes -->
   <div class="file-section">
-    <div class="section-header" onclick={() => stagedCollapsed = !stagedCollapsed} >
-      <div class="section-title">
-        <span class="collapse-icon">{stagedCollapsed ? '▶' : '▼'}</span>
-        <span>Staged Changes</span>
-      </div>
-      <span class="count-badge">{stagedFiles.length}</span>
-    </div>
+    <Tab
+      title="Staged Changes"
+      count={stagedFiles.length}
+      isCollapsed={stagedCollapsed}
+      onToggle={() => stagedCollapsed = !stagedCollapsed}
+      actions={[{icon: 'remove', label: 'Unstage All Changes', onClick: unstageAll}]}
+    />
 
     {#if !stagedCollapsed}
       <ul class="file-list">
         {#each stagedFiles as file}
-          <li class="file-item">
-            <span class="codicon codicon-{getFileIcon(file.path)} file-icon"></span>
-            <span class="file-name">{file.path}</span>
-            <span class="file-status status-staged">staged</span>
-            <div class="file-actions">
-              <button
-                class="action-icon"
-                onclick={() => openDiff(file.path)}
-                title="Open Changes"
-              >
-                <span class="codicon codicon-go-to-file"></span>
-              </button>
-              <button
-                class="action-icon"
-                onclick={() => unstageFile(file.path)}
-                title="Unstage"
-              >
-                <span class="codicon codicon-remove"></span>
-              </button>
-            </div>
-          </li>
+          <TreeItem
+            fileName={getFileName(file.path)}
+            filePath={file.path}
+            status={file.status as 'M' | 'U' | 'D'}
+            onOpenFile={openFile}
+            onOpenDiff={openDiff}
+            onUnstage={unstageFile}
+          />
         {/each}
-        {#if stagedFiles.length > 0}
-          <li class="file-item action-row">
-            <button class="link-button" onclick={unstageAll}>
-              Unstage All Changes
-            </button>
-          </li>
-        {/if}
       </ul>
     {/if}
   </div>
 
   <!-- Changes -->
   <div class="file-section">
-    <div class="section-header" onclick={() => changesCollapsed = !changesCollapsed}>
-      <div class="section-title">
-        <span class="collapse-icon">{changesCollapsed ? '▶' : '▼'}</span>
-        <span>Changes</span>
-      </div>
-      <span class="count-badge">{unstagedFiles.length}</span>
-    </div>
+    <Tab
+      title="Changes"
+      count={unstagedFiles.length}
+      isCollapsed={changesCollapsed}
+      onToggle={() => changesCollapsed = !changesCollapsed}
+      actions={[{icon: 'add', label: 'Stage All Changes', onClick: stageAll}]}
+    />
 
     {#if !changesCollapsed}
       <ul class="file-list">
         {#each unstagedFiles as file}
-          <li class="file-item">
-            <span class="codicon codicon-{getFileIcon(file.path)} file-icon"></span>
-            <span class="file-name">{file.path}</span>
-            <span class="file-status status-{file.status}">{getStatusLabel(file.status)}</span>
-            <div class="file-actions">
-              <button
-                class="action-icon"
-                onclick={() => openDiff(file.path)}
-                title="Open Changes"
-              >
-                <span class="codicon codicon-go-to-file"></span>
-              </button>
-              <button
-                class="action-icon"
-                onclick={() => stageFile(file.path)}
-                title="Stage Changes"
-              >
-                <span class="codicon codicon-add"></span>
-              </button>
-              <button
-                class="action-icon"
-                onclick={() => discardChanges(file.path)}
-                title="Discard Changes"
-              >
-                <span class="codicon codicon-discard"></span>
-              </button>
-            </div>
-          </li>
+          <TreeItem
+            fileName={getFileName(file.path)}
+            filePath={file.path}
+            status={file.status as 'M' | 'U' | 'D'}
+            onOpenFile={openFile}
+            onOpenDiff={openDiff}
+            onStage={stageFile}
+            onDiscard={discardChanges}
+          />
         {/each}
-        {#if unstagedFiles.length > 0}
-          <li class="file-item action-row">
-            <button class="link-button" onclick={stageAll}>
-              Stage All Changes
-            </button>
-          </li>
-        {/if}
       </ul>
     {/if}
   </div>
@@ -275,160 +218,13 @@
     min-height: 60px;
   }
 
-  .commit-btn {
-    width: 100%;
-    padding: 6px 12px;
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border: none;
-    border-radius: 2px;
-    cursor: pointer;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
-
-  .commit-btn:hover {
-    background: var(--vscode-button-hoverBackground);
-  }
-
   .file-section {
     margin-top: 16px;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 8px;
-    cursor: pointer;
-    user-select: none;
-    background: var(--vscode-sideBarSectionHeader-background);
-    border-top: 1px solid var(--vscode-sideBarSectionHeader-border);
-  }
-
-  .section-header:hover {
-    background: var(--vscode-list-hoverBackground);
-  }
-
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-  }
-
-  .collapse-icon {
-    font-size: 10px;
-  }
-
-  .count-badge {
-    background: var(--vscode-badge-background);
-    color: var(--vscode-badge-foreground);
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
   }
 
   .file-list {
     list-style: none;
     padding: 0;
     margin: 0;
-  }
-
-  .file-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    cursor: pointer;
-  }
-
-  .file-item:hover {
-    background: var(--vscode-list-hoverBackground);
-  }
-
-  .file-icon {
-    flex-shrink: 0;
-    opacity: 0.8;
-  }
-
-  .file-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .file-status {
-    font-size: 10px;
-    padding: 2px 4px;
-    border-radius: 2px;
-    font-weight: 600;
-  }
-
-  .status-M {
-    color: var(--vscode-gitDecoration-modifiedResourceForeground);
-  }
-
-  .status-U {
-    color: var(--vscode-gitDecoration-untrackedResourceForeground);
-  }
-
-  .status-D {
-    color: var(--vscode-gitDecoration-deletedResourceForeground);
-  }
-
-  .status-staged {
-    color: var(--vscode-gitDecoration-addedResourceForeground);
-  }
-
-  .file-actions {
-    display: flex;
-    gap: 2px;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .file-item:hover .file-actions {
-    opacity: 1;
-  }
-
-  .action-icon {
-    background: transparent;
-    border: none;
-    padding: 2px 4px;
-    cursor: pointer;
-    color: var(--vscode-foreground);
-    display: flex;
-    align-items: center;
-  }
-
-  .action-icon:hover {
-    background: var(--vscode-toolbar-hoverBackground);
-  }
-
-  .action-row {
-    justify-content: center;
-    padding: 8px;
-    border-top: 1px solid var(--vscode-sideBarSectionHeader-border);
-  }
-
-  .link-button {
-    background: transparent;
-    border: none;
-    color: var(--vscode-textLink-foreground);
-    cursor: pointer;
-    font-size: 12px;
-    text-decoration: underline;
-  }
-
-  .link-button:hover {
-    color: var(--vscode-textLink-activeForeground);
   }
 </style>
