@@ -42,21 +42,23 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.getHtmlContent(webviewView.webview);
 
     // Handle messages from the webview
-    webviewView.webview.onDidReceiveMessage(async message => {
+    webviewView.webview.onDidReceiveMessage(async (message: UI.Messages.SidebarToExtensionMessage) => {
+      console.log('changes webview provider: onDidReceiveMessage');
+      console.log(message);
       try {
-        switch (message.command) {
+        switch (message.type) {
           case 'ready':
             // Webview is ready, send initial data
             await this.refresh();
             break;
           case 'commit':
-            await this.handleCommit(message.stepType, message.message);
+            await this.handleCommit(message.payload.stepType, message.payload.message);
             break;
           case 'stageFile':
-            await this.stageFile(message.filePath);
+            await this.stageFile(message.payload.filePath);
             break;
           case 'unstageFile':
-            await this.unstageFile(message.filePath);
+            await this.unstageFile(message.payload.filePath);
             break;
           case 'stageAll':
             await this.stageAll();
@@ -65,19 +67,19 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
             await this.unstageAll();
             break;
           case 'openDiff':
-            await this.openDiff(message.filePath);
+            await this.openDiff(message.payload.filePath);
             break;
           case 'discardChanges':
-            await this.discardChanges(message.filePath);
+            await this.discardChanges(message.payload.filePath);
             break;
           case 'showError':
-            vscode.window.showErrorMessage(message.message);
+            vscode.window.showErrorMessage(message.payload.message);
             break;
           case 'refresh':
             await this.refresh();
             break;
           case 'openFile':
-            await this.openFile(message.filePath);
+            await this.openFile(message.payload.filePath);
             break;
         }
       } catch (error) {
@@ -97,12 +99,12 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
 
     try {
       const status = await this.gitOperations.getWorkingDirectoryStatus();
-      const currentStepType = this.stepTypeSelector.getCurrentStepType();
-      const currentMessage = this.stepTypeSelector.getCurrentStepMessage();
+      const stepType = this.stepTypeSelector.getCurrentStepType();
+      const stepMessage = this.stepTypeSelector.getCurrentStepMessage();
 
       // Determine the original status for each staged file
       // A staged file can be: modified (M), deleted (D), or new/untracked (U/A)
-      const stagedWithStatus = status.staged.map(file => {
+      const stagedFiles = status.staged.map(file => {
         if (status.deleted.includes(file)) {
           return { path: file, status: 'D' };
         } else if (status.modified.includes(file)) {
@@ -114,7 +116,7 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
       });
 
       // Unstaged changes (not staged)
-      const unstagedChanges = [...status.modified
+      const unstagedFiles = [...status.modified
           .filter(f => !status.staged.includes(f))
           .map(f => ({ path: f, status: 'M' })),
         ...status.untracked
@@ -129,10 +131,10 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
         type     : 'data-update',
         category : 'sidebar',
         payload  : {
-          staged             : stagedWithStatus,
-          changes            : unstagedChanges,
-          currentStepType    : currentStepType,
-          currentStepMessage : currentMessage,
+          stagedFiles,
+          unstagedFiles,
+          stepType,
+          stepMessage,
         },
       };
       await this.view.webview.postMessage(data);

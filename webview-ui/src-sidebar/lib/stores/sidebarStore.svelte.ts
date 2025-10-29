@@ -48,33 +48,14 @@ export const sidebarStore = {
   },
 
   handleMessage(message: UI.Messages.ExtensionToSidebarMessage) {
-    console.log('SidebarStore: Received message:', message);
     switch (message.type) {
       case 'data-update':
-        //TODO: rename the variables to make it easier to identify them across the app
-        // furthermore we can than move on to just descruct
-        // sidebarState = {sidebarState, ...message.payload};
-        sidebarState.stagedFiles = message.payload.staged;
-        sidebarState.unstagedFiles = message.payload.changes;
-        sidebarState.stepType = message.payload.currentStepType;
-        sidebarState.stepMessage = message.payload.currentStepMessage;
-
+        sidebarState = { ...sidebarState, ...message.payload };
         break;
+      default:
+        console.warn('Unknown message received: ', message);
     }
   },
 
-  validate() {
-    if (!sidebarStore.stepMessage.trim()) {
-      sendMessage({
-        type    : 'showError',
-        payload : { message: 'Commit message cannot be empty' },
-      });
-      return;
-    }
-
-    sendMessage({
-      type    : 'validate',
-      payload : { stepType: this.stepType, message: this.stepMessage.trim() },
-    });
-  },
+  validate() {},
 } as const;

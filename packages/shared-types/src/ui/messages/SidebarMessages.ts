@@ -5,10 +5,10 @@
 import { Commit } from '../../domain';
 
 interface SidebarData {
-  staged             : Array<{ path: string; status: string }>;
-  changes            : Array<{ path: string; status: string }>;
-  currentStepType    : Commit.Type;
-  currentStepMessage : string;
+  stagedFiles   : Array<{ path: string; status: string }>;
+  unstagedFiles : Array<{ path: string; status: string }>;
+  stepType      : Commit.Type;
+  stepMessage   : string;
 }
 
 // Extension → Webview Tutorial Messages

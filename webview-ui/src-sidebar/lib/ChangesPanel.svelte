@@ -1,64 +1,48 @@
 <script lang="ts">
-  import { vscode } from '@shared/utils/vscode';
   import { Domain } from '@gitorial/shared-types';
   import type { UI } from '@gitorial/shared-types';
   import TreeItem from './TreeItem.svelte';
   import Tab from './Tab.svelte';
   import Button from './Button.svelte';
   import { sidebarStore } from './stores/sidebarStore.svelte';
+  import { sendMessage } from './utils/messaging';
 
-
-  // Available step types
   const stepTypes: readonly Domain.Commit.Type[] = Domain.Commit.Types;
 
-  // Listen for messages from extension
   window.addEventListener('message', (event: MessageEvent<UI.Messages.ExtensionToSidebarMessage>) => {
     const message = event.data;
     console.log('ChangesPanel received message:', message);
     sidebarStore.handleMessage(message);
   });
 
-  // Handlers
   function handleValidate() {
-    sidebarStore.validate();
+    if (!sidebarStore.stepMessage.trim()) {
+      sendMessage({
+        type    : 'showError',
+        payload : { message: 'Commit message cannot be empty' },
+      });
+      return;
+    }
+
+    sendMessage({
+      type    : 'validate',
+      payload : { stepType: sidebarStore.stepType, message: sidebarStore.stepMessage.trim() },
+    });
   }
 
-  function stageFile(file: string) {
-    vscode.postMessage({ command: 'stageFile', filePath: file });
-  }
+  const stageFile = (file: string) => sendMessage({type: "stageFile", payload: { filePath: file }});
+  const unstageFile = (file: string) => sendMessage({type: "unstageFile", payload: { filePath: file }})
+  const discardChanges = (file: string) => sendMessage({type: "discardChanges", payload: { filePath: file }})
+  const openDiff = (file: string) => sendMessage({type: "openDiff", payload: { filePath: file }})
+  const openFile = (file: string) => sendMessage({type: "openFile", payload: { filePath: file }})
+  const stageAll = () => sendMessage({type: "stageAll" })
+  const unstageAll = () => sendMessage({type: "unstageAll" })
 
-  function unstageFile(file: string) {
-    vscode.postMessage({ command: 'unstageFile', filePath: file });
-  }
+  const getFileName = (filePath: string): string => filePath.split('/').pop() || filePath;
 
-  function discardChanges(file: string) {
-    vscode.postMessage({ command: 'discardChanges', filePath: file });
-  }
-
-  function openDiff(file: string) {
-    vscode.postMessage({ command: 'openDiff', filePath: file });
-  }
-
-  function stageAll() {
-    vscode.postMessage({ command: 'stageAll' });
-  }
-
-  function unstageAll() {
-    vscode.postMessage({ command: 'unstageAll' });
-  }
-
-  function openFile(file: string) {
-    vscode.postMessage({command: 'openFile', filePath: file});
-  }
-
-  function getFileName(filePath: string): string {
-    return filePath.split('/').pop() || filePath;
-  }
-
-  // Notify extension that webview is ready
   $effect(() => {
     console.log('ChangesPanel ready, sending ready message');
-    vscode.postMessage({ command: 'ready' });
+    sendMessage({type: "ready" })
   });
 </script>
 
