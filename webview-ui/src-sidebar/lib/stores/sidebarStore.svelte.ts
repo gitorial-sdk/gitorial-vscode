@@ -1,5 +1,4 @@
 import type { UI, Domain } from '@gitorial/shared-types';
-import { sendMessage } from '../utils/messaging';
 
 interface SidebarState {
   stepType         : Domain.Commit.Type;
@@ -25,8 +24,14 @@ export const sidebarStore = {
   get stepType() {
     return sidebarState.stepType;
   },
+  set stepType(v) {
+    sidebarState.stepType = v;
+  },
   get stepMessage() {
     return sidebarState.stepMessage;
+  },
+  set stepMessage(v) {
+    sidebarState.stepMessage = v;
   },
   get stagedFiles() {
     return sidebarState.stagedFiles;

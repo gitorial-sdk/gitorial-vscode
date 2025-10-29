@@ -37,6 +37,7 @@
   const openFile = (file: string) => sendMessage({type: "openFile", payload: { filePath: file }})
   const stageAll = () => sendMessage({type: "stageAll" })
   const unstageAll = () => sendMessage({type: "unstageAll" })
+  const discardAllUnstaged = () => sendMessage({type: "discardAllUnstaged" })
 
   const getFileName = (filePath: string): string => filePath.split('/').pop() || filePath;
 
@@ -111,7 +112,11 @@
       count={sidebarStore.unstagedFiles.length}
       isCollapsed={sidebarStore.changesCollapsed}
       onToggle={() => sidebarStore.changesCollapsed = !sidebarStore.changesCollapsed}
-      actions={[{icon: 'add', label: 'Stage All Changes', onClick: stageAll}]}
+      actions={
+      [
+        {icon: 'add', label: 'Stage All Changes', onClick: stageAll},
+        {icon: 'discard', label: 'Discard All Changes', onClick: discardAllUnstaged}
+        ]}
     />
 
     {#if !sidebarStore.changesCollapsed}

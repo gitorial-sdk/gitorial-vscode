@@ -25,6 +25,7 @@ export type SidebarToExtensionMessage =
   | { category: 'sidebar'; type: 'unstageAll' }
   | { category: 'sidebar'; type: 'openDiff'; payload: { filePath: string } }
   | { category: 'sidebar'; type: 'discardChanges'; payload: { filePath: string } }
+  | { category: 'sidebar'; type: 'discardAllUnstaged' }
   | { category: 'sidebar'; type: 'showError'; payload: { message: string } }
   | { category: 'sidebar'; type: 'refresh' }
   | { category: 'sidebar'; type: 'openFile'; payload: { filePath: string } };

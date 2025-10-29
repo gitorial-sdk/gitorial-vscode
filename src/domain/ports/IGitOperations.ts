@@ -419,6 +419,12 @@ export interface IGitOperations {
   reset(options: string[]): Promise<void>;
 
   /**
+   * Discard changes in specific files (restore from HEAD)
+   * @param filePaths Array of file paths to discard changes for
+   */
+  discardChanges(filePaths: string[]): Promise<void>;
+
+  /**
    * Push a branch to the remote repository
    * @param branchName The name of the branch to push
    * @param force Whether to force push (optional)

@@ -183,6 +183,11 @@
         "command": "gitorial.commit",
         "title": "Gitorial: Commit Changes",
         "icon": "$(check)"
+      },
+      {
+        "command": "gitorial.resetAll",
+        "title": "Gitorial: Discard All Changes",
+        "icon": "$(discard)"
       }
     ],
     "menus": {
@@ -216,19 +221,24 @@
           "group": "navigation"
         },
         {
-          "command": "gitorial.commit",
-          "when": "view == gitorial-changes",
+          "command": "gitorial.resetAll",
+          "when": "view == gitorial-changes-webview",
           "group": "navigation@1"
         },
         {
-          "command": "gitorial.stageAll",
+          "command": "gitorial.commit",
           "when": "view == gitorial-changes",
           "group": "navigation@2"
         },
         {
-          "command": "gitorial.unstageAll",
+          "command": "gitorial.stageAll",
           "when": "view == gitorial-changes",
           "group": "navigation@3"
+        },
+        {
+          "command": "gitorial.unstageAll",
+          "when": "view == gitorial-changes",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [

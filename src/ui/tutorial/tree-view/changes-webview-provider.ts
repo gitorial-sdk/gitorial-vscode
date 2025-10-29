@@ -72,6 +72,9 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
           case 'discardChanges':
             await this.discardChanges(message.payload.filePath);
             break;
+          case 'discardAllUnstaged':
+            await this.discardAllUnstaged();
+            break;
           case 'showError':
             vscode.window.showErrorMessage(message.payload.message);
             break;
@@ -220,9 +223,53 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
     );
 
     if (confirm === 'Discard Changes') {
-      await this.gitOperations.reset(['--', filePath]);
+      await this.gitOperations.discardChanges([filePath]);
       await this.refresh();
       vscode.window.showInformationMessage(`Discarded changes in ${fileName}`);
+    }
+  }
+
+  /**
+   * Discard all unstaged changes (does not affect staged files)
+   */
+  private async discardAllUnstaged(): Promise<void> {
+    const status = await this.gitOperations.getWorkingDirectoryStatus();
+    const unstagedCount =
+      status.modified.filter(f => !status.staged.includes(f)).length +
+      status.untracked.length +
+      status.deleted.filter(f => !status.staged.includes(f)).length;
+
+    if (unstagedCount === 0) {
+      vscode.window.showInformationMessage('No unstaged changes to discard');
+      return;
+    }
+
+    const confirm = await vscode.window.showWarningMessage(
+      `Are you sure you want to discard ALL ${unstagedCount} unstaged change(s)? This action cannot be undone.`,
+      { modal: true },
+      'Discard All Unstaged'
+    );
+
+    if (confirm === 'Discard All Unstaged') {
+      const stagedSet = new Set(status.staged);
+
+      // Get only unstaged modified/deleted files
+      const unstagedModified = status.modified.filter(f => !stagedSet.has(f));
+      const unstagedDeleted = status.deleted.filter(f => !stagedSet.has(f));
+      const unstagedFiles = [...unstagedModified, ...unstagedDeleted];
+
+      // Discard changes in unstaged tracked files
+      if (unstagedFiles.length > 0) {
+        await this.gitOperations.discardChanges(unstagedFiles);
+      }
+
+      // Clean untracked files (git clean -fd)
+      if (status.untracked.length > 0) {
+        await this.gitOperations.resetWorkingDirectory();
+      }
+
+      await this.refresh();
+      vscode.window.showInformationMessage('All unstaged changes have been discarded');
     }
   }
 
@@ -233,6 +280,26 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
     await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(path.join(this.workspacePath, filePath)), {
       preview : false,
     });
+  }
+
+  /**
+   * Reset all changes (unstage all staged files and discard all unstaged changes)
+   */
+  public async resetAll(): Promise<void> {
+    const confirm = await vscode.window.showWarningMessage(
+      'Are you sure you want to discard ALL changes? This will unstage all staged files and discard all unstaged changes.',
+      { modal: true },
+      'Discard All Changes'
+    );
+
+    if (confirm === 'Discard All Changes') {
+      // First, unstage all staged files
+      await this.gitOperations.reset(['HEAD']);
+      // Then, discard all unstaged changes
+      await this.gitOperations.resetWorkingDirectory();
+      await this.refresh();
+      vscode.window.showInformationMessage('All changes have been discarded');
+    }
   }
 
   /**

@@ -97,6 +97,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
   // Register the webview provider for Changes
   context.subscriptions.push(vscode.window.registerWebviewViewProvider('gitorial-changes-webview', changesWebviewProvider));
 
+  // Register commands for the Changes view
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gitorial.resetAll', async () => {
+      await changesWebviewProvider.resetAll();
+    })
+  );
+
   // Register the tree view for Steps
   const stepsTreeView = vscode.window.createTreeView('gitorial-steps', {
     treeDataProvider : stepsTreeDataProvider,

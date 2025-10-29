@@ -933,6 +933,19 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   }
 
   /**
+   * Discard changes in specific files (restore from HEAD)
+   * Uses git checkout HEAD -- <file> to restore files to their committed state
+   * @param filePaths Array of file paths to discard changes for
+   */
+  public async discardChanges(filePaths: string[]): Promise<void> {
+    if (filePaths.length === 0) {
+      return;
+    }
+    // Use git checkout HEAD -- <files> to restore files from HEAD
+    await this.git.checkout(['HEAD', '--', ...filePaths]);
+  }
+
+  /**
    * Capture current changes in the working directory
    * @returns Object containing modified, added, and deleted files with their content
    */
