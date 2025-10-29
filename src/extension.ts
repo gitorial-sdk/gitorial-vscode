@@ -95,7 +95,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
   console.log('📖 Registering webview and tree view providers...');
 
   // Register the webview provider for Changes
-  context.subscriptions.push(vscode.window.registerWebviewViewProvider('gitorial-changes-webview', changesWebviewProvider));
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('gitorial-changes-webview', changesWebviewProvider),
+    changesWebviewProvider // Add the provider itself to dispose its file watcher
+  );
 
   // Register commands for the Changes view
   context.subscriptions.push(

@@ -55,6 +55,7 @@ export const sidebarStore = {
   handleMessage(message: UI.Messages.ExtensionToSidebarMessage) {
     switch (message.type) {
       case 'data-update':
+      case 'file-data-update':
         sidebarState = { ...sidebarState, ...message.payload };
         break;
       default:

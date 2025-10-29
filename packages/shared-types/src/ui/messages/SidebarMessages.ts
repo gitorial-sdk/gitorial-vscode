@@ -12,7 +12,13 @@ interface SidebarData {
 }
 
 // Extension → Webview Tutorial Messages
-export type ExtensionToSidebarMessage = { category: 'sidebar'; type: 'data-update'; payload: SidebarData };
+export type ExtensionToSidebarMessage =
+  | { category: 'sidebar'; type: 'data-update'; payload: SidebarData }
+  | {
+      category : 'sidebar';
+      type     : 'file-data-update';
+      payload  : { stagedFiles: Array<{ path: string; status: string }>; unstagedFiles: Array<{ path: string; status: string }> };
+    };
 
 // Webview → Extension Tutorial Messages
 export type SidebarToExtensionMessage =

@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { IGitOperations } from '@domain/ports/IGitOperations';
 import { StepTypeSelector } from './step-type-selector';
 import { UI } from '@gitorial/shared-types';
+import { GitRepositoryWatcher } from '@ui/tutorial/tree-view/git/git-repository-watcher';
 
 /**
  * WebviewView provider for the Changes view
@@ -11,6 +12,7 @@ import { UI } from '@gitorial/shared-types';
  */
 export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
+  private gitWatcher: GitRepositoryWatcher;
 
   constructor(
     private readonly gitOperations: IGitOperations,
@@ -22,6 +24,17 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
     this.stepTypeSelector.setOnChangeCallback(() => {
       this.refresh();
     });
+
+    // Set up Git repository watcher
+    this.gitWatcher = new GitRepositoryWatcher(this.workspacePath, () => this.refreshOnGitFileStatusChange());
+    this.gitWatcher.start();
+  }
+
+  /**
+   * Clean up resources
+   */
+  public dispose(): void {
+    this.gitWatcher.dispose();
   }
 
   /**
@@ -138,6 +151,54 @@ export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
           unstagedFiles,
           stepType,
           stepMessage,
+        },
+      };
+      await this.view.webview.postMessage(data);
+    } catch (error) {
+      console.error('Failed to refresh webview:', error);
+    }
+  }
+
+  async refreshOnGitFileStatusChange(): Promise<void> {
+    console.log('refreshing git file status');
+    if (!this.view) {
+      return;
+    }
+
+    try {
+      const status = await this.gitOperations.getWorkingDirectoryStatus();
+
+      // Determine the original status for each staged file
+      // A staged file can be: modified (M), deleted (D), or new/untracked (U/A)
+      const stagedFiles = status.staged.map(file => {
+        if (status.deleted.includes(file)) {
+          return { path: file, status: 'D' };
+        } else if (status.modified.includes(file)) {
+          return { path: file, status: 'M' };
+        } else {
+          // If it's staged but not in modified/deleted, it's a new file (Added)
+          return { path: file, status: 'U' };
+        }
+      });
+
+      // Unstaged changes (not staged)
+      const unstagedFiles = [...status.modified
+          .filter(f => !status.staged.includes(f))
+          .map(f => ({ path: f, status: 'M' })),
+        ...status.untracked
+          .map(f => ({ path: f, status: 'U' })),
+        ...status.deleted
+          .filter(f => !status.staged.includes(f))
+          .map(f => ({ path: f, status: 'D' })),
+      ];
+
+      // Send update to webview
+      const data: UI.Messages.ExtensionToSidebarMessage = {
+        type     : 'file-data-update',
+        category : 'sidebar',
+        payload  : {
+          stagedFiles,
+          unstagedFiles,
         },
       };
       await this.view.webview.postMessage(data);

@@ -16,6 +16,9 @@
     "node": ">=20.0.0",
     "pnpm": ">=10.0.0"
   },
+  "extensionDependencies": [
+    "vscode.git"
+  ],
   "scripts": {
     "// Development": "=== Development Commands ===",
     "dev": "pnpm run build:shared && pnpm run build:watch",
