@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { IGitOperations } from '@domain/ports/IGitOperations';
+import { Domain } from '@gitorial/shared-types';
 
-type StepType = 'section' | 'template' | 'solution' | 'action' | 'readme';
+type StepType = Domain.Commit.Type;
 
 const STEP_TYPE_LABELS: Record<StepType, { label: string; description: string; icon: string }> = {
   section : {

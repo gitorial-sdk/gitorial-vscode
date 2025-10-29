@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { IGitOperations } from '@domain/ports/IGitOperations';
-import { StepTypeSelector } from './step-type-selector';
+import { StepTypeSelector } from './StepTypeSelector';
 import { UI } from '@gitorial/shared-types';
 import { GitRepositoryWatcher } from '@ui/tutorial/tree-view/git/git-repository-watcher';
 
@@ -10,7 +10,7 @@ import { GitRepositoryWatcher } from '@ui/tutorial/tree-view/git/git-repository-
  * WebviewView provider for the Changes view
  * Uses a Svelte-based UI for enhanced interactivity
  */
-export class ChangesWebviewProvider implements vscode.WebviewViewProvider {
+export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private gitWatcher: GitRepositoryWatcher;
 

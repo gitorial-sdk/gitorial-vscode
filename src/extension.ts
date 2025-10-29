@@ -42,10 +42,10 @@ import {
 import { WebviewPanelManager } from '@ui/webview/WebviewPanelManager';
 import { TutorialAuthoringService } from '@domain/services/authoring/TutorialAuthoringService';
 import { AuthoringDraftRepository } from '@domain/repositories/AuthoringDraftRepository';
-import { ChangesWebviewProvider } from '@ui/tutorial/tree-view/changes-webview-provider';
-import { StepsTreeDataProvider } from '@ui/tutorial/tree-view/steps-tree-provider';
-import { DiffCommandHandler } from '@ui/tutorial/tree-view/diff-command-handler';
-import { StepTypeSelector } from '@ui/tutorial/tree-view/step-type-selector';
+import { ChangesSidebarProvider } from '@ui/tutorial/tree-view/ChangesSidebarProvider';
+import { StepsTreeDataProvider } from '@ui/tutorial/tree-view/StepsTreeProvider';
+import { DiffCommandHandler } from '@ui/tutorial/tree-view/DiffCommandHandler';
+import { StepTypeSelector } from '@ui/tutorial/tree-view/StepTypeSelector';
 
 /**
 
@@ -295,7 +295,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // --- Webview and Tree Data Providers ---
   const workspaceGitOperations = gitOperationsFactory.fromPath(workspacePath);
   const stepTypeSelector = StepTypeSelector.register(context, workspaceGitOperations, workspacePath);
-  const changesWebviewProvider = new ChangesWebviewProvider(
+  const changesWebviewProvider = new ChangesSidebarProvider(
     workspaceGitOperations,
     stepTypeSelector,
     workspacePath,
