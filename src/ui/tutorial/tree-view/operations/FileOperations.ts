@@ -74,7 +74,7 @@ export class FileOperations {
 
     // Clean untracked files (git clean -fd)
     if (untrackedFiles.length > 0) {
-      await this.gitOps.resetWorkingDirectory();
+      await this.gitOps.cleanWorkingDirectory();
     }
 
     return ok();
