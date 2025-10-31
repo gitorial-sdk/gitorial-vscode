@@ -35,7 +35,7 @@ export class DiffCommandHandler {
   private contentProvider: GitFileContentProvider;
   private disposable: vscode.Disposable;
 
-  constructor(private readonly gitOperations: IGitOperations) {
+  constructor(gitOperations: IGitOperations) {
     this.contentProvider = new GitFileContentProvider(gitOperations);
     // Register the content provider for our custom scheme
     this.disposable = vscode.workspace.registerTextDocumentContentProvider('gitorial', this.contentProvider);

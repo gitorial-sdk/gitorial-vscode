@@ -13,7 +13,7 @@ export class StepTreeItem extends vscode.TreeItem {
     public readonly iconPath?: vscode.ThemeIcon,
     public readonly command?: vscode.Command,
     public readonly description?: string,
-    public readonly tooltip?: string
+    public readonly tooltip?: vscode.MarkdownString
   ) {
     super(label, collapsibleState);
     this.iconPath = iconPath;
@@ -167,7 +167,7 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
         icon,
         undefined,
         description,
-        tooltip.value
+        tooltip
       );
 
       // Add context value for menu items

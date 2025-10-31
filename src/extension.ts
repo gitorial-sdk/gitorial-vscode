@@ -294,7 +294,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
 
   // --- Webview and Tree Data Providers ---
   const workspaceGitOperations = gitOperationsFactory.fromPath(workspacePath);
-  const stepTypeSelector = StepTypeSelector.register(context, workspaceGitOperations, workspacePath);
+  const stepTypeSelector = new StepTypeSelector(workspaceGitOperations);
   const changesWebviewProvider = new ChangesSidebarProvider(
     workspaceGitOperations,
     stepTypeSelector,
