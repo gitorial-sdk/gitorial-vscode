@@ -23,24 +23,33 @@ export class StepTypeSelector {
   }
 
   /**
-   * Load the current step type and message from the latest commit message
+   * Load the current step type and message from the currently checked out commit message
    */
   private async loadCurrentStepType(): Promise<void> {
     try {
-      const commits = await this.gitOperations.getCommits();
-      if (commits.length > 0) {
-        const latestCommit = commits[0];
-        // Parse commit message to extract type (format: "type: title")
-        const match = latestCommit.message.match(/^(section|template|solution|action|readme):\s*(.+)/i);
-        if (match && (match[1].toLowerCase() !== this.currentStepType || match[2].trim() !== this.currentStepMessage)) {
-          this.currentStepType = match[1].toLowerCase() as StepType;
-          this.currentStepMessage = match[2].trim();
+      const currentCommitHash = await this.gitOperations.getCurrentCommitHash();
+      const currentCommitMessage = await this.gitOperations.getCommitMessage(currentCommitHash);
+      // Parse commit message to extract type (format: "type: title")
+      const match = currentCommitMessage.match(/^(section|template|solution|action|readme):\s*(.+)/i);
+      if (match) {
+        const newStepType = match[1].toLowerCase() as StepType;
+        const newStepMessage = match[2].trim();
+        if (newStepType !== this.currentStepType || newStepMessage !== this.currentStepMessage) {
+          this.currentStepType = newStepType;
+          this.currentStepMessage = newStepMessage;
           if (this.onChangeCallback) this.onChangeCallback();
         }
       }
     } catch (error) {
       console.error('Failed to load current step type:', error);
     }
+  }
+
+  /**
+   * Reload the step type and message from the currently checked out commit
+   */
+  async reloadFromCurrentCommit(): Promise<void> {
+    await this.loadCurrentStepType();
   }
 
   /**

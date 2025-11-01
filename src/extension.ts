@@ -46,6 +46,7 @@ import { ChangesSidebarProvider } from '@ui/tutorial/tree-view/ChangesSidebarPro
 import { StepsTreeDataProvider } from '@ui/tutorial/tree-view/StepsTreeProvider';
 import { DiffCommandHandler } from '@ui/tutorial/tree-view/DiffCommandHandler';
 import { StepTypeSelector } from '@ui/tutorial/tree-view/StepTypeSelector';
+import { StepsCommandHandler } from '@ui/tutorial/tree-view/StepsCommandHandler';
 
 /**
 
@@ -75,6 +76,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     workspacePath,
     changesWebviewProvider,
     stepsTreeDataProvider,
+    stepTypeSelector,
+    workspaceGitOperations,
   } = application;
 
   const commandHandler = new CommandHandler(
@@ -107,16 +110,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     })
   );
 
+  // Register steps command handler
+  const stepsCommandHandler = new StepsCommandHandler(
+    workspaceGitOperations,
+    stepsTreeDataProvider,
+    stepTypeSelector
+  );
+  stepsCommandHandler.register(context);
+
   // Register the tree view for Steps
   const stepsTreeView = vscode.window.createTreeView('gitorial-steps', {
     treeDataProvider : stepsTreeDataProvider,
     showCollapseAll  : true,
   });
 
-  context.subscriptions.push(stepsTreeView);
+  context.subscriptions.push(stepsTreeView, stepsTreeDataProvider);
 
   console.log('📖 Registering diff command handler...');
-  const { workspaceGitOperations } = application;
   DiffCommandHandler.register(context, workspaceGitOperations);
 
   await checkAndHandleAutoOpenState(tutorialController, autoOpenState);
@@ -314,6 +324,7 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
     workspacePath,
     changesWebviewProvider,
     stepsTreeDataProvider,
+    stepTypeSelector,
     workspaceGitOperations,
   } as const;
 }

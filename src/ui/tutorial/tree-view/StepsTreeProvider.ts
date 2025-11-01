@@ -25,8 +25,10 @@ export class StepTreeItem extends vscode.TreeItem {
 
 /**
  * Provides data for the Steps tree view
+ * Shows all commits from the gitorial branch (full branch lifetime)
+ * and highlights which commit is currently checked out
  */
-export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeItem> {
+export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<StepTreeItem | undefined | null | void> = new vscode.EventEmitter<
     StepTreeItem | undefined | null | void
   >();
@@ -34,6 +36,7 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
 
   private commits: DefaultLogFields[] = [];
   private currentCommitHash?: string;
+  private headWatcherInterval?: NodeJS.Timeout;
 
   constructor(
     private readonly gitOperationsFactory: IGitOperationsFactory,
@@ -41,6 +44,9 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
   ) {
     // Initial load
     this.loadCommits();
+
+    // Start watching for HEAD changes (commit checkouts)
+    this.startHeadWatcher();
   }
 
   /**
@@ -64,8 +70,15 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
         this.currentCommitHash = undefined;
       }
 
-      // Get all commits
-      const commits = await gitOps.getCommits();
+      // Get all commits from the gitorial branch (full branch lifetime)
+      let commits: DefaultLogFields[] = [];
+      try {
+        commits = await gitOps.getCommits('gitorial');
+      } catch (error) {
+        console.warn('Could not get commits from gitorial branch, falling back to current branch:', error);
+        // Fallback to current branch if gitorial branch doesn't exist or has issues
+        commits = await gitOps.getCommits();
+      }
       this.commits = commits;
 
       this._onDidChangeTreeData.fire();
@@ -81,6 +94,38 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
    */
   async refresh(): Promise<void> {
     await this.loadCommits();
+  }
+
+  /**
+   * Start watching for HEAD changes (commit checkouts)
+   * Polls every 2 seconds to detect when the current commit changes
+   */
+  private startHeadWatcher(): void {
+    // Check for HEAD changes every 2 seconds
+    this.headWatcherInterval = setInterval(async () => {
+      try {
+        const gitOps = this.gitOperationsFactory.fromPath(this.workspacePath);
+        const newCurrentCommitHash = await gitOps.getCurrentCommitHash();
+
+        // If the current commit hash changed, refresh the view
+        if (newCurrentCommitHash !== this.currentCommitHash) {
+          console.log('StepsTreeProvider: HEAD changed, refreshing...');
+          await this.refresh();
+        }
+      } catch (_error) {
+        // Ignore errors during periodic checks - they'll be caught during explicit refresh
+      }
+    }, 2000);
+  }
+
+  /**
+   * Dispose of resources
+   */
+  dispose(): void {
+    if (this.headWatcherInterval) {
+      clearInterval(this.headWatcherInterval);
+      this.headWatcherInterval = undefined;
+    }
   }
 
   /**
@@ -165,7 +210,11 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
         vscode.TreeItemCollapsibleState.None,
         commit.hash,
         icon,
-        undefined,
+        {
+          command: 'gitorial.checkoutStep',
+          title: 'Check Out Step',
+          arguments: [commit.hash]
+        },
         description,
         tooltip
       );
