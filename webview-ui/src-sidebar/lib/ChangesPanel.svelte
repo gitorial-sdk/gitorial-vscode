@@ -30,6 +30,21 @@
     });
   }
 
+  function handleCommit() {
+    if (!sidebarStore.hasChanges) {
+      sendMessage({
+        type    : 'showError',
+        payload : { message: 'No changes to save' },
+      });
+      return;
+    }
+
+    sendMessage({
+      type    : 'commit',
+      payload : { stepType: sidebarStore.stepType, message: sidebarStore.stepMessage.trim() },
+    });
+  }
+
   const stageFile = (file: string) => sendMessage({type: "stageFile", payload: { filePath: file }});
   const unstageFile = (file: string) => sendMessage({type: "unstageFile", payload: { filePath: file }})
   const discardChanges = (file: string) => sendMessage({type: "discardChanges", payload: { filePath: file }})
@@ -72,9 +87,9 @@
   <!-- Commit Button -->
   <div class="section">
     <Button
-      label="Validate"
-      icon="validate"
-      onClick={handleValidate}
+      label="Commit"
+      icon="pass"
+      onClick={handleCommit}
       disabled={!sidebarStore.hasChanges}
     />
   </div>

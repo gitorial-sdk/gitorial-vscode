@@ -45,12 +45,15 @@ export class WebviewHtmlBuilder {
     htmlContent = htmlContent.replace(/<script.*?src=".*?"[^>]*><\/script>/g, '');
     htmlContent = htmlContent.replace(/<link rel="stylesheet".*?href=".*?"[^>]*>/g, '');
 
+    // Ensure codicons CSS is always included
+    const codiconsLink = '<link rel="stylesheet" href="https://microsoft.github.io/vscode-codicons/dist/codicon.css">';
+
     // Inject with webview URIs
     htmlContent = htmlContent.replace(
       '</head>',
       `  <meta http-equiv="Content-Security-Policy" content="${csp}">\n` +
         `  <link rel="stylesheet" type="text/css" href="${cssUri}">\n` +
-        `  <link rel="stylesheet" href="https://microsoft.github.io/vscode-codicons/dist/codicon.css">\n` +
+        `  ${codiconsLink}\n` +
         '</head>'
     );
     htmlContent = htmlContent.replace(

@@ -34,4 +34,5 @@ export type SidebarToExtensionMessage =
   | { category: 'sidebar'; type: 'discardAllUnstaged' }
   | { category: 'sidebar'; type: 'showError'; payload: { message: string } }
   | { category: 'sidebar'; type: 'refresh' }
-  | { category: 'sidebar'; type: 'openFile'; payload: { filePath: string } };
+  | { category: 'sidebar'; type: 'openFile'; payload: { filePath: string } }
+  | { category: 'sidebar'; type: 'safe'; payload: { stepType: Commit.Type; message: string } };
