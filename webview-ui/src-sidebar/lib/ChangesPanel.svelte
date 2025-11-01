@@ -75,7 +75,7 @@
       label="Validate"
       icon="validate"
       onClick={handleValidate}
-      disabled={!sidebarStore.stepMessage.trim() || sidebarStore.stagedFiles.length === 0}
+      disabled={!sidebarStore.hasChanges}
     />
   </div>
 

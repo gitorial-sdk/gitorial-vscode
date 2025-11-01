@@ -9,6 +9,11 @@ interface SidebarState {
   changesCollapsed : boolean;
 }
 
+interface OriginalState {
+  stepType    : Domain.Commit.Type;
+  stepMessage : string;
+}
+
 const initialState: SidebarState = {
   stepType         : 'solution',
   stepMessage      : '',
@@ -19,6 +24,7 @@ const initialState: SidebarState = {
 };
 
 let sidebarState = $state<SidebarState>(initialState);
+let originalState = $state<OriginalState | null>(null);
 
 export const sidebarStore = {
   get stepType() {
@@ -55,12 +61,40 @@ export const sidebarStore = {
   handleMessage(message: UI.Messages.ExtensionToSidebarMessage) {
     switch (message.type) {
       case 'data-update':
+        sidebarState = { ...sidebarState, ...message.payload };
+        // Store original values when data is first loaded
+        if (originalState === null && message.payload.stepType && message.payload.stepMessage) {
+          originalState = {
+            stepType: message.payload.stepType,
+            stepMessage: message.payload.stepMessage,
+          };
+        }
+        break;
       case 'file-data-update':
         sidebarState = { ...sidebarState, ...message.payload };
         break;
       default:
         console.warn('Unknown message received: ', message);
     }
+  },
+
+  // Computed property to check if anything has changed
+  get hasChanges(): boolean {
+    // Always enable if there are staged files
+    if (sidebarState.stagedFiles.length > 0) {
+      return true;
+    }
+
+    // Check if original state exists (data has been loaded)
+    if (!originalState) {
+      return false;
+    }
+
+    // Check if step type or step message has changed
+    return (
+      sidebarState.stepType !== originalState.stepType ||
+      sidebarState.stepMessage.trim() !== originalState.stepMessage.trim()
+    );
   },
 
   validate() {},
