@@ -163,6 +163,10 @@
         "icon": "$(discard)"
       },
       {
+        "command": "gitorial.copyCommitHash",
+        "title": "Copy Commit Hash"
+      },
+      {
         "command": "gitorial.stageAll",
         "title": "Gitorial: Stage All Changes",
         "icon": "$(add)"
@@ -249,6 +253,11 @@
           "command": "gitorial.discardChanges",
           "when": "view == gitorial-changes && viewItem == unstagedFile",
           "group": "1_modification"
+        },
+        {
+          "command": "gitorial.copyCommitHash",
+          "when": "view == gitorial-steps && (viewItem == commit || viewItem == currentCommit)",
+          "group": "9_cutcopypaste"
         }
       ]
     },

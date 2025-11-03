@@ -211,9 +211,9 @@ export class StepsTreeDataProvider implements vscode.TreeDataProvider<StepTreeIt
         commit.hash,
         icon,
         {
-          command: 'gitorial.checkoutStep',
-          title: 'Check Out Step',
-          arguments: [commit.hash]
+          command   : 'gitorial.checkoutStep',
+          title     : 'Check Out Step',
+          arguments : [commit.hash],
         },
         description,
         tooltip

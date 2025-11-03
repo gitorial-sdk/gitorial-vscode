@@ -18,19 +18,58 @@ export class StepsCommandHandler {
    * Registers all step-related commands with the VS Code context.
    */
   public register(context: vscode.ExtensionContext): void {
-    const checkoutCommand = vscode.commands.registerCommand(
-      'gitorial.checkoutStep',
-      (commitHash: string) => this.handleCheckoutStep(commitHash)
+    const checkoutCommand = vscode.commands.registerCommand('gitorial.checkoutStep', (commitHash: string) =>
+      this.handleCheckoutStep(commitHash)
     );
 
-    context.subscriptions.push(checkoutCommand);
+    const copyHashCommand = vscode.commands.registerCommand('gitorial.copyCommitHash', (commitHash: string) =>
+      this.handleCopyCommitHash(commitHash)
+    );
+
+    context.subscriptions.push(checkoutCommand, copyHashCommand);
     console.log('Steps commands registered.');
   }
 
   /**
-   * Handles checking out a specific step/commit.
+   * Handles copying a commit hash to the clipboard.
+   * Can receive either a string (commit hash) or a StepTreeItem (from context menu).
    */
-  private async handleCheckoutStep(commitHash: string): Promise<void> {
+  private async handleCopyCommitHash(arg: string | any): Promise<void> {
+    let commitHash: string;
+
+    // Handle both direct string arguments and tree item arguments from context menu
+    if (typeof arg === 'string') {
+      commitHash = arg;
+    } else if (arg && typeof arg.commitHash === 'string') {
+      // From context menu - arg is the StepTreeItem
+      commitHash = arg.commitHash;
+    } else {
+      vscode.window.showErrorMessage('Could not determine commit hash to copy');
+      return;
+    }
+
+    const shortHash = commitHash.substring(0, 7);
+    await vscode.env.clipboard.writeText(shortHash);
+    vscode.window.showInformationMessage(`Copied commit hash: ${shortHash}`);
+  }
+
+  /**
+   * Handles checking out a specific step/commit.
+   * Can receive either a string (commit hash) or a StepTreeItem (from context menu).
+   */
+  private async handleCheckoutStep(arg: string | any): Promise<void> {
+    let commitHash: string;
+
+    // Handle both direct string arguments and tree item arguments from context menu
+    if (typeof arg === 'string') {
+      commitHash = arg;
+    } else if (arg && typeof arg.commitHash === 'string') {
+      // From context menu - arg is the StepTreeItem
+      commitHash = arg.commitHash;
+    } else {
+      vscode.window.showErrorMessage('Could not determine commit to check out');
+      return;
+    }
     const shortHash = commitHash.substring(0, 7);
 
     // Check if this commit is already checked out

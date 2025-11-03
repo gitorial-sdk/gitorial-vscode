@@ -111,11 +111,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
   );
 
   // Register steps command handler
-  const stepsCommandHandler = new StepsCommandHandler(
-    workspaceGitOperations,
-    stepsTreeDataProvider,
-    stepTypeSelector
-  );
+  const stepsCommandHandler = new StepsCommandHandler(workspaceGitOperations, stepsTreeDataProvider, stepTypeSelector);
   stepsCommandHandler.register(context);
 
   // Register the tree view for Steps
