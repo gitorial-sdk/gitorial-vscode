@@ -9,6 +9,7 @@ export interface SidebarState {
   mergeCollapsed      : boolean;
   stagedCollapsed     : boolean;
   changesCollapsed    : boolean;
+  //TODO              : remove and make a derived property instead
   commitEditingStatus : 'Conflict' | 'Success' | 'Saving' | 'Editing';
 }
 
@@ -87,6 +88,11 @@ export const sidebarStore = {
         break;
       case 'file-data-update':
         sidebarState = { ...sidebarState, ...message.payload };
+        if (message.payload.mergeFiles.length > 0) {
+          sidebarState.commitEditingStatus = 'Conflict';
+        } else if (sidebarState.commitEditingStatus === 'Conflict') {
+          sidebarState.commitEditingStatus = 'Editing';
+        }
         break;
       case 'commit-editing-conflict':
         sidebarState.commitEditingStatus = 'Conflict';

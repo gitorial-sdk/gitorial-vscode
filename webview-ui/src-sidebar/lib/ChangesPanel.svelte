@@ -95,13 +95,12 @@
       label="Commit"
       icon="pass"
       onClick={handleCommit}
-      disabled={!sidebarStore.hasChanges}
+      disabled={!sidebarStore.hasChanges || sidebarStore.commitEditingStatus !== 'Editing'}
     />
   </div>
 
 
   <!-- Merge Changes -->
-  <!-- TODO -->
    {#if sidebarStore.mergeFiles.length > 0}
   <div class="file-section">
     <Tab
@@ -117,7 +116,6 @@
     {#if !sidebarStore.mergeCollapsed}
       <ul class="file-list">
         {#each sidebarStore.mergeFiles as file}
-  <!-- TODO -->
           <TreeItem
             fileName={getFileName(file.path)}
             filePath={file.path}

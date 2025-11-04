@@ -74,16 +74,35 @@ export class SidebarMessageHandler {
 
   private async handleCommit(stepType: Domain.Commit.Type, message: string): Promise<void> {
     const checkedOutCommit = await this.gitOps.getCurrentCommitHash();
-    const amendResult = await this.commitOps.amend(message);
-    if (amendResult.isErr()) {
-      this.emitError(amendResult.error);
-      return;
-    }
+    const isRebaseInProgress = await this.gitOps.isRebaseInProgress();
+    const hasConflicts = await this.gitOps.hasRebaseConflicts();
 
-    const rebaseResult = await this.commitOps.rebaseOntoGitorial(checkedOutCommit);
-    if (rebaseResult.isErr()) {
-      this.emitError(rebaseResult.error);
-      return;
+    if (isRebaseInProgress) {
+      // We're in a rebase - user wants to continue (either after resolving conflicts or normally)
+      const rebaseContinueResult = await this.commitOps.rebaseContinue();
+      if (rebaseContinueResult.isErr()) {
+        this.emitError(rebaseContinueResult.error);
+        return;
+      }
+
+      const message = hasConflicts
+        ? 'Rebase conflicts resolved, continuing...'
+        : 'Continuing rebase...';
+      vscode.window.showInformationMessage(message);
+    } else {
+      // Normal commit workflow: amend current commit + rebase onto gitorial
+      const amendResult = await this.commitOps.amend(message);
+      if (amendResult.isErr()) {
+        this.emitError(amendResult.error);
+        return;
+      }
+
+      const rebaseResult = await this.commitOps.rebaseOntoGitorial(checkedOutCommit);
+      if (rebaseResult.isErr()) {
+        this.emitError(rebaseResult.error);
+        return;
+      }
+      vscode.window.showInformationMessage(`Applied changes to next step: ${stepType}: ${message}`);
     }
 
     // The RebaseWatcher will automatically detect conflicts or success and send
@@ -95,7 +114,6 @@ export class SidebarMessageHandler {
 
     // Refresh the UI to show the updated state
     await this.onRefresh();
-    vscode.window.showInformationMessage(`Applied changes to next step: ${stepType}: ${message}`);
   }
 
   private async handleUnstageFile(filePath: string) {

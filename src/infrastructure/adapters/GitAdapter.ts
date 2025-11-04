@@ -970,7 +970,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Continue an ongoing rebase operation after resolving conflicts
    */
   public async rebaseContinue(): Promise<void> {
-    await this.git.raw(['rebase', '--continue']);
+    await this.git.raw(['rebase', '--continue', '--no-edit']);
   }
 
   /**

@@ -37,6 +37,15 @@ export class CommitOperations {
     }
   }
 
+  async rebaseContinue(): Promise<Result<void, Error>> {
+    try {
+      await this.gitOps.rebaseContinue();
+      return ok(undefined);
+    } catch (e) {
+      return err(`Failed to continue rebase: ${e}`);
+    }
+  }
+
   async rebaseOntoGitorial(ontoCommit: string): Promise<Result<void, Error>> {
     try {
       await this.gitOps.rebaseOntoGitorial(ontoCommit);
