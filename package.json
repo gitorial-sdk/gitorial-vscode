@@ -49,8 +49,8 @@
     "clean": "rm -rf out dist node_modules/.cache packages/*/dist webview-ui/dist",
     "reset": "pnpm run clean && pnpm install && pnpm run build:shared",
     "// Formatting": "=== Code Formatting ===",
-    "format": "prettier --write src packages/shared-types/src && eslint --fix .",
-    "format:check": "prettier --check src packages/shared-types/src && eslint ."
+    "format": "prettier --write src packages/shared-types/src webview-ui/src-* && eslint --fix .",
+    "format:check": "prettier --check src packages/shared-types/src webview-ui/src-* && eslint ."
   },
   "categories": [
     "Education",
