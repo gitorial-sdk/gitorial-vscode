@@ -6,6 +6,7 @@
   import Button from './Button.svelte';
   import { sidebarStore } from './stores/sidebarStore.svelte';
   import { sendMessage } from './utils/messaging';
+  import StatusPanel from './StatusPanel.svelte';
 
   const stepTypes: readonly Domain.Commit.Type[] = Domain.Commit.Types;
 
@@ -39,6 +40,7 @@
       return;
     }
 
+    sidebarStore.commitEditingStatus = 'Saving';
     sendMessage({
       type    : 'commit',
       payload : { stepType: sidebarStore.stepType, message: sidebarStore.stepMessage.trim() },
@@ -63,6 +65,9 @@
 </script>
 
 <div class="changes-panel">
+  <!-- Status Panel -->
+  <StatusPanel status={sidebarStore.commitEditingStatus} />
+
   <!-- Step Type Selection -->
   <div class="section">
     <label for="stepType">Step Type</label>
@@ -94,6 +99,39 @@
     />
   </div>
 
+
+  <!-- Merge Changes -->
+  <!-- TODO -->
+   {#if sidebarStore.mergeFiles.length > 0}
+  <div class="file-section">
+    <Tab
+      title="Merge Changes"
+      count={sidebarStore.mergeFiles.length}
+      isCollapsed={sidebarStore.mergeCollapsed}
+      onToggle={() => sidebarStore.mergeCollapsed = !sidebarStore.mergeCollapsed}
+      actions={[
+        {icon: 'add', label: 'Stage All Merge Changes', onClick: () => null},
+        ]}
+    />
+
+    {#if !sidebarStore.mergeCollapsed}
+      <ul class="file-list">
+        {#each sidebarStore.mergeFiles as file}
+  <!-- TODO -->
+          <TreeItem
+            fileName={getFileName(file.path)}
+            filePath={file.path}
+            status={file.status as 'M' | 'U' | 'D' | 'C'}
+            onOpenFile={openFile}
+            onOpenDiff={openDiff}
+            onStage={stageFile}
+          />
+        {/each}
+      </ul>
+    {/if}
+  </div>
+  {/if}
+
   <!-- Staged Changes -->
   <div class="file-section">
     <Tab
@@ -101,7 +139,9 @@
       count={sidebarStore.stagedFiles.length}
       isCollapsed={sidebarStore.stagedCollapsed}
       onToggle={() => sidebarStore.stagedCollapsed = !sidebarStore.stagedCollapsed}
-      actions={[{icon: 'remove', label: 'Unstage All Changes', onClick: unstageAll}]}
+      actions={[
+        {icon: 'add', label: 'Stage Changes', onClick: unstageAll},
+        ]}
     />
 
     {#if !sidebarStore.stagedCollapsed}

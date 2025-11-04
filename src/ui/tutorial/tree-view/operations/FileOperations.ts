@@ -1,5 +1,5 @@
 import { IGitOperations } from '@domain/ports/IGitOperations';
-import { err, ok, Result } from 'neverthrow';
+import { ok, Result } from 'neverthrow';
 
 type Error = string;
 
@@ -37,9 +37,9 @@ export class FileOperations {
    * Used to check if there are changes to discard before showing confirmation dialog
    */
   async getUnstagedChangesInfo(): Promise<{
-    unstagedCount: number;
-    unstagedFiles: string[];
-    untrackedFiles: string[];
+    unstagedCount  : number;
+    unstagedFiles  : string[];
+    untrackedFiles : string[];
   }> {
     const status = await this.gitOps.getWorkingDirectoryStatus();
     const stagedSet = new Set(status.staged);
@@ -54,7 +54,7 @@ export class FileOperations {
     return {
       unstagedCount,
       unstagedFiles,
-      untrackedFiles: status.untracked,
+      untrackedFiles : status.untracked,
     };
   }
 
@@ -63,10 +63,7 @@ export class FileOperations {
    * @param unstagedFiles - List of unstaged tracked files (modified/deleted) to discard
    * @param untrackedFiles - List of untracked files to clean
    */
-  async discardAllUnstaged(
-    unstagedFiles: string[],
-    untrackedFiles: string[]
-  ): Promise<Result<void, Error>> {
+  async discardAllUnstaged(unstagedFiles: string[], untrackedFiles: string[]): Promise<Result<void, Error>> {
     // Discard changes in unstaged tracked files
     if (unstagedFiles.length > 0) {
       await this.gitOps.discardChanges(unstagedFiles);

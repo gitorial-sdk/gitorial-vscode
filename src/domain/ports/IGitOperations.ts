@@ -174,10 +174,11 @@ export interface DiffResult {
 }
 
 export interface WorkingDirectoryStatus {
-  staged    : string[];
-  untracked : string[];
-  deleted   : string[];
-  modified  : string[];
+  staged     : string[];
+  untracked  : string[];
+  deleted    : string[];
+  modified   : string[];
+  conflicted : string[];
 }
 
 /**
@@ -436,4 +437,41 @@ export interface IGitOperations {
    * @param branchName The name of the branch to pull from (optional, defaults to current)
    */
   pullLatest(branchName?: string): Promise<void>;
+
+  /**
+   * Amend the current commit with new message and/or staged changes
+   * @param newMessage Optional new commit message. If not provided, keeps current message
+   */
+  amendCommit(newMessage?: string): Promise<string>;
+
+  /**
+   * Rebase onto the gitorial branch
+   * @param ontoCommit The commit to rebase onto (e.g., 'HEAD~3' or 'abc1234')
+   */
+  rebaseOntoGitorial(ontoCommit: string): Promise<void>;
+
+  /**
+   * Abort an ongoing rebase operation
+   */
+  rebaseAbort(): Promise<void>;
+
+  /**
+   * Continue an ongoing rebase operation after resolving conflicts
+   */
+  rebaseContinue(): Promise<void>;
+
+  /**
+   * Check if a rebase operation is currently in progress
+   */
+  isRebaseInProgress(): Promise<boolean>;
+
+  /**
+   * Check if there are merge conflicts from an ongoing rebase
+   */
+  hasRebaseConflicts(): Promise<boolean>;
+
+  /**
+   * Get the list of files that are in conflict
+   */
+  getConflictFiles(): Promise<string[]>;
 }

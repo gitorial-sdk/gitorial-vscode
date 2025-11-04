@@ -5,6 +5,7 @@ export class GitStatusMapper {
   static mapToFileStatuses(status: WorkingDirectoryStatus): {
     stagedFiles   : FileStatus[];
     unstagedFiles : FileStatus[];
+    mergeFiles    : FileStatus[];
   } {
     const stagedFiles = status.staged.map(file => ({
       path   : file,
@@ -19,16 +20,20 @@ export class GitStatusMapper {
         .map(f => ({ path: f, status: 'D' }) satisfies FileStatus),
     ];
 
-    return { stagedFiles, unstagedFiles };
+    const mergeFiles: FileStatus[] = status.conflicted.map(f => ({ path: f, status: 'C' }) satisfies FileStatus);
+
+    return { stagedFiles, unstagedFiles, mergeFiles };
   }
 
-  private static determineFileStatus(file: string, status: WorkingDirectoryStatus): FileStatusCode {
+  static determineFileStatus(file: string, status: WorkingDirectoryStatus): FileStatusCode {
     if (status.deleted.includes(file)) {
       return 'D';
     } else if (status.modified.includes(file)) {
       return 'M';
     } else if (status.untracked.includes(file)) {
       return 'U';
+    } else if (status.conflicted.includes(file)) {
+      return 'C';
     } else {
       return 'U';
     }

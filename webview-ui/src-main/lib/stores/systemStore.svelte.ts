@@ -2,15 +2,15 @@ import type { UI } from '@gitorial/shared-types';
 import { sendMessage } from '../utils/messaging';
 
 interface SystemState {
-  isLoading: boolean;
-  lastError: string | null;
-  isAuthorMode: boolean;
+  isLoading    : boolean;
+  lastError    : string | null;
+  isAuthorMode : boolean;
 }
 
 const initialState: SystemState = {
-  isLoading: false,
-  lastError: null,
-  isAuthorMode: false,
+  isLoading    : false,
+  lastError    : null,
+  isAuthorMode : false,
 };
 
 let systemState = $state<SystemState>(initialState);
@@ -36,35 +36,35 @@ export const systemStore = {
   handleMessage(message: UI.Messages.ExtensionToWebviewSystemMessageAll) {
     console.log('SystemStore: Received message:', message);
     switch (message.type) {
-    case 'loading-state':
-      systemState.isLoading = message.payload.isLoading;
-      break;
+      case 'loading-state':
+        systemState.isLoading = message.payload.isLoading;
+        break;
 
-    case 'error':
-      systemState.lastError = message.payload.message;
-      break;
+      case 'error':
+        systemState.lastError = message.payload.message;
+        break;
 
-    case 'author-mode-changed':
-      systemState.isAuthorMode = message.payload.isActive;
-      break;
-    case 'confirmResult':
-      const id = (message as any).payload.id as string;
-      const confirmed = (message as any).payload.confirmed as boolean;
-      const resolver = pendingConfirms.get(id);
-      if (resolver) {
-        resolver(confirmed);
-        pendingConfirms.delete(id);
-      }
-      break;
+      case 'author-mode-changed':
+        systemState.isAuthorMode = message.payload.isActive;
+        break;
+      case 'confirmResult':
+        const id = (message as any).payload.id as string;
+        const confirmed = (message as any).payload.confirmed as boolean;
+        const resolver = pendingConfirms.get(id);
+        if (resolver) {
+          resolver(confirmed);
+          pendingConfirms.delete(id);
+        }
+        break;
     }
   },
 
   setError(message: string) {
     systemState.lastError = message;
     sendMessage({
-      category: 'system',
-      type: 'error',
-      payload: { message },
+      category : 'system',
+      type     : 'error',
+      payload  : { message },
     });
   },
 

@@ -864,10 +864,11 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   public async getWorkingDirectoryStatus(): Promise<WorkingDirectoryStatus> {
     const status = await this.git.status();
     return {
-      staged    : status.staged,
-      untracked : status.not_added,
-      deleted   : status.deleted,
-      modified  : status.modified,
+      staged     : status.staged,
+      untracked  : status.not_added,
+      deleted    : status.deleted,
+      modified   : status.modified,
+      conflicted : status.conflicted,
     };
   }
 
@@ -930,6 +931,46 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    */
   public async reset(options: string[]): Promise<void> {
     await this.git.reset(options);
+  }
+
+  /**
+   * Amend the current commit with new message and/or staged changes
+   * @param newMessage Optional new commit message. If not provided, keeps current message
+   */
+  public async amendCommit(newMessage?: string): Promise<string> {
+    const options: string[] = ['commit', '--amend'];
+
+    if (newMessage) {
+      options.push('-m', newMessage);
+    } else {
+      // If no message provided, use --no-edit to keep current message
+      options.push('--no-edit');
+    }
+
+    await this.git.raw(options);
+    return await this.git.revparse(['HEAD']);
+  }
+
+  /**
+   *
+   * @param ontoCommit The commit to rebase onto (e.g., 'HEAD~3' or 'abc1234')
+   */
+  public async rebaseOntoGitorial(ontoCommit: string): Promise<void> {
+    await this.git.raw(['rebase', '--onto', 'HEAD', ontoCommit, 'gitorial']);
+  }
+
+  /**
+   * Abort an ongoing rebase operation
+   */
+  public async rebaseAbort(): Promise<void> {
+    await this.git.raw(['rebase', '--abort']);
+  }
+
+  /**
+   * Continue an ongoing rebase operation after resolving conflicts
+   */
+  public async rebaseContinue(): Promise<void> {
+    await this.git.raw(['rebase', '--continue']);
   }
 
   /**
@@ -1046,6 +1087,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
    * Safely update a single step in the gitorial branch without corrupting other steps.
    * This prevents the cascade corruption issue that occurs when synthesizeGitorialBranch
    * is called with potentially corrupted commit hashes from the manifest.
+   * @deprecated manifest-based publishing will be removed in the future
    */
   public async updateSingleStepInGitorialBranch(
     stepIndex: number,
@@ -1078,6 +1120,7 @@ export class GitAdapter implements IGitOperations, IGitChanges {
   /**
    * Rebuild the gitorial branch from a manifest when publishing.
    * This creates a clean gitorial branch with the exact commits specified in the manifest.
+   * @deprecated manifest-based publishing will be removed in the future
    */
   public async rebuildGitorialBranchFromManifest(steps: Array<{ commit: string; type: string; title: string }>): Promise<void> {
     // Create backup of current gitorial branch
@@ -1177,6 +1220,65 @@ export class GitAdapter implements IGitOperations, IGitChanges {
 
       throw error;
     }
+  }
+
+  /**
+   * Check if a rebase operation is currently in progress
+   */
+  public async isRebaseInProgress(): Promise<boolean> {
+    try {
+      // Get the git directory path
+      const gitDirOutput = await this.git.raw(['rev-parse', '--git-dir']);
+      const gitDirPath = gitDirOutput.trim();
+      const absGitDirPath = path.isAbsolute(gitDirPath) ? gitDirPath : path.join(this.repoPath, gitDirPath);
+
+      // Check for rebase-merge directory
+      let rebaseMergeExists = false;
+      try {
+        const gitRebaseMergePath = path.join(absGitDirPath, 'rebase-merge');
+        await fs.promises.access(gitRebaseMergePath);
+        rebaseMergeExists = true;
+      } catch {
+        rebaseMergeExists = false;
+      }
+
+      // Check for rebase-apply directory
+      let rebaseApplyExists = false;
+      try {
+        const gitRebaseApplyPath = path.join(absGitDirPath, 'rebase-apply');
+        await fs.promises.access(gitRebaseApplyPath);
+        rebaseApplyExists = true;
+      } catch {
+        rebaseApplyExists = false;
+      }
+
+      return rebaseMergeExists || rebaseApplyExists;
+    } catch (error) {
+      console.error('GitAdapter: Error checking rebase status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if there are merge conflicts from an ongoing rebase
+   */
+  public async hasRebaseConflicts(): Promise<boolean> {
+    try {
+      // Check if we're in a rebase state and have conflicts
+      const status = await this.git.status();
+      return status.conflicted.length > 0 && (await this.isRebaseInProgress());
+    } catch (error) {
+      console.error('GitAdapter: Error checking rebase conflicts:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get the list of files that are in conflict
+   */
+  public async getConflictFiles(): Promise<string[]> {
+    const status = await this.git.status();
+    return status.conflicted;
   }
 }
 

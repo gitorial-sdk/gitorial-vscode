@@ -10,14 +10,14 @@ export function sendMessage(message: UI.Messages.WebviewToExtensionMessage) {
 
 export function requestConfirm(messageText: string, detail?: string): Promise<boolean> {
   const id = uuidv4();
-  return new Promise<boolean>((resolve) => {
+  return new Promise<boolean>(resolve => {
     // Register resolver to be called when extension replies
     resolveConfirmPromise(id, resolve);
     // Send request to extension
     vscode.postMessage({
-      category: 'system',
-      type: 'requestConfirm',
-      payload: { id, message: messageText, detail },
+      category : 'system',
+      type     : 'requestConfirm',
+      payload  : { id, message: messageText, detail },
     } as any);
   });
 }

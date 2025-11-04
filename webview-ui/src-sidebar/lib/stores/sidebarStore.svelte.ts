@@ -1,12 +1,15 @@
 import type { UI, Domain } from '@gitorial/shared-types';
 
-interface SidebarState {
-  stepType         : Domain.Commit.Type;
-  stepMessage      : string;
-  stagedFiles      : Array<{ path: string; status: string }>;
-  unstagedFiles    : Array<{ path: string; status: string }>;
-  stagedCollapsed  : boolean;
-  changesCollapsed : boolean;
+export interface SidebarState {
+  stepType            : Domain.Commit.Type;
+  stepMessage         : string;
+  stagedFiles         : Array<{ path: string; status: string }>;
+  unstagedFiles       : Array<{ path: string; status: string }>;
+  mergeFiles          : Array<{ path: string; status: string }>;
+  mergeCollapsed      : boolean;
+  stagedCollapsed     : boolean;
+  changesCollapsed    : boolean;
+  commitEditingStatus : 'Conflict' | 'Success' | 'Saving' | 'Editing';
 }
 
 interface OriginalState {
@@ -15,18 +18,27 @@ interface OriginalState {
 }
 
 const initialState: SidebarState = {
-  stepType         : 'solution',
-  stepMessage      : '',
-  stagedFiles      : [],
-  unstagedFiles    : [],
-  stagedCollapsed  : false,
-  changesCollapsed : false,
+  stepType            : 'solution',
+  stepMessage         : '',
+  stagedFiles         : [],
+  unstagedFiles       : [],
+  mergeFiles          : [],
+  mergeCollapsed      : false,
+  stagedCollapsed     : false,
+  changesCollapsed    : false,
+  commitEditingStatus : 'Editing',
 };
 
 let sidebarState = $state<SidebarState>(initialState);
 let originalState = $state<OriginalState | null>(null);
 
 export const sidebarStore = {
+  get commitEditingStatus() {
+    return sidebarState.commitEditingStatus;
+  },
+  set commitEditingStatus(v) {
+    sidebarState.commitEditingStatus = v;
+  },
   get stepType() {
     return sidebarState.stepType;
   },
@@ -45,6 +57,15 @@ export const sidebarStore = {
   get unstagedFiles() {
     return sidebarState.unstagedFiles;
   },
+  get mergeFiles() {
+    return sidebarState.mergeFiles;
+  },
+  get mergeCollapsed() {
+    return sidebarState.mergeCollapsed;
+  },
+  set mergeCollapsed(v) {
+    sidebarState.mergeCollapsed = v;
+  },
   get stagedCollapsed() {
     return sidebarState.stagedCollapsed;
   },
@@ -61,17 +82,18 @@ export const sidebarStore = {
   handleMessage(message: UI.Messages.ExtensionToSidebarMessage) {
     switch (message.type) {
       case 'data-update':
+        originalState = message.payload;
         sidebarState = { ...sidebarState, ...message.payload };
-        // Store original values when data is first loaded
-        if (originalState === null && message.payload.stepType && message.payload.stepMessage) {
-          originalState = {
-            stepType: message.payload.stepType,
-            stepMessage: message.payload.stepMessage,
-          };
-        }
         break;
       case 'file-data-update':
         sidebarState = { ...sidebarState, ...message.payload };
+        break;
+      case 'commit-editing-conflict':
+        sidebarState.commitEditingStatus = 'Conflict';
+        sidebarState.mergeFiles = message.payload.mergeFiles;
+        break;
+      case 'commit-editing-success':
+        sidebarState.commitEditingStatus = 'Success';
         break;
       default:
         console.warn('Unknown message received: ', message);
@@ -91,10 +113,7 @@ export const sidebarStore = {
     }
 
     // Check if step type or step message has changed
-    return (
-      sidebarState.stepType !== originalState.stepType ||
-      sidebarState.stepMessage.trim() !== originalState.stepMessage.trim()
-    );
+    return sidebarState.stepType !== originalState.stepType || sidebarState.stepMessage.trim() !== originalState.stepMessage.trim()
   },
 
   validate() {},

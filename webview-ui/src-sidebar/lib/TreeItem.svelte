@@ -7,7 +7,7 @@
   interface Props {
     fileName: string;
     filePath: string;
-    status: 'M' | 'U' | 'D';
+    status: 'M' | 'U' | 'D' | 'C';
     onOpenDiff: (path: string) => void;
     onOpenFile: (path: string) => void;
     onStage?: (path: string) => void;
@@ -39,11 +39,12 @@
     }
   }
 
-  function getStatusLabel(status: string): string {
+  function getStatusLabel(status: string): string | undefined {
     switch (status) {
       case 'M': return 'M';
       case 'U': return 'U';
       case 'D': return 'D';
+      case 'C': return undefined; // Conflicted files are not displayed in the tree with a status label
       default: return status.charAt(0).toUpperCase();
     }
   }

@@ -5,6 +5,7 @@ import { DiffOperations } from '../operations/DiffOperations';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { NavigationOperations } from '../operations/NavigationOperations';
+import { IGitOperations } from '@domain/ports/IGitOperations';
 
 export class SidebarMessageHandler {
   constructor(
@@ -12,6 +13,7 @@ export class SidebarMessageHandler {
     private readonly commitOps: CommitOperations,
     private readonly diffOps: DiffOperations,
     private readonly navOps: NavigationOperations,
+    private readonly gitOps: IGitOperations,
     private readonly onRefresh: () => Promise<void>
   ) {}
 
@@ -69,9 +71,33 @@ export class SidebarMessageHandler {
       this.emitError(result.error);
     }
   }
+
   private async handleCommit(stepType: Domain.Commit.Type, message: string): Promise<void> {
-    await this.commitOps.commit(stepType, message);
+    const checkedOutCommit = await this.gitOps.getCurrentCommitHash();
+    const amendResult = await this.commitOps.amend(message);
+    if (amendResult.isErr()) {
+      this.emitError(amendResult.error);
+      return;
+    }
+
+    const rebaseResult = await this.commitOps.rebaseOntoGitorial(checkedOutCommit);
+    if (rebaseResult.isErr()) {
+      this.emitError(rebaseResult.error);
+      return;
+    }
+
+    // The RebaseWatcher will automatically detect conflicts or success and send
+    // appropriate messages ('commit-editing-conflict' or 'commit-editing-success')
+    // to the webview when the rebase state changes.
+
+    // Give the watcher a moment to detect the state change
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Refresh the UI to show the updated state
+    await this.onRefresh();
+    vscode.window.showInformationMessage(`Applied changes to next step: ${stepType}: ${message}`);
   }
+
   private async handleUnstageFile(filePath: string) {
     const result = await this.fileOps.unstageFile(filePath);
     if (result.isOk()) {

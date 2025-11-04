@@ -3,6 +3,7 @@ import { IGitOperations } from '@domain/ports/IGitOperations';
 import { StepTypeSelector } from './StepTypeSelector';
 import { UI } from '@gitorial/shared-types';
 import { GitRepositoryWatcher } from '@ui/tutorial/tree-view/git/GitRepositoryWatcher';
+import { RebaseWatcher } from '@ui/tutorial/tree-view/git/RebaseWatcher';
 import { SidebarMessageHandler } from './messaging/SidebarMessageHandler';
 import { SidebarMessenger } from './messaging/SidebarMessenger';
 import { FileOperations } from './operations/FileOperations';
@@ -21,6 +22,7 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private sidebarMessanger?: SidebarMessenger;
   private gitWatcher: GitRepositoryWatcher;
+  private rebaseWatcher: RebaseWatcher;
   private sidebarMessageHandler: SidebarMessageHandler;
   private fileOps: FileOperations;
 
@@ -36,13 +38,22 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
     const navOps = new NavigationOperations(workspacePath);
     const onRefresh = () => this.refresh();
 
-    this.sidebarMessageHandler = new SidebarMessageHandler(this.fileOps, commitOps, diffOps, navOps, onRefresh);
+    this.sidebarMessageHandler = new SidebarMessageHandler(this.fileOps, commitOps, diffOps, navOps, gitOperations, onRefresh);
     // Bind to preserve `this` when invoked as a callback
     this.stepTypeSelector.setOnChangeCallback(this.refresh.bind(this));
 
     // Bind to preserve `this` inside the watcher callback
     this.gitWatcher = new GitRepositoryWatcher(this.workspacePath, this.refreshOnGitFileStatusChange.bind(this));
     this.gitWatcher.start();
+
+    // Set up rebase watcher to detect conflicts and success
+    this.rebaseWatcher = new RebaseWatcher(
+      this.workspacePath,
+      this.gitOperations,
+      this.handleRebaseConflict.bind(this),
+      this.handleRebaseSuccess.bind(this)
+    );
+    this.rebaseWatcher.start();
   }
 
   /**
@@ -50,6 +61,7 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
    */
   public dispose(): void {
     this.gitWatcher.dispose();
+    this.rebaseWatcher.dispose();
   }
 
   /**
@@ -89,7 +101,7 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
 
     try {
       const status = await this.gitOperations.getWorkingDirectoryStatus();
-      const { stagedFiles, unstagedFiles } = GitStatusMapper.mapToFileStatuses(status);
+      const { stagedFiles, unstagedFiles, mergeFiles } = GitStatusMapper.mapToFileStatuses(status);
       const stepType = this.stepTypeSelector.getCurrentStepType();
       const stepMessage = this.stepTypeSelector.getCurrentStepMessage();
 
@@ -99,6 +111,7 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
         payload  : {
           stagedFiles,
           unstagedFiles,
+          mergeFiles,
           stepType,
           stepMessage,
         },
@@ -117,8 +130,8 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
 
     try {
       const status = await this.gitOperations.getWorkingDirectoryStatus();
-      const { stagedFiles, unstagedFiles } = GitStatusMapper.mapToFileStatuses(status);
-      await this.sidebarMessanger.sendFileDataUpdate({ stagedFiles, unstagedFiles });
+      const { stagedFiles, unstagedFiles, mergeFiles } = GitStatusMapper.mapToFileStatuses(status);
+      await this.sidebarMessanger.sendFileDataUpdate({ stagedFiles, unstagedFiles, mergeFiles });
     } catch (error) {
       console.error('Failed to refresh webview:', error);
     }
@@ -142,6 +155,32 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
       } else {
         vscode.window.showInformationMessage(result.error);
       }
+    }
+  }
+
+  /**
+   * Handle rebase conflict detection
+   */
+  private async handleRebaseConflict(): Promise<void> {
+    console.log('ChangesSidebarProvider: Rebase conflict detected');
+    if (this.sidebarMessanger) {
+      const mergeFiles = await this.gitOperations.getConflictFiles();
+      const status = await this.gitOperations.getWorkingDirectoryStatus();
+      const fileStatus = mergeFiles.map(f => {
+        const fileStatus = GitStatusMapper.determineFileStatus(f, status);
+        return { path: f, status: fileStatus };
+      });
+      await this.sidebarMessanger.sendConflict(fileStatus);
+    }
+  }
+
+  /**
+   * Handle rebase success detection
+   */
+  private async handleRebaseSuccess(): Promise<void> {
+    console.log('ChangesSidebarProvider: Rebase completed successfully');
+    if (this.sidebarMessanger) {
+      await this.sidebarMessanger.sendSuccess();
     }
   }
 

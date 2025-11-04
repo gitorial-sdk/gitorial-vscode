@@ -7,6 +7,7 @@ import { Commit } from '../../domain';
 interface SidebarData {
   stagedFiles   : Array<{ path: string; status: string }>;
   unstagedFiles : Array<{ path: string; status: string }>;
+  mergeFiles    : Array<{ path: string; status: string }>;
   stepType      : Commit.Type;
   stepMessage   : string;
 }
@@ -17,7 +18,20 @@ export type ExtensionToSidebarMessage =
   | {
       category : 'sidebar';
       type     : 'file-data-update';
-      payload  : { stagedFiles: Array<{ path: string; status: string }>; unstagedFiles: Array<{ path: string; status: string }> };
+      payload  : {
+        stagedFiles   : Array<{ path: string; status: string }>;
+        unstagedFiles : Array<{ path: string; status: string }>;
+        mergeFiles    : Array<{ path: string; status: string }>;
+      };
+    }
+  | {
+      category : 'sidebar';
+      type     : 'commit-editing-conflict';
+      payload  : { mergeFiles: Array<{ path: string; status: string }> };
+    }
+  | {
+      category : 'sidebar';
+      type     : 'commit-editing-success';
     };
 
 // Webview → Extension Tutorial Messages
