@@ -474,4 +474,11 @@ export interface IGitOperations {
    * Get the list of files that are in conflict
    */
   getConflictFiles(): Promise<string[]>;
+
+  /**
+   * Get the commit hash of a specific branch
+   * @param branchName The name of the branch (e.g., 'gitorial', 'main')
+   * @returns The commit hash that the branch points to
+   */
+  getBranchCommitHash(branchName: string): Promise<string>;
 }

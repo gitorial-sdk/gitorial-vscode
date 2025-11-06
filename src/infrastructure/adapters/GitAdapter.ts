@@ -1280,6 +1280,16 @@ export class GitAdapter implements IGitOperations, IGitChanges {
     const status = await this.git.status();
     return status.conflicted;
   }
+
+  /**
+   * Get the commit hash of a specific branch
+   * @param branchName The name of the branch (e.g., 'gitorial', 'main')
+   * @returns The commit hash that the branch points to
+   */
+  public async getBranchCommitHash(branchName: string): Promise<string> {
+    return this.git.revparse([branchName]);
+  }
+
 }
 
 /**
