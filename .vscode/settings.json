@@ -1,45 +1,30 @@
-// Place your settings in this file to overwrite default and user settings.
 {
-  "files.exclude": {
-    "out": false // set this to true to hide the "out" folder with the compiled JS files
-  },
-  "search.exclude": {
-    "out": true // set this to false to include "out" folder in search results
-  },
-  // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-  "typescript.tsc.autoDetect": "off",
-  "gitorial.cloneLocation": "subdirectory",
-
-  // === UNIFIED FORMATTING CONFIGURATION ===
-
-  // ESLint Configuration
-  "eslint.format.enable": true,
-  "eslint.validate": ["javascript", "typescript"],
-
-  // Make ESLint the default formatter for TypeScript and JavaScript
-  "[typescript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-    "editor.formatOnSave": true
-  },
+  // Prettier as default formatter for JS/TS
   "[javascript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-    "editor.formatOnSave": true
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
   },
 
-  // Code Actions on Save (ESLint fixes)
+  // ESLint configuration - run on type, don't format
+  "eslint.run": "onType",
+  "eslint.format.enable": false,
+
+  // Prettier configuration
+  "prettier.configPath": ".prettierrc.json",
+
+  // General editor settings
+  "editor.formatOnSave": false, // Let language-specific settings handle this
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
-  },
-
-  // Disable VS Code's built-in TypeScript formatter to prevent conflicts
-  "typescript.format.enable": false,
-  "javascript.format.enable": false,
-
-  // General editor settings to match ESLint config
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.detectIndentation": false,
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true
+  }
 }
