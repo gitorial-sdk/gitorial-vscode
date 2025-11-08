@@ -4,10 +4,23 @@
 
 import { Commit } from '../../domain';
 
+/**
+ * A file in the source code
+ */
+export type SourceCodeFile = {
+  relativePath : string;
+  status       : SourceCodeFileStatus;
+};
+
+/**
+ * The status symbol (M = Modified, D = Deleted, U = New, C = Conflicted)
+ */
+export type SourceCodeFileStatus = 'M' | 'D' | 'U' | 'C';
+
 interface SidebarData {
-  stagedFiles   : Array<{ path: string; status: string }>;
-  unstagedFiles : Array<{ path: string; status: string }>;
-  mergeFiles    : Array<{ path: string; status: string }>;
+  stagedFiles   : Array<SourceCodeFile>;
+  unstagedFiles : Array<SourceCodeFile>;
+  mergeFiles    : Array<SourceCodeFile>;
   stepType      : Commit.Type;
   stepMessage   : string;
 }
@@ -19,15 +32,19 @@ export type ExtensionToSidebarMessage =
       category : 'sidebar';
       type     : 'file-data-update';
       payload  : {
-        stagedFiles   : Array<{ path: string; status: string }>;
-        unstagedFiles : Array<{ path: string; status: string }>;
-        mergeFiles    : Array<{ path: string; status: string }>;
+        stagedFiles   : Array<SourceCodeFile>;
+        unstagedFiles : Array<SourceCodeFile>;
+        mergeFiles    : Array<SourceCodeFile>;
       };
     }
   | {
       category : 'sidebar';
       type     : 'commit-editing-conflict';
-      payload  : { mergeFiles: Array<{ path: string; status: string }> };
+      payload  : {
+        stepType    : Commit.Type;
+        stepMessage : string;
+        mergeFiles  : Array<SourceCodeFile>;
+      };
     }
   | {
       category : 'sidebar';

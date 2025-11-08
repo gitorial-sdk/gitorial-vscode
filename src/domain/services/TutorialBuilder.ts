@@ -119,13 +119,15 @@ export class TutorialBuilder {
         throw new Error(`TutorialBuilder: Commit message "${message}" missing type prefix.`);
       }
 
-      const parsedType = message.substring(0, colonIndex)
-        .toLowerCase();
-      if (!this.VALID_STEP_TYPES.includes(parsedType as Domain.Commit.Type)) {
-        throw new Error(`TutorialBuilder: Invalid step type "${parsedType}" in commit message: "${message}".`);
+      const parsed = Domain.Commit.V1.Validator.parseMessage(message);
+      if (parsed.isErr()) {
+        console.error(`🔍 TutorialBuilder: ERROR - ${parsed.error.message}`);
+        console.error(`Code: ${parsed.error.code}`);
+        throw new Error(`TutorialBuilder: ${parsed.error.message}`);
       }
 
-      const stepType = parsedType as Domain.Commit.Type;
+      const { type: stepType } = parsed.value;
+
       const stepTitle =
         message.substring(colonIndex + 1)
           .trim() || 'Unnamed Step';

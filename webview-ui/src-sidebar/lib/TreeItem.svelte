@@ -8,6 +8,9 @@
     fileName: string;
     filePath: string;
     status: 'M' | 'U' | 'D' | 'C';
+    /**
+     * TODO: rename to onClick
+     */
     onOpenDiff: (path: string) => void;
     onOpenFile: (path: string) => void;
     onStage?: (path: string) => void;

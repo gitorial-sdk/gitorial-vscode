@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
-import { FileStatus } from '../types';
 import { UI, Domain } from '@gitorial/shared-types';
 
 export class SidebarMessenger {
   constructor(private readonly webview: vscode.Webview) {}
 
   async sendDataUpdate(data: {
-    stagedFiles   : FileStatus[];
-    unstagedFiles : FileStatus[];
-    mergeFiles    : FileStatus[];
+    stagedFiles   : UI.Messages.SourceCodeFile[];
+    unstagedFiles : UI.Messages.SourceCodeFile[];
+    mergeFiles    : UI.Messages.SourceCodeFile[];
     stepType      : Domain.Commit.Type;
     stepMessage   : string;
   }): Promise<void> {
@@ -20,9 +19,9 @@ export class SidebarMessenger {
   }
 
   async sendFileDataUpdate(data: {
-    stagedFiles   : FileStatus[];
-    unstagedFiles : FileStatus[];
-    mergeFiles    : FileStatus[];
+    stagedFiles   : UI.Messages.SourceCodeFile[];
+    unstagedFiles : UI.Messages.SourceCodeFile[];
+    mergeFiles    : UI.Messages.SourceCodeFile[];
   }): Promise<void> {
     await this.webview.postMessage({
       type     : 'file-data-update',
@@ -31,11 +30,15 @@ export class SidebarMessenger {
     } satisfies UI.Messages.ExtensionToSidebarMessage);
   }
 
-  async sendConflict(mergeFiles: FileStatus[]): Promise<void> {
+  async sendConflict(data: {
+    stepType    : Domain.Commit.Type;
+    stepMessage : string;
+    mergeFiles  : UI.Messages.SourceCodeFile[];
+  }): Promise<void> {
     await this.webview.postMessage({
       type     : 'commit-editing-conflict',
       category : 'sidebar',
-      payload  : { mergeFiles },
+      payload  : data,
     } satisfies UI.Messages.ExtensionToSidebarMessage);
   }
 

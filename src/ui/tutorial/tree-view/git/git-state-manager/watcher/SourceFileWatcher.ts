@@ -2,10 +2,10 @@ import { err, ok, Result } from 'neverthrow';
 import { GitStateData } from '../types';
 import { DebouncedWatcher } from './DebouncedWatcher';
 import * as vscode from 'vscode';
-import { GitStateManager } from '..';
 import { GitStatusMapper } from '../../GitStatusMapper';
 import { IGitOperations } from '@domain/ports/IGitOperations';
 import * as path from 'path';
+import { GitState } from '../state';
 
 /**
  * VS Code Git Extension API types
@@ -59,8 +59,8 @@ export class SourceFileWatcher extends DebouncedWatcher {
   private gitApiWatcher?: vscode.Disposable;
   private userFilesWatcher?: vscode.FileSystemWatcher;
 
-  constructor(workspacePath: string, gitOps: IGitOperations, stateManager: GitStateManager) {
-    super(stateManager);
+  constructor(workspacePath: string, gitOps: IGitOperations, state: GitState) {
+    super(state);
     this.workspacePath = workspacePath;
     this.gitOps = gitOps;
   }
@@ -76,9 +76,9 @@ export class SourceFileWatcher extends DebouncedWatcher {
 
     return {
       files : {
-        staged   : stagedFiles.map(file => file.path),
-        unstaged : unstagedFiles.map(file => file.path),
-        merge    : mergeFiles.map(file => file.path),
+        staged   : stagedFiles,
+        unstaged : unstagedFiles,
+        merge    : mergeFiles,
       },
     };
   }
@@ -135,7 +135,6 @@ export class SourceFileWatcher extends DebouncedWatcher {
     this.userFilesWatcher = vscode.workspace.createFileSystemWatcher(pattern, false, false, false);
 
     const debouncedRefresh = async (uri: vscode.Uri) => {
-      // Ignore changes in excluded directories
       const relativePath = path.relative(this.workspacePath, uri.fsPath);
       const excludedPatterns = [
         /^\.git\//, // .git directory (handled by rebase watcher)

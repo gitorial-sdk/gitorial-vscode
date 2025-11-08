@@ -117,11 +117,11 @@
       <ul class="file-list">
         {#each sidebarStore.mergeFiles as file}
           <TreeItem
-            fileName={getFileName(file.path)}
-            filePath={file.path}
-            status={file.status as 'M' | 'U' | 'D' | 'C'}
+            fileName={getFileName(file.relativePath)}
+            filePath={file.relativePath}
+            status={file.status}
             onOpenFile={openFile}
-            onOpenDiff={openDiff}
+            onOpenDiff={openFile}
             onStage={stageFile}
           />
         {/each}
@@ -146,9 +146,9 @@
       <ul class="file-list">
         {#each sidebarStore.stagedFiles as file}
           <TreeItem
-            fileName={getFileName(file.path)}
-            filePath={file.path}
-            status={file.status as 'M' | 'U' | 'D'}
+            fileName={getFileName(file.relativePath)}
+            filePath={file.relativePath}
+            status={file.status}
             onOpenFile={openFile}
             onOpenDiff={openDiff}
             onUnstage={unstageFile}
@@ -176,9 +176,9 @@
       <ul class="file-list">
         {#each sidebarStore.unstagedFiles as file}
           <TreeItem
-            fileName={getFileName(file.path)}
-            filePath={file.path}
-            status={file.status as 'M' | 'U' | 'D'}
+            fileName={getFileName(file.relativePath)}
+            filePath={file.relativePath}
+            status={file.status}
             onOpenFile={openFile}
             onOpenDiff={openDiff}
             onStage={stageFile}

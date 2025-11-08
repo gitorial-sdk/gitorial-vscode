@@ -1,8 +1,8 @@
 import { IGitOperations } from '@domain/ports/IGitOperations';
-import { GitStateManager } from '..';
 import { GitStateData } from '../types';
 import { DebouncedWatcher } from './DebouncedWatcher';
 import * as vscode from 'vscode';
+import { GitState } from '../state';
 
 /**
  * Watches .git/ directory for rebase operations and updates Git state accordingly.
@@ -31,8 +31,8 @@ export class StateWatcher extends DebouncedWatcher {
   private workspacePath: string;
   private gitOps: IGitOperations;
 
-  constructor(workspacePath: string, gitOps: IGitOperations, stateManager: GitStateManager) {
-    super(stateManager);
+  constructor(workspacePath: string, gitOps: IGitOperations, state: GitState) {
+    super(state);
     this.workspacePath = workspacePath;
     this.gitOps = gitOps;
   }

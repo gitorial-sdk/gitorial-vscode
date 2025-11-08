@@ -301,6 +301,15 @@ async function bootstrapApplication(context: vscode.ExtensionContext) {
   // --- Webview and Tree Data Providers ---
   const workspaceGitOperations = gitOperationsFactory.fromPath(workspacePath);
   const stepTypeSelector = new StepTypeSelector(workspaceGitOperations);
+
+  const currentCommitHash = await workspaceGitOperations.getCurrentCommitHash();
+  const commit = await workspaceGitOperations.getCommitInfo(currentCommitHash);
+  if (!commit) throw new Error('Could not get commit info');
+  const stepTypeResult = Domain.Commit.V1.Validator.parseMessage(commit.message);
+  if (stepTypeResult.isErr()) throw new Error('Could not parse commit message');
+  const stepType = stepTypeResult.value.type;
+  const stepMessage = stepTypeResult.value.title;
+
   const changesWebviewProvider = new ChangesSidebarProvider(
     workspaceGitOperations,
     stepTypeSelector,

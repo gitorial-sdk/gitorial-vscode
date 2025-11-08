@@ -1,31 +1,36 @@
 import { WorkingDirectoryStatus } from '@domain/ports/IGitOperations';
-import { FileStatus, FileStatusCode } from '../types';
+import { UI } from '@gitorial/shared-types';
 
 export class GitStatusMapper {
   static mapToFileStatuses(status: WorkingDirectoryStatus): {
-    stagedFiles   : FileStatus[];
-    unstagedFiles : FileStatus[];
-    mergeFiles    : FileStatus[];
+    stagedFiles   : UI.Messages.SourceCodeFile[];
+    unstagedFiles : UI.Messages.SourceCodeFile[];
+    mergeFiles    : UI.Messages.SourceCodeFile[];
   } {
-    const stagedFiles = status.staged.map(file => ({
-      path   : file,
-      status : this.determineFileStatus(file, status),
-    }));
+    const stagedFiles = status.staged.map(
+      file =>
+        ({
+          relativePath : file,
+          status       : this.determineFileStatus(file, status),
+        }) satisfies UI.Messages.SourceCodeFile
+    );
 
-    const unstagedFiles: FileStatus[] = [...status.modified.filter(f => !status.staged.includes(f))
-        .map(f => ({ path: f, status: 'M' }) satisfies FileStatus),
-      ...status.untracked.map(f => ({ path: f, status: 'U' }) satisfies FileStatus),
+    const unstagedFiles: UI.Messages.SourceCodeFile[] = [...status.modified.filter(f => !status.staged.includes(f))
+        .map(f => ({ relativePath: f, status: 'M' }) satisfies UI.Messages.SourceCodeFile),
+      ...status.untracked.map(f => ({ relativePath: f, status: 'U' }) satisfies UI.Messages.SourceCodeFile),
       ...status.deleted
         .filter(f => !status.staged.includes(f))
-        .map(f => ({ path: f, status: 'D' }) satisfies FileStatus),
+        .map(f => ({ relativePath: f, status: 'D' }) satisfies UI.Messages.SourceCodeFile),
     ];
 
-    const mergeFiles: FileStatus[] = status.conflicted.map(f => ({ path: f, status: 'C' }) satisfies FileStatus);
+    const mergeFiles: UI.Messages.SourceCodeFile[] = status.conflicted.map(
+      f => ({ relativePath: f, status: 'C' }) satisfies UI.Messages.SourceCodeFile
+    );
 
     return { stagedFiles, unstagedFiles, mergeFiles };
   }
 
-  static determineFileStatus(file: string, status: WorkingDirectoryStatus): FileStatusCode {
+  static determineFileStatus(file: string, status: WorkingDirectoryStatus): UI.Messages.SourceCodeFileStatus {
     if (status.deleted.includes(file)) {
       return 'D';
     } else if (status.modified.includes(file)) {

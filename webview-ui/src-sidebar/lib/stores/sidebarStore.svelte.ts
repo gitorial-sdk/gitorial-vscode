@@ -3,9 +3,9 @@ import type { UI, Domain } from '@gitorial/shared-types';
 export interface SidebarState {
   stepType            : Domain.Commit.Type;
   stepMessage         : string;
-  stagedFiles         : Array<{ path: string; status: string }>;
-  unstagedFiles       : Array<{ path: string; status: string }>;
-  mergeFiles          : Array<{ path: string; status: string }>;
+  stagedFiles         : Array<UI.Messages.SourceCodeFile>;
+  unstagedFiles       : Array<UI.Messages.SourceCodeFile>;
+  mergeFiles          : Array<UI.Messages.SourceCodeFile>;
   mergeCollapsed      : boolean;
   stagedCollapsed     : boolean;
   changesCollapsed    : boolean;
@@ -96,10 +96,18 @@ export const sidebarStore = {
         break;
       case 'commit-editing-conflict':
         sidebarState.commitEditingStatus = 'Conflict';
+
         sidebarState.mergeFiles = message.payload.mergeFiles;
+        sidebarState.stepType = message.payload.stepType;
+        sidebarState.stepMessage = message.payload.stepMessage;
+
+        originalState = {
+          stepType    : message.payload.stepType,
+          stepMessage : message.payload.stepMessage,
+        };
         break;
       case 'commit-editing-success':
-        sidebarState.commitEditingStatus = 'Success';
+        this.setSuccessStatusWithTimeout();
         break;
       default:
         console.warn('Unknown message received: ', message);
@@ -120,6 +128,13 @@ export const sidebarStore = {
 
     // Check if step type or step message has changed
     return sidebarState.stepType !== originalState.stepType || sidebarState.stepMessage.trim() !== originalState.stepMessage.trim()
+  },
+
+  setSuccessStatusWithTimeout() {
+    sidebarState.commitEditingStatus = 'Success';
+    setTimeout(() => {
+      sidebarState.commitEditingStatus = 'Editing';
+    }, 3000);
   },
 
   validate() {},

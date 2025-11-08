@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import { GitStateData } from '../types';
-import { GitStateManager } from '..';
+import { GitState } from '../state';
 
 export abstract class DebouncedWatcher implements vscode.Disposable {
   private timeoutId?: NodeJS.Timeout;
   private readonly debounceMs: number;
-  private stateManager: GitStateManager;
+  private state: GitState;
   protected isActive = false;
 
-  constructor(stateManager: GitStateManager, debounceMs: number = 500) {
+  constructor(state: GitState, debounceMs: number = 500) {
     this.debounceMs = debounceMs;
-    this.stateManager = stateManager;
+    this.state = state;
   }
 
   /**
@@ -63,15 +63,16 @@ export abstract class DebouncedWatcher implements vscode.Disposable {
   }
 
   private async checkAndNotify(): Promise<void> {
-    const oldState = this.stateManager.state;
-    const newState = { ...oldState, ...(await this.computeStateDelta()) };
+    const oldState = this.state.state;
+    const newPartialState = await this.computeStateDelta();
 
-    if (!this.statesEqual(oldState, newState)) {
-      this.stateManager.mutateState(() => newState);
+    if (!this.statesEqual(oldState, newPartialState)) {
+      this.state.mutate(newPartialState);
     }
   }
 
-  private statesEqual(a: GitStateData, b: GitStateData): boolean {
+  private statesEqual(a: GitStateData, partialB: Partial<GitStateData>): boolean {
+    const b = { ...a, ...partialB };
     return JSON.stringify(a) === JSON.stringify(b);
   }
 

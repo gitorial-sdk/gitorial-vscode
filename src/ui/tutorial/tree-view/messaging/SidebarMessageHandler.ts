@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { NavigationOperations } from '../operations/NavigationOperations';
 import { IGitOperations } from '@domain/ports/IGitOperations';
+import { GitStateManager } from '../git/git-state-manager';
 
 export class SidebarMessageHandler {
   constructor(
@@ -75,7 +76,6 @@ export class SidebarMessageHandler {
   private async handleCommit(stepType: Domain.Commit.Type, message: string): Promise<void> {
     const checkedOutCommit = await this.gitOps.getCurrentCommitHash();
     const isRebaseInProgress = await this.gitOps.isRebaseInProgress();
-    const hasConflicts = await this.gitOps.hasRebaseConflicts();
 
     if (isRebaseInProgress) {
       // We're in a rebase - user wants to continue (either after resolving conflicts or normally)
@@ -85,13 +85,10 @@ export class SidebarMessageHandler {
         return;
       }
 
-      const message = hasConflicts
-        ? 'Rebase conflicts resolved, continuing...'
-        : 'Continuing rebase...';
-      vscode.window.showInformationMessage(message);
+      vscode.window.showInformationMessage('Continuing rebase...');
     } else {
       // Normal commit workflow: amend current commit + rebase onto gitorial
-      const amendResult = await this.commitOps.amend(message);
+      const amendResult = await this.commitOps.amend({ stepType, message });
       if (amendResult.isErr()) {
         this.emitError(amendResult.error);
         return;
@@ -102,17 +99,10 @@ export class SidebarMessageHandler {
         this.emitError(rebaseResult.error);
         return;
       }
-      vscode.window.showInformationMessage(`Applied changes to next step: ${stepType}: ${message}`);
+
     }
-
-    // The RebaseWatcher will automatically detect conflicts or success and send
-    // appropriate messages ('commit-editing-conflict' or 'commit-editing-success')
-    // to the webview when the rebase state changes.
-
-    // Give the watcher a moment to detect the state change
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Refresh the UI to show the updated state
     await this.onRefresh();
   }
 

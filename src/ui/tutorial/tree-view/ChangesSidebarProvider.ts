@@ -2,8 +2,7 @@ import * as vscode from 'vscode';
 import { IGitOperations } from '@domain/ports/IGitOperations';
 import { StepTypeSelector } from './StepTypeSelector';
 import { UI } from '@gitorial/shared-types';
-import { GitRepositoryWatcher } from '@ui/tutorial/tree-view/git/GitRepositoryWatcher';
-import { RebaseWatcher } from '@ui/tutorial/tree-view/git/RebaseWatcher';
+import { GitStateManager } from './git/git-state-manager';
 import { SidebarMessageHandler } from './messaging/SidebarMessageHandler';
 import { SidebarMessenger } from './messaging/SidebarMessenger';
 import { FileOperations } from './operations/FileOperations';
@@ -13,6 +12,7 @@ import { NavigationOperations } from './operations/NavigationOperations';
 import { GitStatusMapper } from './git/GitStatusMapper';
 import { WebviewHtmlBuilder } from './html/WebviewHtmlBuilder';
 import { BUILD_FOLDER, WEBVIEW_FOLDER } from './const';
+import { Hooks } from './git/git-state-manager/types';
 
 /**
  * WebviewView provider for the Changes view
@@ -21,10 +21,9 @@ import { BUILD_FOLDER, WEBVIEW_FOLDER } from './const';
 export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private sidebarMessanger?: SidebarMessenger;
-  private gitWatcher: GitRepositoryWatcher;
-  private rebaseWatcher: RebaseWatcher;
   private sidebarMessageHandler: SidebarMessageHandler;
   private fileOps: FileOperations;
+  private gitStateManager: GitStateManager;
 
   constructor(
     private readonly gitOperations: IGitOperations,
@@ -38,30 +37,38 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
     const navOps = new NavigationOperations(workspacePath);
     const onRefresh = () => this.refresh();
 
+    const hooks: Hooks = {
+      onSourceFileChange : data => this.refreshOnGitFileStatusChange(data),
+      onRebaseStart      : () => {
+        console.log('ChangesSidebarProvider: Rebase started');
+      },
+      onRebaseConflict : async conflictedFiles => {
+        console.log('ChangesSidebarProvider: Rebase conflict detected', conflictedFiles);
+        await this.sidebarMessanger?.sendConflict(conflictedFiles);
+      },
+      onRebaseSuccess : () => {
+        console.log('ChangesSidebarProvider: Rebase completed successfully');
+        this.sidebarMessanger?.sendSuccess();
+        vscode.window.showInformationMessage(`Applied changes successfully`);
+      },
+      onRebaseAbort : () => {
+        console.log('ChangesSidebarProvider: Rebase was aborted');
+        vscode.window.showWarningMessage('Rebase operation was cancelled');
+      },
+    };
+
+    this.gitStateManager = new GitStateManager(hooks, workspacePath, gitOperations);
+
     this.sidebarMessageHandler = new SidebarMessageHandler(this.fileOps, commitOps, diffOps, navOps, gitOperations, onRefresh);
-    // Bind to preserve `this` when invoked as a callback
+
     this.stepTypeSelector.setOnChangeCallback(this.refresh.bind(this));
-
-    // Bind to preserve `this` inside the watcher callback
-    this.gitWatcher = new GitRepositoryWatcher(this.workspacePath, this.refreshOnGitFileStatusChange.bind(this));
-    this.gitWatcher.start();
-
-    // Set up rebase watcher to detect conflicts and success
-    this.rebaseWatcher = new RebaseWatcher(
-      this.workspacePath,
-      this.gitOperations,
-      this.handleRebaseConflict.bind(this),
-      this.handleRebaseSuccess.bind(this)
-    );
-    this.rebaseWatcher.start();
   }
 
   /**
    * Clean up resources
    */
   public dispose(): void {
-    this.gitWatcher.dispose();
-    this.rebaseWatcher.dispose();
+    this.gitStateManager.dispose();
   }
 
   /**
@@ -122,16 +129,18 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  async refreshOnGitFileStatusChange(): Promise<void> {
-    console.log('refreshing git file status');
+  async refreshOnGitFileStatusChange(data: {
+    stagedFiles   : UI.Messages.SourceCodeFile[];
+    unstagedFiles : UI.Messages.SourceCodeFile[];
+    mergeFiles    : UI.Messages.SourceCodeFile[];
+  }): Promise<void> {
+    console.log('refreshing git file status', data);
     if (!this.sidebarMessanger) {
       return;
     }
 
     try {
-      const status = await this.gitOperations.getWorkingDirectoryStatus();
-      const { stagedFiles, unstagedFiles, mergeFiles } = GitStatusMapper.mapToFileStatuses(status);
-      await this.sidebarMessanger.sendFileDataUpdate({ stagedFiles, unstagedFiles, mergeFiles });
+      await this.sidebarMessanger.sendFileDataUpdate(data);
     } catch (error) {
       console.error('Failed to refresh webview:', error);
     }
@@ -155,32 +164,6 @@ export class ChangesSidebarProvider implements vscode.WebviewViewProvider {
       } else {
         vscode.window.showInformationMessage(result.error);
       }
-    }
-  }
-
-  /**
-   * Handle rebase conflict detection
-   */
-  private async handleRebaseConflict(): Promise<void> {
-    console.log('ChangesSidebarProvider: Rebase conflict detected');
-    if (this.sidebarMessanger) {
-      const mergeFiles = await this.gitOperations.getConflictFiles();
-      const status = await this.gitOperations.getWorkingDirectoryStatus();
-      const fileStatus = mergeFiles.map(f => {
-        const fileStatus = GitStatusMapper.determineFileStatus(f, status);
-        return { path: f, status: fileStatus };
-      });
-      await this.sidebarMessanger.sendConflict(fileStatus);
-    }
-  }
-
-  /**
-   * Handle rebase success detection
-   */
-  private async handleRebaseSuccess(): Promise<void> {
-    console.log('ChangesSidebarProvider: Rebase completed successfully');
-    if (this.sidebarMessanger) {
-      await this.sidebarMessanger.sendSuccess();
     }
   }
 
